@@ -8,6 +8,11 @@
 
 library(stringr)
 
+# what the hell does the VCF file look like?
+vcf.data<-read.table("~/Dropbox/ddRADseq/pseudoref_raccoon_counts_maf0.1_minmeanDP20_minGQ25.recode.vcf")
+dim(vcf.data)
+vcf.data[1,]
+
 # read in the structure data to get the sample IDs
 stru.data<-read.table("~/Dropbox//ddRADseq/pseudoref_raccoon_counts_maf0.1_minmeanDP20_minGQ25_structure.stru", skip=1)
 in.library<-stru.data[,1]
