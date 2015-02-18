@@ -33,7 +33,8 @@ dr=0.01 #percent in size range, expressed as a decimal
 it=200 #illumina type; 2x100=200
 br=gs*dr/fl*it #no. bases to read per sample
 ps=br*seq(0, 0.01, 0.001) #possible number of SNPs
-png(file='~/Dropbox/ColoState/Projects/Outputs/Expected_SNPs.png', height=10, width=10, res=300, unit='cm')
+png(file='~/Dropbox/ColoState/Projects/Outputs/Expected_SNPs.png', height=10, width=15, res=300, unit='cm')
+par(mar=c(5,6,4,2))
 plot(seq(0, 0.01, 0.001), ps, axes=FALSE, ylab="", xlab="Per Base SNP Probability", main="SNPs from 1% of Deer Genome")
 magaxis(side=1:2, las=1, ylab="Expected Number of SNPs", mtline=3.5)
 dev.off()
