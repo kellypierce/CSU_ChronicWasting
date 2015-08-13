@@ -1,7 +1,7 @@
 # ddRADseq library QC for first batch of samples processed
 
 data<-read.csv('~/Dropbox/ColoState/Projects/Outputs/DNA_Prep_QC.csv')
-#why are there so many extra rows??
+#why are there so many extra columns??
 data<-data[,1:16] #that's better
 
 #duplicated samples each get their own row... remove them
