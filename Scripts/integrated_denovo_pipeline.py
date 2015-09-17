@@ -7,7 +7,7 @@ import subprocess
 import os, os.path
 import sys
 import numpy as np
-import pandas as pd
+import pandas as pd #fuck pandas
 
 '''
 # Quality filter with FASTX Toolkit
@@ -18,7 +18,7 @@ subprocess.call("zcat ~/Downloads/Sample1_ACTTGA_L008_R1_001.fastq.gz | fastq_qu
 subprocess.call("zcat /home/antolinlab/Downloads/Sample1_ACTTGA_L008_R1_001_filtered.fastq.gz | /usr/local/bin/fastx_barcode_splitter.pl --bcfile /home/antolinlab/Desktop/CSU_ChronicWasting/PilotAnalysis/pilot_barcode_file --prefix /home/antolinlab/Desktop/CSU_ChronicWasting/PilotAnalysis/Demultiplexed/pilot_demultiplex_ --bol", shell=True)
 # to-do: automatically generate a new directory "Demultiplexed" to house the new data (and ONLY the new data)
 '''
-
+'''
 # Generate "-s" arguments to Stacks denovo_map.pl
 mp_dir = '/home/antolinlab/Desktop/CSU_ChronicWasting/PilotAnalysis/Demultiplexed/'
 s_list=[]
@@ -53,22 +53,26 @@ build_args = ['/home/antolinlab/Downloads/stacks-1.31/scripts/denovo_map.pl ',
 denovo_call = ''.join(build_args)
 
 #subprocess.call(denovo_call, shell=True)
-
+'''
 # Extract consensus sequence from tags.tsv Stacks output, save as FASTQ
-
+# This actually works! no pandas or numpy needed
 ref_path = '/home/antolinlab/Desktop/CSU_ChronicWasting/PilotAnalysis/batch_1.catalog.tags.tsv'
-col_names = ['SQLID', 'SampleID', 'LocusID', 'Chrom', 
-             'BP', 'Strand', 'SeqType', 'Stack', 'SeqID', 
-             'Seq', 'Deleveraged', 'Blacklisted', 'Lumberjack', 'LogLik']
-ref = pd.read_csv(ref_path, comment='#', sep='\t', names=col_names)
-#print ref
-locus = ref.ix[:,'LocusID']
-new_header = pd.concat([pd.DataFrame(['> pseudoref_']*len(locus)), pd.DataFrame(locus)], axis=1)
-reformatted = [None]*len(locus)
-for i in range(len(locus)-1):
-    #print new_header.iloc[i:,0]   
-    reformatted[i]=new_header.iloc[i:,0]+str(new_header.iloc[i:,1])
-print reformatted
+ids = []
+seqs = []
+with open(ref_path, 'r') as y:
+    next(y)
+    for l in y:
+        fields = l.split("\t")
+        new_id = '>'+fields[2]+'_pseudoref'
+        ids.append(new_id)
+        seqs.append(fields[9])
+fastq_flat = [val for pair in zip(ids, seqs) for val in pair]
+fastq_interleaved = '\n'.join(fastq_flat)
+
+with open('/home/antolinlab/Desktop/CSU_ChronicWasting/PilotAnalysis/pseudoref.fa', 'a') as fq:
+    fq.write(fastq_interleaved)
+#with open(pseudoref.fq, 'a') as new:
+#    for i in 
 #seq = ref.ix[:,'Seq']
 #print seq
 
