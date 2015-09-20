@@ -182,3 +182,68 @@ glmx.test <- gamlssMX(dbr.pilot[,1]~1, family='NBI', data=dbr.pilot, K=2)
 ```
 
 # Try next: Conway-Maxwell-Poisson Distribution, a poisson mixture model that allows for bimodality.
+
+---------------------------------------------------
+\pagebreak
+
+# How does quality filtering influence the distribution of the DBR sequences recovered?
+
+Ideally we filter error OUT of the DBRs in the sequence data before using them to infer the true distribution of DBRs in the adapter pool. Error may change the shape of the DBR distribution... does it? 
+
+The script
+
+```
+quality_dbr_sensitivity.py
+```
+Performs a sensitivity analysis on the quality filters employed by FASTX-Toolkit's *fastq\_qualit\y_filter* function, and then using *sed* to extract the DBR sequences and save them to a file.
+
+The quality for each base is given as an ASCII-33 score (inferred from looking at the characters used in the quality line and the values reported in this table: http://drive5.com/usearch/manual/quality\_score.html). The *fastq\_quality\_filter* takes two important arguments, one for the minimum base score and one for the fraction of bases that have to have at least that median. I have required that at least 50% of bases have the minimum score, meaning that the median score will be no less than the minimum. ASCII-33 scores range from 1-41.
+
+Load the data:
+```{r}
+setwd('~/Desktop/CSU_ChronicWasting/PilotAnalysis/QualDBR_Sensitivity/')
+qual.files=list.files(getwd())
+qual.counts=grep('.txt', qual.files, value=T)
+```
+
+## Sensitivity analysis with reciprocal transformed data
+
+This is bad for a couple of reasons, but it stays in the file because it was useful for thinking about the problem.
+
+Reciprocally transforming count data will give a weird distribution -- 1/1 = 1; 1/2 = 0.5. There will be a big gap in the distribution (between 0.5 and 1) where there cannot be any data.
+
+I also plotted after removing singletons. However, we WANT DBRs with a low frequency of occurrence. Especially if they are high quality. Singletons should not be removed at this phase (removing singleton DNA sequences once DBRs are removed, however, is sensible).
+
+```{r}
+#png(file='~/Desktop/CSU_ChronicWasting/PilotAnalysis/DBR_Distr_Qual_Sensitivity.png', width=30, height=40, units='cm', res=300)
+par(mfrow=c(4,2))
+for(file in qual.counts){
+  dbr.counts=read.table(file)
+  hist(1/dbr.counts[,1], xlim=c(0,1), main=paste('Minimum Median Quality = ', substr(file, 1, 2)), xlab='1/DBR Counts')
+  
+  no.singletons=dbr.counts[dbr.counts[,1]>1,]
+  hist(1/no.singletons[,1], xlim=c(0,1), main=paste('Minimum Median Quality = ', substr(file, 1, 2), '(No Singletons)'), xlab='1/DBR Counts')
+}
+#dev.off()
+
+```
+
+## Sensitivity analysis on DBR proportions with logit transformation
+
+Expressing DBR frequency as a fraction of all reads is arguably better for downstream analysis because we will ultimately gauge DBR occurrence in assembled loci against DBR occurrence in the original (quality filtered) data. If we used raw counts, DBR occurrence in the assembled loci would almost always be less than the expected overall count.
+
+Another benefit of using the fraction of reads with a given DBR is that expressing count frequency as a proportion allows us to use the logit transformation. The distribution of DBR fractions is highly, highly right skewed. After performing the logit transformation we can better see the shape of the distribution and confirm that it is (1) unimodal and (2) likely to fit a 
+
+```{r}
+
+par(mfrow=c(4,2))
+for(file in qual.counts){
+  dbr.counts=read.table(file)
+  counts.fraction=dbr.counts[,1]/sum(dbr.counts[,1])
+  print(min(counts.fraction))
+  print(min(counts.fraction)*sum(dbr.counts[,1]))
+  counts.logit=log((counts.fraction)/(1-counts.fraction))
+  hist(counts.fraction, main=paste('Minimum Median Quality = ', substr(file, 1, 2)), xlab='Fraction of Reads with DBR', freq=FALSE)
+  hist(counts.logit-min(counts.logit), main=paste('Minimum Median Quality = ', substr(file, 1, 2)), xlab='logit(Fraction of Reads with DBR)')
+}
+```
