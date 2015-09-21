@@ -11,7 +11,6 @@ import subprocess
 import os, os.path
 import sys
 import numpy as np
-import pandas as pd #fuck pandas
 import re
 
 filter = False
@@ -155,3 +154,5 @@ if refmapping:
             bwa_mem_call = '/home/antolinlab/Downloads/bwa.kit/bwa mem -M -R ' + read_group_header + " " + pseudoref_path + ' ' + new_dir + i + ' > ' + assembly_path + fname + '.sam'
             print bwa_mem_call
             subprocess.call(bwa_mem_call, shell=True)
+            
+
