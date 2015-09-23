@@ -48,11 +48,12 @@ with open(dict_in, 'r') as f:
 with open(seq_dict_in, 'r') as s:
     R1 = json.load(s)
     
-print 'Checking dictionary format (version 3).'
-r = itertools.islice(R1.iteritems(), 0, 10)
-for keyr, valuer in r:
-    print keyr, valuer
-print len(R1)
+#print 'Checking dictionary format (version 3).'
+#r = itertools.islice(R1.iteritems(), 0, 10)
+#for keyr, valuer in r:
+#    print keyr, valuer
+#print len(R1)
+#print R1['8:1311:18936:26586']
 
 assembled_dir = '/home/antolinlab/Desktop/CSU_ChronicWasting/PilotAnalysis/Assembled'
 for i in os.listdir(assembled_dir):
@@ -76,35 +77,59 @@ for i in os.listdir(assembled_dir):
                 
                 # extract the info for the dictionary for each line
                 QNAME = re.split('(\d[:|_]\d+[:|_]\d+[:|_]\d+)', fields[0])[1] # FASTQ ID = QNAME column in sam file
+                FLAG = fields[1]
                 RNAME = fields[2] # ref sequence name -- where did the sequence map?
+                POS = fields[3]
+                MAPQ = fields[4] # mapping quality
+                CIGAR = fields[5] # additional mapping info
                 QUAL = fields[10] # sequence quality score
+                
+                if FLAG != '0':
+                    print FLAG
+'''                
+                #if QNAME == '8:2106:9834:86213':
+                #    print fields
+                
+                #print POS, CIGAR, len(QUAL)
                 
                 # extract the DBR corresponding to the QNAME for each row
                 dbr_value = dbr.get(QNAME)[0] 
                 
-                # WE NEED TWO DICTIONARIES TO REPRESENT ALL THE RELATIONSHIP BETWEEN RNAME, QNAME, dbr_value, QUAL, AND count
-                # build a dictionary with structure {DBR: (locus: count)}                    
-                if RNAME not in assembly_dict_2:
-                    assembly_dict_2.setdefault(RNAME, {})[dbr_value]=1 # add the new DBR and its associated locus and count
-                else:
-                    if dbr_value not in assembly_dict_2.get(RNAME):
-                        assembly_dict_2.setdefault(RNAME, {})[dbr_value]=1
-                    else:
-                        assembly_dict_2[RNAME][dbr_value]=assembly_dict_2[RNAME][dbr_value]+1    
+                # after trimming, the sequences are 116 bases long
+                # the POS for all matched sequences should be 1 because we used a pseudoreference build from our RADtags
+                # if all 116 bases match, POS = 1 and CIGAR = 116M (meaning 116 bases match the reference)
+                # repetitive regions may map to multiple regions but not exactly -- this would cause the same sequence ID to be present > 1x in the dictionary
+                # sequences present >1x in the dictionary break the count of DBRs, and cause problems with filtering downstream
+                # the inexact matches of repetitive regions can be detected by POS != 1 or CIGAR != 116M
+                # a more flexible/broader use way of filtering would be to do a REGEX search on the CIGAR score and report the number of digits preceeding the M
+                # then you could only keep the entry that has the largest number of matches (but M can show up multiple times in the CIGAR score if separated by an insertion, so think about this more)
                 
-                # build a dictionary with structure {RNAME: {DBR:[[QNAME, QUAL]]}}        
-                if RNAME not in assembly_dict_3:
-                    assembly_dict_3.setdefault(RNAME, {})[dbr_value]=[[QNAME, QUAL]]
-                else:
-                    if dbr_value not in assembly_dict_3.get(RNAME):
-                        assembly_dict_3.setdefault(RNAME, {})[dbr_value]=[[QNAME, QUAL]]
+                # FOR OUR PURPOSES, filtering on POS == 1 will keep only the good matches
+                if POS == '1':
+                
+                    # WE NEED TWO DICTIONARIES TO REPRESENT ALL THE RELATIONSHIP BETWEEN RNAME, QNAME, dbr_value, QUAL, AND count
+                    # build a dictionary with structure {DBR: (locus: count)}                    
+                    if RNAME in assembly_dict_2:
+                        if dbr_value in assembly_dict_2.get(RNAME):
+                            assembly_dict_2[RNAME][dbr_value]=assembly_dict_2[RNAME][dbr_value]+1
+                        else:
+                            assembly_dict_2.setdefault(RNAME, {})[dbr_value]=1
                     else:
-                        assembly_dict_3[RNAME][dbr_value].append([QNAME, QUAL])
+                        assembly_dict_2.setdefault(RNAME, {})[dbr_value]=1 # add the new DBR and its associated locus and count
+    
+                    # build a dictionary with structure {RNAME: {DBR:[[QNAME, QUAL]]}}        
+                    if RNAME in assembly_dict_3:
+                        if dbr_value in assembly_dict_3.get(RNAME):
+                            assembly_dict_3[RNAME][dbr_value].append([QNAME, QUAL])
+                        else:
+                            assembly_dict_3.setdefault(RNAME, {})[dbr_value]=[[QNAME, QUAL]]
+                    else:
+                        assembly_dict_3.setdefault(RNAME, {})[dbr_value]=[[QNAME, QUAL]]
 
     # NOW THAT DICTIONARIES ARE MADE, REMOVE DUPLICATE SEQUENCES BASED ON DBR COUNTS
     # for each assembled locus, get the associated dbr_value and count
     for RNAME, value in assembly_dict_2.iteritems():
-        print 'RNAME', RNAME
+        #print 'RNAME', RNAME
         # ignore the data where the reference is "unmapped" -- RNAME = '*'
         if RNAME != '*':
             # get all the DBRs and counts that went into that locus in that sample
@@ -119,40 +144,49 @@ for i in os.listdir(assembled_dir):
                     ## FOR NOW THE EXPECTATION IS RANDOM             #
                     ##################################################
                     #n_expected = np.random.uniform(2, 10)
-                    n_expected = 10
+                    n_expected = 5
                     # if we count more DBR occurrences than we expect, we need to evaluate the quality of the sequences associated with that DBR
                     # calculating median QUAL from the full ASCII QUAL score is computationally intensive enough that we only want to do it when absolutely necessary -- only if we observe a DBR more often than expected
                     if count > n_expected:
                         #print 'count', count, 'n exp', n_expected
                         # the other dictionary contains the full quality information for each RNAME:DBR pair (this will be multiple entries of sequence IDs and qualities
                         qname_qual = assembly_dict_3[RNAME][dbr_value] #this is a list of lists: [[QNAME, QUAL], [QNAME, QUAL], ...]
+                        #print RNAME, dbr_value, len(qname_qual)
+                        #print qname_qual
                         ID_quals = {} # we'll make yet another dictionary to store the QNAME and the median QUAL
                         for i in qname_qual:
-                            id=i[0]
-                            ID_quals[id] = qual_mode(i[1], phred_dict)
+                            id_val=i[0]
+                            ID_quals[id_val] = qual_mode(i[1], phred_dict)
                         # determine how many sequences will need to be removed and start a counter, t
+                        #print 'start length', len(ID_quals)
+                        #if len(ID_quals) < count:
+                            #print qname_qual
                         n_remove = count - n_expected
                         t = 0
-                        print 'count', count, 'expected', n_expected, 'remove', n_remove, 'tally', t
+                        #print 'count', count, 'expected', n_expected, 'remove', n_remove, 'tally', t
                         # with the full {ID: qual} dictionary available, we can now determine which sequences should be removed based on their score                        
                         while t < n_remove:
                             t += 1 
-                            print ID_quals
-                            print 'tally', t
-                            print 'number of sequences for the given sample/locus/DBR combo', len(ID_quals)
-                            if len(ID_quals)>0:
-                                to_remove = min(ID_quals, key=ID_quals.get)
-                                if to_remove == '8:1311:18936:26586':
-                                    print '########################################### Goddamn duplicate'
-                                #print 'removal ID', to_remove
-                                #print 'sub dict value', ID_quals[to_remove]
-                                #print 'full dict value', R1[to_remove]
-                                # remove the sequences by their IDs from the master R1 sequence ID file
-                                del ID_quals[to_remove]
-                                del R1[to_remove] #8:1311:18936:26586
-                                print len(R1)
-                            else:
-                                print "They're all gone!"
+                            #print ID_quals
+                            #print 'tally', t
+                            #print 'number of sequences for the given sample/locus/DBR combo', len(ID_quals)
+                            to_remove = min(ID_quals, key=lambda x:ID_quals[x])
+                            #print to_remove
+                            #print 'Removing key', to_remove
+                            #print '########################################### Goddamn duplicate'
+                            #print 'removal ID', to_remove
+                            #print 'sub dict value', ID_quals[to_remove]
+                            #print 'full dict value', R1[to_remove]
+                            # remove the sequences by their IDs from the master R1 sequence ID file
+                            del ID_quals[to_remove]
+                            #print 'updated length', len(ID_quals)
+                            assert to_remove in R1, "%s was not in R1" % to_remove
+                            del R1[to_remove] #8:1311:18936:26586
+                            #else:
+                                #print 'Missing key', to_remove
+                            
+                            #print len(R1)
+
                             #try:
                             #    del R1[to_remove]
                             #except KeyError as ke:
@@ -165,8 +199,7 @@ for i in os.listdir(assembled_dir):
                             #    del R1[to_remove]
                             #else:
                             #    print '##################################'
-                            
-                            
+                                                        
     if write_dict:
         dict_out = '/home/antolinlab/Desktop/CSU_ChronicWasting/PilotAnalysis/' + number + '_assembly_dict.json'
         print 'WARNING: which of the 3 dictionaries to write?'
@@ -190,7 +223,7 @@ if save_reduced_dict:
     with open('/home/antolinlab/Desktop/CSU_ChronicWasting/PilotAnalysis/R1_reduced_dict', 'w') as fp:          
         json.dump(R1, fp)
 
-
+'''
 '''
 # OTHER METRICS FOR DESCRIBING OVERALL SEQUENCE QUALITY (QUAL = ASCII character string)
 
