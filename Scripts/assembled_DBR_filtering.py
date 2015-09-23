@@ -35,24 +35,29 @@ phred_dict = {'"':1,"#":2,"$":3,"%":4,"&":5,"'":6,"(":7,")":8,"*":9,"+":10,
 
 test_dict=False
 write_dict=False
+save_reduced_dict=False
 
 # load Dictionary
 
 dict_in = '/home/antolinlab/Desktop/CSU_ChronicWasting/PilotAnalysis/dbr_dict'
-seq_dict_in = '/home/antolinlab/Desktop/CSU_ChronicWasting/PilotAnalysis/R1_dict.json'
+seq_dict_in = '/home/antolinlab/Desktop/CSU_ChronicWasting/PilotAnalysis/R1_dict'
   
 with open(dict_in, 'r') as f:
     dbr = json.load(f)
 
 with open(seq_dict_in, 'r') as s:
     R1 = json.load(s)
+    
+print 'Checking dictionary format (version 3).'
+r = itertools.islice(R1.iteritems(), 0, 10)
+for keyr, valuer in r:
+    print keyr, valuer
+print len(R1)
 
 assembled_dir = '/home/antolinlab/Desktop/CSU_ChronicWasting/PilotAnalysis/Assembled'
 for i in os.listdir(assembled_dir):
     
     # initialize an empty dictionary with each iteration of the for-loop
-    assembly_dict_0 = {}
-    assembly_dict_1 = {}
     assembly_dict_2 = {}
     assembly_dict_3 = defaultdict(list)
     
@@ -71,19 +76,14 @@ for i in os.listdir(assembled_dir):
                 
                 # extract the info for the dictionary for each line
                 QNAME = re.split('(\d[:|_]\d+[:|_]\d+[:|_]\d+)', fields[0])[1] # FASTQ ID = QNAME column in sam file
-                RNAME = fields[2] # ref sequence name ('locus', if you will)
+                RNAME = fields[2] # ref sequence name -- where did the sequence map?
                 QUAL = fields[10] # sequence quality score
                 
+                # extract the DBR corresponding to the QNAME for each row
                 dbr_value = dbr.get(QNAME)[0] 
                 
-                
-                #assembly_dict_0.setdefault(RNAME, {})[QNAME]=QUAL # dict with ID and quality scores
-                #assembly_dict_1.setdefault(RNAME, {})[QNAME]=dbr_value # dict with ID and DBR
-                #assembly_dict_3.setdefault(RNAME, {})[dbr_value]=[QNAME, QUAL] # dict with ID and DBR
-    
-                #print locus, dbr_value
-                
-                # FUNCTIONAL: build a dictionary with structure {DBR: (locus: count)}                    
+                # WE NEED TWO DICTIONARIES TO REPRESENT ALL THE RELATIONSHIP BETWEEN RNAME, QNAME, dbr_value, QUAL, AND count
+                # build a dictionary with structure {DBR: (locus: count)}                    
                 if RNAME not in assembly_dict_2:
                     assembly_dict_2.setdefault(RNAME, {})[dbr_value]=1 # add the new DBR and its associated locus and count
                 else:
@@ -91,7 +91,8 @@ for i in os.listdir(assembled_dir):
                         assembly_dict_2.setdefault(RNAME, {})[dbr_value]=1
                     else:
                         assembly_dict_2[RNAME][dbr_value]=assembly_dict_2[RNAME][dbr_value]+1    
-                        
+                
+                # build a dictionary with structure {RNAME: {DBR:[[QNAME, QUAL]]}}        
                 if RNAME not in assembly_dict_3:
                     assembly_dict_3.setdefault(RNAME, {})[dbr_value]=[[QNAME, QUAL]]
                 else:
@@ -100,32 +101,71 @@ for i in os.listdir(assembled_dir):
                     else:
                         assembly_dict_3[RNAME][dbr_value].append([QNAME, QUAL])
 
-    # now each sample has 2 dictionaries describing the relationships between RNAME, QNAME, dbr_value, QUAL, and count
+    # NOW THAT DICTIONARIES ARE MADE, REMOVE DUPLICATE SEQUENCES BASED ON DBR COUNTS
+    # for each assembled locus, get the associated dbr_value and count
     for RNAME, value in assembly_dict_2.iteritems():
         print 'RNAME', RNAME
+        # ignore the data where the reference is "unmapped" -- RNAME = '*'
         if RNAME != '*':
+            # get all the DBRs and counts that went into that locus in that sample
             for subvalue in value.iteritems():
                 #print 'Subvalue', subvalue
                 dbr_value = subvalue[0] 
                 count = subvalue[1]
+                # we know the DBRs with count = 1 are okay to save, so we don't need to calculate expected occurrences for them
                 if count > 1:
-                    # we don't have a likelihood function yet, so draw from a random distribution to see if we need to calculate quality score:
-                    n_expected = np.random.uniform(2, 10)
+                    ##################################################
+                    ## THIS IS WHERE THE LIKELIHOOD FUNCTION WILL GO #
+                    ## FOR NOW THE EXPECTATION IS RANDOM             #
+                    ##################################################
+                    #n_expected = np.random.uniform(2, 10)
+                    n_expected = 10
+                    # if we count more DBR occurrences than we expect, we need to evaluate the quality of the sequences associated with that DBR
+                    # calculating median QUAL from the full ASCII QUAL score is computationally intensive enough that we only want to do it when absolutely necessary -- only if we observe a DBR more often than expected
                     if count > n_expected:
-                        print 'count', count, 'n exp', n_expected
-                        qname_qual = assembly_dict_3[RNAME][dbr_value]
-                        ID_quals = {}
+                        #print 'count', count, 'n exp', n_expected
+                        # the other dictionary contains the full quality information for each RNAME:DBR pair (this will be multiple entries of sequence IDs and qualities
+                        qname_qual = assembly_dict_3[RNAME][dbr_value] #this is a list of lists: [[QNAME, QUAL], [QNAME, QUAL], ...]
+                        ID_quals = {} # we'll make yet another dictionary to store the QNAME and the median QUAL
                         for i in qname_qual:
                             id=i[0]
                             ID_quals[id] = qual_mode(i[1], phred_dict)
+                        # determine how many sequences will need to be removed and start a counter, t
                         n_remove = count - n_expected
                         t = 0
-                        while t <= n_remove:
-                            #print ID_quals
-                            to_remove = min(ID_quals, key=ID_quals.get)
-                            #print to_remove
-                            del seq_dict_in[to_remove]
-                            t += 1
+                        print 'count', count, 'expected', n_expected, 'remove', n_remove, 'tally', t
+                        # with the full {ID: qual} dictionary available, we can now determine which sequences should be removed based on their score                        
+                        while t < n_remove:
+                            t += 1 
+                            print ID_quals
+                            print 'tally', t
+                            print 'number of sequences for the given sample/locus/DBR combo', len(ID_quals)
+                            if len(ID_quals)>0:
+                                to_remove = min(ID_quals, key=ID_quals.get)
+                                if to_remove == '8:1311:18936:26586':
+                                    print '########################################### Goddamn duplicate'
+                                #print 'removal ID', to_remove
+                                #print 'sub dict value', ID_quals[to_remove]
+                                #print 'full dict value', R1[to_remove]
+                                # remove the sequences by their IDs from the master R1 sequence ID file
+                                del ID_quals[to_remove]
+                                del R1[to_remove] #8:1311:18936:26586
+                                print len(R1)
+                            else:
+                                print "They're all gone!"
+                            #try:
+                            #    del R1[to_remove]
+                            #except KeyError as ke:
+                            #    print ke 
+                            #    print '\n'.join(R1.keys())
+                            #    print '\n' + to_remove + '\n'
+                            
+                            #if to_remove in R1:
+                            #    print 'key present'
+                            #    del R1[to_remove]
+                            #else:
+                            #    print '##################################'
+                            
                             
     if write_dict:
         dict_out = '/home/antolinlab/Desktop/CSU_ChronicWasting/PilotAnalysis/' + number + '_assembly_dict.json'
@@ -144,18 +184,34 @@ for i in os.listdir(assembled_dir):
         for keyY, valueY in y:
             print keyY, valueY
 
+if save_reduced_dict:
+    R1_reduced_dict_out = '/home/antolinlab/Desktop/CSU_ChronicWasting/PilotAnalysis/R1_reduced_dict.json'
+    print 'Writing dictionary to ' + R1_reduced_dict_out
+    with open('/home/antolinlab/Desktop/CSU_ChronicWasting/PilotAnalysis/R1_reduced_dict', 'w') as fp:          
+        json.dump(R1, fp)
 
 
 '''
-# we only need to calculate the quality score for some loci
-                countQUAL = Counter(QUAL)
-                freqQUAL = countQUAL.most_common() # counts of all unique ASCII characters
-                modeQUAL = countQUAL.most_common(1) # most frequent occurrence
-                listQUAL = list(QUAL) # split the string into a list
-                list_intQUAL = []
-                for q in listQUAL:
-                    list_intQUAL.append(phred_dict[q])
-                intQUAL = phred_dict[modeQUAL[0][0]]
-                medQUAL = np.median(list_intQUAL)
-                print 'mode', intQUAL, 'median', medQUAL
+# OTHER METRICS FOR DESCRIBING OVERALL SEQUENCE QUALITY (QUAL = ASCII character string)
+
+# counter object (from collections import Counter)
+countQUAL = Counter(QUAL)
+
+# frequency table of ASCII characters
+freqQUAL = countQUAL.most_common()
+
+# most frequently observed ASCII character
+modeQUAL = countQUAL.most_common(1)
+
+# most frequently observed integer score
+intQUAL = phred_dict[modeQUAL[0][0]]
+
+# list of integer qualities
+listQUAL = list(QUAL) # split the ASCII string into a list
+list_intQUAL = []
+for q in listQUAL:
+    list_intQUAL.append(phred_dict[q])
+    
+# median quality
+medQUAL = np.median(list_intQUAL)
 '''
