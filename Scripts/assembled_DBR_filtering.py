@@ -33,27 +33,22 @@ phred_dict = {'"':1,"#":2,"$":3,"%":4,"&":5,"'":6,"(":7,")":8,"*":9,"+":10,
 
 # conversion reference: http://drive5.com/usearch/manual/quality_score.html
 
-test_dict=False
+test_dict=True
 write_dict=False
 save_reduced_dict=False
 
 # load Dictionary
 
-dict_in = '/home/antolinlab/Desktop/CSU_ChronicWasting/PilotAnalysis/dbr_dict'
-seq_dict_in = '/home/antolinlab/Desktop/CSU_ChronicWasting/PilotAnalysis/R1_dict'
-  
+dict_in = '/home/antolinlab/Desktop/CSU_ChronicWasting/PilotAnalysis/initial_qualFilter_dbr_dict'
+#seq_dict_in = '/home/antolinlab/Desktop/CSU_ChronicWasting/PilotAnalysis/initial_qualFilter_R1_dict'
+
+print 'Opening DBR dictionary ' + dict_in  
 with open(dict_in, 'r') as f:
     dbr = json.load(f)
 
-with open(seq_dict_in, 'r') as s:
-    R1 = json.load(s)
-    
-#print 'Checking dictionary format (version 3).'
-#r = itertools.islice(R1.iteritems(), 0, 10)
-#for keyr, valuer in r:
-#    print keyr, valuer
-#print len(R1)
-#print R1['8:1311:18936:26586']
+#print 'Opening Read 1 dictionary ' + seq_dict_in
+#with open(seq_dict_in, 'r') as s:
+#    R1 = json.load(s)
 
 assembled_dir = '/home/antolinlab/Desktop/CSU_ChronicWasting/PilotAnalysis/Assembled'
 for i in os.listdir(assembled_dir):
@@ -64,10 +59,15 @@ for i in os.listdir(assembled_dir):
     
     # print some info to track progress
     path=os.path.join(assembled_dir, i)
-    print 'Creating dictionary from ' + path
+    print 'Creating filtering dictionaries from ' + path
     
     # get the sample number for use later
     number = re.split('(\d+)', i)[1] # enclose the regex in parentheses to keep it in the output
+    
+    # start counter for the number of primary reads
+    n_primary = 0
+    
+    delete_list = []
     
     # open the sam file and process its contents
     with open(path, 'r') as inFile:
@@ -77,23 +77,15 @@ for i in os.listdir(assembled_dir):
                 
                 # extract the info for the dictionary for each line
                 QNAME = re.split('(\d[:|_]\d+[:|_]\d+[:|_]\d+)', fields[0])[1] # FASTQ ID = QNAME column in sam file
-                FLAG = fields[1]
+                FLAG = fields[1] # bitwise flag with map info; == 0 if primary read
                 RNAME = fields[2] # ref sequence name -- where did the sequence map?
-                POS = fields[3]
+                POS = fields[3] # position of map
                 MAPQ = fields[4] # mapping quality
                 CIGAR = fields[5] # additional mapping info
                 QUAL = fields[10] # sequence quality score
                 
-                if FLAG != '0':
-                    print FLAG
-'''                
-                #if QNAME == '8:2106:9834:86213':
-                #    print fields
-                
-                #print POS, CIGAR, len(QUAL)
-                
                 # extract the DBR corresponding to the QNAME for each row
-                dbr_value = dbr.get(QNAME)[0] 
+                dbr_value = dbr.get(QNAME) 
                 
                 # after trimming, the sequences are 116 bases long
                 # the POS for all matched sequences should be 1 because we used a pseudoreference build from our RADtags
@@ -103,9 +95,14 @@ for i in os.listdir(assembled_dir):
                 # the inexact matches of repetitive regions can be detected by POS != 1 or CIGAR != 116M
                 # a more flexible/broader use way of filtering would be to do a REGEX search on the CIGAR score and report the number of digits preceeding the M
                 # then you could only keep the entry that has the largest number of matches (but M can show up multiple times in the CIGAR score if separated by an insertion, so think about this more)
+                # I had thought that filtering on POS == 1 will keep only the good matches, but it is possible to have multiple matches to POS == 1 with different levels of clipping
                 
-                # FOR OUR PURPOSES, filtering on POS == 1 will keep only the good matches
-                if POS == '1':
+                # A MORE GENERAL SOLUTION THAT SHOULD WORK FOR A VARIETY OF CIRCUMSTANCES:
+                # bitwise FLAG == 0 means that the read is the PRIMARY READ. There will only be one of these per sequence, so only mapped primary reads should be considered.
+                if FLAG == '0':
+                
+                    # tally the new primary read
+                    n_primary += 1
                 
                     # WE NEED TWO DICTIONARIES TO REPRESENT ALL THE RELATIONSHIP BETWEEN RNAME, QNAME, dbr_value, QUAL, AND count
                     # build a dictionary with structure {DBR: (locus: count)}                    
@@ -128,6 +125,8 @@ for i in os.listdir(assembled_dir):
 
     # NOW THAT DICTIONARIES ARE MADE, REMOVE DUPLICATE SEQUENCES BASED ON DBR COUNTS
     # for each assembled locus, get the associated dbr_value and count
+    print 'Checking DBR counts against expectations.'
+    total_removed = 0
     for RNAME, value in assembly_dict_2.iteritems():
         #print 'RNAME', RNAME
         # ignore the data where the reference is "unmapped" -- RNAME = '*'
@@ -162,44 +161,20 @@ for i in os.listdir(assembled_dir):
                         #if len(ID_quals) < count:
                             #print qname_qual
                         n_remove = count - n_expected
+                        total_removed += n_remove
                         t = 0
                         #print 'count', count, 'expected', n_expected, 'remove', n_remove, 'tally', t
                         # with the full {ID: qual} dictionary available, we can now determine which sequences should be removed based on their score                        
                         while t < n_remove:
                             t += 1 
-                            #print ID_quals
-                            #print 'tally', t
-                            #print 'number of sequences for the given sample/locus/DBR combo', len(ID_quals)
                             to_remove = min(ID_quals, key=lambda x:ID_quals[x])
-                            #print to_remove
-                            #print 'Removing key', to_remove
-                            #print '########################################### Goddamn duplicate'
-                            #print 'removal ID', to_remove
-                            #print 'sub dict value', ID_quals[to_remove]
-                            #print 'full dict value', R1[to_remove]
                             # remove the sequences by their IDs from the master R1 sequence ID file
                             del ID_quals[to_remove]
-                            #print 'updated length', len(ID_quals)
-                            assert to_remove in R1, "%s was not in R1" % to_remove
-                            del R1[to_remove] #8:1311:18936:26586
-                            #else:
-                                #print 'Missing key', to_remove
-                            
-                            #print len(R1)
-
-                            #try:
-                            #    del R1[to_remove]
-                            #except KeyError as ke:
-                            #    print ke 
-                            #    print '\n'.join(R1.keys())
-                            #    print '\n' + to_remove + '\n'
-                            
-                            #if to_remove in R1:
-                            #    print 'key present'
-                            #    del R1[to_remove]
-                            #else:
-                            #    print '##################################'
-                                                        
+                            # exit with error if a key is missing
+                            delete_list.append(to_remove)
+                            #assert to_remove in R1, "%s was not in R1" % to_remove
+                            #del R1[to_remove] #8:1311:18936:26586
+    print 'Removed ' + str(total_removed) + ' PCR duplicates out of ' + str(n_primary) + ' primary mapped reads.'                                                    
     if write_dict:
         dict_out = '/home/antolinlab/Desktop/CSU_ChronicWasting/PilotAnalysis/' + number + '_assembly_dict.json'
         print 'WARNING: which of the 3 dictionaries to write?'
@@ -217,13 +192,12 @@ for i in os.listdir(assembled_dir):
         for keyY, valueY in y:
             print keyY, valueY
 
-if save_reduced_dict:
-    R1_reduced_dict_out = '/home/antolinlab/Desktop/CSU_ChronicWasting/PilotAnalysis/R1_reduced_dict.json'
-    print 'Writing dictionary to ' + R1_reduced_dict_out
-    with open('/home/antolinlab/Desktop/CSU_ChronicWasting/PilotAnalysis/R1_reduced_dict', 'w') as fp:          
-        json.dump(R1, fp)
+#if save_reduced_dict:
+#    R1_reduced_dict_out = '/home/antolinlab/Desktop/CSU_ChronicWasting/PilotAnalysis/R1_reduced_dict.json'
+#    print 'Writing dictionary to ' + R1_reduced_dict_out
+#    with open('/home/antolinlab/Desktop/CSU_ChronicWasting/PilotAnalysis/R1_reduced_dict', 'w') as fp:          
+#        json.dump(R1, fp)
 
-'''
 '''
 # OTHER METRICS FOR DESCRIBING OVERALL SEQUENCE QUALITY (QUAL = ASCII character string)
 
