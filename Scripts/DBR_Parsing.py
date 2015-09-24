@@ -16,7 +16,7 @@ import gzip
 ## No need for subprocess calls to SED for FASTQ file parsing
         
 def R1_dict(fq_path, test_dict = False, save_path = None): 
-    print 'Converting Read 1 FASTQ file to dictionary.'
+    print 'Creating {ID: (full seq, +, qual)} dictionary.'
     R1 = {}
     fq_line = 1
     # gzip.open() will work with both compressed and uncompressed files
@@ -43,9 +43,10 @@ def R1_dict(fq_path, test_dict = False, save_path = None):
         print 'Writing dictionary to ' + save_path
         with open(save_path, 'w') as fp:          
             json.dump(R1, fp)
-                     
-def DBR_dict(fq_path, test_dict = False, save_path = None):
-    print 'Converting Read 2 FASTQ file to DBR dictionary.'
+
+# consider adding DBR start and stop indices as arguments to DBR_dict()                     
+def DBR_dict(fq_path, dbr_start, dbr_stop, test_dict = False, save_path = None):
+    print 'Creating {ID: dbr} dictionary.'
     dbr = {}
     fq_line = 1
     # gzip.open() will work with both compressed and uncompressed files
@@ -56,7 +57,7 @@ def DBR_dict(fq_path, test_dict = False, save_path = None):
                 fq_line = 2
             elif fq_line == 2:
                 seq = list(line) # split the sequence line into a list
-                tag = ''.join(seq[0:8])
+                tag = ''.join(seq[dbr_start:dbr_stop])
                 dbr[ID] = tag
                 fq_line = 3
             elif fq_line == 3:
