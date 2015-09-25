@@ -15,8 +15,36 @@ import sys
 import json
 import re
 import itertools
-import sqlite3
 import numpy as np
+
+# To do
+# 1. Check that SAM files contain a map for all the sequences so that FASTQ filtering doesn't leave some bad quality data behine
+#    Alternatively, instead of tracking tags to remove, track tags to keep
+# 2. Make the FASTQ filtering function
+#    line = 1
+#    with open(filtered_undemultiplexed_fastq, 'r') as raw:
+#        with open(dbr_filtered_output_file, 'a') as out:
+#            for line in raw:
+#                if line == 1:
+#                    ID = regex for ID
+#                    if ID in long_list_of_IDs_to_save:
+#                        out.write(ID)
+#        ... and so on... this needs some work, but should move through lines in sets of 4
+# 2. Make this work for data that span multiple libraries
+#    Something like 
+#       for inner_dir in outer_dir: # directory holding directories of demultiplexed data from multiple libraries
+#           for file in inner_dir:  # the demultiplexed data themselves
+#                do the de novo assembly to get one big catalogs.tsv file for the pseudoreference
+# 3. Do we need to make the big "dbr_dict" from the qual-fitered, un-demultiplexed FASTQ?
+#    It seems that all the data we need are in the dictionaries built as part of filtering.
+#    As long as we have some external representation of the DBR frequencies, we don't really need a separate dictionary
+# 4. How should this be executed? Many cmd line params is tedious, and that would usurp the modular nature of this code.
+#    Instead I think that each execution should be its own python script, e.g. 'pilot_assemly.py'
+#    These python scripts would import DBR_Parsing, integrated_denovo_pipeline, and assembled_DBR_filtering python modules.
+#    After the imports, there would be a series of calls to the relevant functions.
+#    An added benefit is that each "job script" is saved -- you'll know exactly what you ran and on what date.
+# 5. On that note, make this stuff functions!
+
 
 def qual_mode(QUAL, phred_dict):
     listQUAL = list(QUAL)
