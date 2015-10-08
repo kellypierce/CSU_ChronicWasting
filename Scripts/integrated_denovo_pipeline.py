@@ -20,6 +20,7 @@ def PEAR_assemble(in_dir, forward, reverse, out_dir, out_name,  extra_params=Non
     else:
         pear_call = 'pear' + ' -f ' + in_dir + forward + ' -r ' + in_dir + reverse + ' -o ' + out_dir + out_name
     subprocess.call(pear_call, shell=True)
+    return
 
 def FASTQ_R1_R2_merge(in_dir, fq_r1, fq_r2, fq_out):
     print 'Taking reverse complement of read 2 with FASTX Toolkit.\n'
@@ -31,6 +32,7 @@ def FASTQ_R1_R2_merge(in_dir, fq_r1, fq_r2, fq_out):
     subprocess.call(merge_call, shell=True)
     rm_tab_call = "sed 's/[ \t]//g' " + in_dir + fq_out + '_merged.fq' + ' >> ' + in_dir + fq_out + '_untabbed_merged.fq'
     subprocess.call(rm_tab_call, shell=True)
+    return
     
 def FASTQ_quality_filter(fq_in, fq_out, q, p):    
     print 'Quality filtering with FASTX Toolkit.\n'
@@ -41,6 +43,7 @@ def FASTQ_quality_filter(fq_in, fq_out, q, p):
     print fqc_call
     subprocess.call(fqc_call, shell=True)
     # to-do: use zcat | wc -l to determine how many lines were removed after filtering (print to screen)
+    return
 
 def Demultiplex(in_file, barcode_file, out_dir, out_prefix):    
     print 'Demultiplexing sequence data with FASTX Toolkit.\n'
@@ -53,6 +56,7 @@ def Demultiplex(in_file, barcode_file, out_dir, out_prefix):
     demultiplex_call = 'zcat ' + in_file + ' | /usr/local/bin/fastx_barcode_splitter.pl --bcfile ' + barcode_file + ' --prefix ' + prefix_path + ' --bol'
     
     subprocess.call(demultiplex_call, shell=True)
+    return
 
 def Trim(in_dir, out_dir, suffix, first_base, last_base=None):    
     print 'Trimming DBR and enzyme cut sites with FASTX Toolkit.\n'
@@ -72,6 +76,7 @@ def Trim(in_dir, out_dir, suffix, first_base, last_base=None):
         # Remove barcodes and R1 enzyme cut site (first
         trim_call = "/usr/local/bin/fastx_trimmer -f " + str(first_base) + ' -l ' + str(last_base) + " -i " + full_path + " -o " + new_path
         subprocess.call(trim_call, shell=True)
+    return
 
 def denovo_Stacks(in_dir, denovo_path, stacks_executables, out_dir, m, n, b, D):    
     print 'Assembling sequences de novo using Stacks denovo_map.pl\n'
@@ -105,6 +110,7 @@ def denovo_Stacks(in_dir, denovo_path, stacks_executables, out_dir, m, n, b, D):
     build_args = [denovo_path, ' -e ', stacks_executables, ' -o ', out_dir, ' -m ', str(m), ' -n ', str(n), ' -t ', '-b ', str(b), ' -D ', D, ' -S ', formatted_list]
     denovo_call = ''.join(build_args)
     subprocess.call(denovo_call, shell=True)
+    return
 
 def GeneratePseudoref(in_dir, out_dir, out_name, BWA_path):    
     print "Preparing pseudoreference genome by extracting Stacks denovo consensus sequence.\n"
@@ -132,6 +138,7 @@ def GeneratePseudoref(in_dir, out_dir, out_name, BWA_path):
     index_call =  BWA_path + ' index ' + out_path # index = BWA function to use
     print index_call
     subprocess.call(index_call, shell = True)
+    return
 
 def refmap_BWA(in_dir, out_dir, BWA_path, pseudoref_full_path):    
     
@@ -148,83 +155,5 @@ def refmap_BWA(in_dir, out_dir, BWA_path, pseudoref_full_path):
             bwa_mem_call = BWA_path + ' mem -M -R ' + read_group_header + " " + pseudoref_full_path + ' ' + in_dir + i + ' > ' + out_dir + fname + '.sam'
             print bwa_mem_call
             subprocess.call(bwa_mem_call, shell=True)
+    return
 
-### Test functions
-'''
-# ASSEMBLE WITH PEAR (OPTIONAL)
-in_dir = '/home/antolinlab/Downloads/'
-forward = 'Sample1_ACTTGA_L008_R1_001.fastq.gz'
-reverse = 'Sample1_ACTTGA_L008_R2_001.fastq.gz'
-out_dir = in_dir
-out_name = 'pear_merged_Sample1_ACTTGA'
-PEAR_assemble(in_dir, forward, reverse, out_dir, out_name)
-'''
-'''
-# MERGE READ 1 AND READ 2
-in_dir = '/home/antolinlab/Downloads/'
-fq_r1 = 'Sample1_ACTTGA_L008_R1_001.fastq'
-fq_r2 = 'Sample1_ACTTGA_L008_R2_001.fastq'
-fq_out = 'Sample1_ACTTGA_R1_R2rc'
-FASTQ_R1_R2_merge(in_dir, fq_r1, fq_r2, fq_out)
-'''
-'''
-# FILTER READ 1 FOR ASSEMBLY
-fq_in = '/home/antolinlab/Downloads/Sample1_ACTTGA_L008_R1_001.fastq.gz'
-q = 25
-p = 50
-fq_out = '/home/antolinlab/Downloads/Sample1_ACTTGA_L008_R1_001_filtered.fastq.gz'
-FASTQ_quality_filter(fq_in, fq_out, q, p)
-
-# FILTER READ 2 FOR DBR PARSING
-fq_in = '/home/antolinlab/Downloads/Sample1_ACTTGA_L008_R2_001.fastq.gz'
-q = 25
-p = 50
-fq_out = '/home/antolinlab/Downloads/Sample1_ACTTGA_L008_R2_001_filtered.fastq.gz'
-FASTQ_quality_filter(fq_in, fq_out, q, p)
-
-# FILTER MERGED READS 1 AND 2
-fq_in = '/home/antolinlab/Downloads/Sample1_ACTTGA_R1_R2rc_untabbed_merged.fq'
-q = 25
-p = 50
-fq_out = '/home/antolinlab/Downloads/Sample1_ACTTGA_R1_R2rc_untabbed_merged_filtered.fq'
-FASTQ_quality_filter(fq_in, fq_out, q, p)
-
-# BUILD DBR PARSING DICTIONARIES
-R1_dict('/home/antolinlab/Downloads/Sample1_ACTTGA_R1_R2rc_untabbed_merged_filtered.fq', test_dict = True, save_path='/home/antolinlab/Desktop/CSU_ChronicWasting/PilotAnalysis/initial_qualFilter_R1_dict')
-DBR_dict('/home/antolinlab/Downloads/Sample1_ACTTGA_R1_R2rc_untabbed_merged_filtered.fq', dbr_start = 231, dbr_stop = 238, test_dict = True, save_path='/home/antolinlab/Desktop/CSU_ChronicWasting/PilotAnalysis/initial_qualFilter_dbr_dict')  
-
-# DEMULTIPLEX MERGED READS
-in_file = '/home/antolinlab/Downloads/Sample1_ACTTGA_R1_R2rc_untabbed_merged_filtered.fq'
-mp_dir = '/home/antolinlab/Desktop/CSU_ChronicWasting/PilotAnalysis/Demultiplexed/'
-prefix = 'pilot_demultiplex_'
-barcode_file = '/home/antolinlab/Desktop/CSU_ChronicWasting/PilotAnalysis/pilot_barcode_file'
-Demultiplex(in_file, barcode_file, mp_dir, prefix)
-
-# TRIM DEMULTIPLEXED READS
-in_dir = '/home/antolinlab/Desktop/CSU_ChronicWasting/PilotAnalysis/Demultiplexed/'
-out_dir = '/home/antolinlab/Desktop/CSU_ChronicWasting/PilotAnalysis/Demultiplexed_Trimmed/'
-suffix = '_trimmed.fq' # eventually make cmd arg
-first_base = 11
-last_base = 238
-Trim(in_dir, out_dir, suffix, first_base, last_base)
-
-# INITIAL DENOVO ASSEMBLY
-in_dir = '/home/antolinlab/Desktop/CSU_ChronicWasting/PilotAnalysis/Demultiplexed_Trimmed/'
-denovo_path = '/home/antolinlab/Downloads/stacks-1.31/scripts/denovo_map.pl '
-stacks_executables = '/home/antolinlab/Downloads/stacks-1.31/scripts'
-out_dir = '/home/antolinlab/Desktop/CSU_ChronicWasting/PilotAnalysis/'
-denovo_Stacks(in_dir, denovo_path, stacks_executables, out_dir, m=10, n=2, b=1, D= 'initial_assembly')
-
-# CREATE PSEUDOREFERENCE
-in_dir = '/home/antolinlab/Desktop/CSU_ChronicWasting/PilotAnalysis/'
-out_dir = '/home/antolinlab/Desktop/CSU_ChronicWasting/PilotAnalysis/'
-BWA_path = '/home/antolinlab/Downloads/bwa.kit/bwa'
-out_name = 'pseudoref.fa'
-GeneratePseudoref(in_dir, out_dir, out_name, BWA_path)
-'''
-# INITIAL PSEUDOREFERENCE-MAPPED ASSEMBLY
-out_dir = '/home/antolinlab/Desktop/CSU_ChronicWasting/PilotAnalysis/Assembled/'
-in_dir = '/home/antolinlab/Desktop/CSU_ChronicWasting/PilotAnalysis/Demultiplexed_Trimmed/'
-BWA_path = '/home/antolinlab/Downloads/bwa.kit/bwa'
-pseudoref_full_path = '/home/antolinlab/Desktop/CSU_ChronicWasting/PilotAnalysis/pseudoref.fa'
-refmap_BWA(in_dir, out_dir, BWA_path, pseudoref_full_path)
