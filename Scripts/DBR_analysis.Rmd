@@ -235,15 +235,17 @@ Expressing DBR frequency as a fraction of all reads is arguably better for downs
 Another benefit of using the fraction of reads with a given DBR is that expressing count frequency as a proportion allows us to use the logit transformation. The distribution of DBR fractions is highly, highly right skewed. After performing the logit transformation we can better see the shape of the distribution and confirm that it is (1) unimodal and (2) likely to fit a 
 
 ```{r}
-
-par(mfrow=c(4,2))
+png(file='~/Desktop/CSU_ChronicWasting/DBR_distributions.png', height=40, width=30, units='cm', res=300)
+par(mfrow=c(4,3))
 for(file in qual.counts){
   dbr.counts=read.table(file)
   counts.fraction=dbr.counts[,1]/sum(dbr.counts[,1])
-  print(min(counts.fraction))
-  print(min(counts.fraction)*sum(dbr.counts[,1]))
+  no.singletons=dbr.counts[dbr.counts[,1]>1,]
+  no.single.counts.frac=no.singletons[,1]/sum(no.singletons[,1])
   counts.logit=log((counts.fraction)/(1-counts.fraction))
   hist(counts.fraction, main=paste('Minimum Median Quality = ', substr(file, 1, 2)), xlab='Fraction of Reads with DBR', freq=FALSE)
-  hist(counts.logit-min(counts.logit), main=paste('Minimum Median Quality = ', substr(file, 1, 2)), xlab='logit(Fraction of Reads with DBR)')
+  hist(no.single.counts.frac, main=paste('Minimum Median Quality = ', substr(file, 1, 2)), xlab='Fraction of Reads with DBR (no singletons)', freq=FALSE)
+  hist(counts.logit-min(counts.logit), main=paste('Minimum Median Quality = ', substr(file, 1, 2)), xlab='translated logit(Fraction of Reads with DBR)')
 }
+dev.off()
 ```
