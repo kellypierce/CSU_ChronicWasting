@@ -55,6 +55,6 @@ def degeneracy_r2(directory, out_name):
 
 #barcode_r1('/home/antolinlab/Downloads/CWD_RADseq/', 'barcode_check')
 #cutsite_r1('/home/antolinlab/Downloads/CWD_RADseq/', 'cutsite_check')
-cutsite_r2('/home/antolinlab/Downloads/CWD_RADseq/', 'cutsite_r2_check')
+#cutsite_r2('/home/antolinlab/Downloads/CWD_RADseq/', 'cutsite_r2_check')
 #degeneracy_r2('/home/antolinlab/Downloads/CWD_RADseq/', 'degeneracy_check')
 
