@@ -59,7 +59,7 @@ def run_FastQC(directory, out_name):
 	if not os.path.exists(out_dir):
 		os.makedirs(out_dir)
 	for f in files:
-		fastqc_call = '/opt/software/FastQC/fastqc ' + directory + f + "-o " + out_dir
+		fastqc_call = '/opt/software/FastQC/fastqc ' + directory + f + " -o " + out_dir
 		subprocess.call(fastqc_call, shell=True)
 
 #barcode_r1('/home/antolinlab/Downloads/CWD_RADseq/', 'barcode_check')
