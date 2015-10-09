@@ -52,6 +52,15 @@ def degeneracy_r2(directory, out_name):
 		if r1: 
 			degeneracy_check_call = 'zcat ' + directory + f + " | sed -n 2~4p | cut -c 1-8 | sort | uniq -c | sort -nr -k 1 > " + out_dir + f + '_' + out_name
 			subprocess.call(degeneracy_check_call, shell=True)
+			
+def run_FastQC(directory, out_name):
+	files = os.listdir(directory)
+	out_dir = directory + '/FastQC/'
+	if not os.path.exists(out_dir):
+		os.makedirs(out_dir)
+	for f in files:
+		fastqc_call = '/opt/software/FastQC/fastqc ' + directory + f + "-o " + out_name
+		subprocess.call(fastqc_call, shell=True)
 
 #barcode_r1('/home/antolinlab/Downloads/CWD_RADseq/', 'barcode_check')
 #cutsite_r1('/home/antolinlab/Downloads/CWD_RADseq/', 'cutsite_check')
