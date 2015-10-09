@@ -45,6 +45,20 @@ def FASTQ_quality_filter(fq_in, fq_out, q, p):
     # to-do: use zcat | wc -l to determine how many lines were removed after filtering (print to screen)
     return
 
+def iterative_FASTQ_quality_filter(directory, out_dir, out_name, q, p, read='*'):
+    files = os.listdir(directory)
+    out = directory + out_dir
+    if not os.path.exists(out):
+        os.makedirs(out)
+    print 'Quality filtering files containing ' + read
+    print 'Results saved to ' + out
+    for f in files:
+        r2 = re.findall(read, f)
+        if r2: 
+            in_file = directory + f
+            out_file = out_dir + f + out_name
+            FASTQ_quality_filter(in_file, out_file, q, p)
+
 def Demultiplex(in_file, barcode_file, out_dir, out_prefix):    
     print 'Demultiplexing sequence data with FASTX Toolkit.\n'
     
