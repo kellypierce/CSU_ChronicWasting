@@ -39,7 +39,7 @@ def FASTQ_quality_filter(fq_in, fq_out, q, p):
     if 'gz' in fq_in:
         fqc_call = "zcat " + fq_in + " | fastq_quality_filter -q " + str(q) + " -p " + str(p) + " -z -o " + fq_out 
     else:
-        fqc_call = "fastq_quality_filter -q " + str(q) + " -p " + str(p) + " -z -i " + fq_in + " -o " + fq_out 
+        fqc_call = "fastq_quality_filter -q " + str(q) + " -p " + str(p) + " -Q33 -z -i " + fq_in + " -o " + fq_out 
     print fqc_call
     subprocess.call(fqc_call, shell=True)
     # to-do: use zcat | wc -l to determine how many lines were removed after filtering (print to screen)
