@@ -1,9 +1,13 @@
+#!/usr/bin/python
+
 from string import Template
 import logging as logging
 from logging import debug, critical, error, info
-from os import linesep, path
+from os import linesep, path, R_OK, X_OK
 import os as os
 import sys as sys
+from subprocess import call, Popen, PIPE
+import subprocess
 
 def configureLogging(verbose = False):
     '''
@@ -32,7 +36,7 @@ def checkFile(filename):
         if os.path.exists(os.path.abspath(filename)) and os.path.isfile(os.path.abspath(filename)) and os.access(os.path.abspath(filename), R_OK):
             return True
         fullPath = join(os.getcwd(), filename[1:])
-        return os.path.exists(fullPath) and os.path.isfile(fullPath) and os.path.access(fullPath, R_OK)
+        return os.path.exists(fullPath) and os.path.isfile(fullPath) and os.access(fullPath, R_OK)
     except IOError:
         return False
 
@@ -42,12 +46,13 @@ def checkExe(filename):
     '''
     if not isinstance(filename, str):
         raise TypeError("need a string, got a %s" % type(filename))
-    return (exists(filename) and isfile(filename) and access(filename, X_OK))
+    return (os.path.exists(filename) and os.path.isfile(filename) and os.access(filename, X_OK))
 
 ################################## GLOBALS ####################################
 # run configureLogging first
 configureLogging(False)
-qualityFilter = '/Users/Kelly/Downloads/bin/fastq_quality_filter'
+#qualityFilter = '/Users/Kelly/Downloads/bin/fastq_quality_filter'
+qualityFilter = '/home/antolinlab/Downloads/fastx_toolkit-0.0.14/src/fastq_quality_filter/fastq_quality_filter'
 fqfStdinTemplate = Template('%s -q $q -p $p -Q33 -z -o $output' % qualityFilter)
 fqfFileTemplate = Template('%s -q $q -p $p -Q33 -z -i $input -o $output' % qualityFilter)
 ###############################################################################
@@ -131,4 +136,4 @@ def FASTQ_quality_filter(fq_in, fq_out, q, p, qualityFilter = qualityFilter):
     # why I structured it this way, but I'm sure there was a reason... But I'll apply the lessons learned here 
     # to the other functions and hopefully improve their performance a bit. Thanks for your help!
     
-FASTQ_quality_filter('/Users/Kelly/Desktop/CSU_ChronicWasting/Library12_S65_L008_R2_001.fastq.gz', '/Users/Kelly/Desktop/CSU_ChronicWasting/test_filter/', q = 30, p = 50)
+FASTQ_quality_filter('/home/antolinlab/Downloads/CWD_RADseq/Library12_S65_L008_R2_001.fastq.gz', '/home/antolinlab/Downloads/CWD_RADseq/test_out', q = 30, p = 50)
