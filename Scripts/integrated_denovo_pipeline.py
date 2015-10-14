@@ -7,10 +7,65 @@
 # Note: hard-coded file paths to be replaced with cmd args
 
 import subprocess
-import os
+from subprocess import call, Popen, PIPE
+import os as os
+from os import linesep, path, R_OK, X_OK
 import re
 import DBR_Parsing
-from DBR_Parsing import R1_dict, DBR_dict
+import string as str
+from string import Template, join
+import logging as logging
+from logging import debug, critical, error, info
+import sys as sys
+import warnings
+
+def configureLogging(verbose = False):
+    '''
+    setup the logger
+    '''
+    logger = logging.getLogger()
+    logger.handlers = []
+
+    logger.setLevel(logging.DEBUG if verbose else logging.INFO)
+    
+    consoleLogHandler = logging.StreamHandler()
+
+    # do not need colors if logging to a non-shell
+    if sys.stdout.isatty():
+        consoleLogHandler.setFormatter(logging.Formatter("\033[93m%(filename)s:%(lineno)s\033[0m: %(message)s"))
+    else:
+        consoleLogHandler.setFormatter(logging.Formatter("%(message)s"))
+
+    logger.addHandler(consoleLogHandler)
+
+def checkFile(filename):
+    '''
+    return true if this is a file and is readable on the current filesystem
+    '''
+    try:
+        if os.path.exists(os.path.abspath(filename)) and os.path.isfile(os.path.abspath(filename)) and os.access(os.path.abspath(filename), R_OK):
+            return True
+        fullPath = str.join(os.getcwd(), filename[1:])
+        return os.path.exists(fullPath) and os.path.isfile(fullPath) and os.access(fullPath, R_OK)
+    except IOError:
+        return False
+
+def checkExe(filename):
+    '''
+    return true if this is an executable file on the current filesystem
+    '''
+    if not isinstance(filename, str):
+        raise TypeError("need a string, got a %s" % type(filename))
+    return (os.path.exists(filename) and os.path.isfile(filename) and os.access(filename, X_OK))
+
+################################## GLOBALS ####################################
+# run configureLogging first
+configureLogging(False)
+#qualityFilter = '/Users/Kelly/Downloads/bin/fastq_quality_filter'
+qualityFilter = '/home/antolinlab/Downloads/fastx_toolkit-0.0.14/src/fastq_quality_filter/fastq_quality_filter'
+fqfStdinTemplate = Template('%s -q $q -p $p -Q33 -z -o $output' % qualityFilter)
+fqfFileTemplate = Template('%s -q $q -p $p -Q33 -z -i $input -o $output' % qualityFilter)
+###############################################################################
 
 def PEAR_assemble(in_dir, forward, reverse, out_dir, out_name,  extra_params=None):
     print 'Merging overlapping reads 1 & 2 with PEAR.'
@@ -34,16 +89,25 @@ def FASTQ_R1_R2_merge(in_dir, fq_r1, fq_r2, fq_out):
     subprocess.call(rm_tab_call, shell=True)
     return
     
-def FASTQ_quality_filter(fq_in, fq_out, q, p):    
-    print 'Quality filtering with FASTX Toolkit.\n'
-    if 'gz' in fq_in:
-        fqc_call = "zcat " + fq_in + " | fastq_quality_filter -q " + str(q) + " -p " + str(p) + "-Q33 -z -o " + fq_out 
+def FASTQ_quality_filter(fq_in, fq_out, q, p, qualityFilter = qualityFilter):
+    if not checkFile(fq_in):
+        raise IOError("where is the input file: %s" % fq_in)
+    if not fq_in.endswith("gz"):
+        warnings.warn("prefer to pass compressed files, consider gzipping the inputs")
+    if not checkExe(qualityFilter):
+        raise Exception("could not find %s in the filesystem for execution, is the environment setup correctly?" % qualityFilter)
+    info("Quality filtering with FASTX Toolkit.")
+    if fq_in.endswith('gz'): # chain a gz decompressor thread to fqf
+        commandLine = fqfStdinTemplate.substitute(q = q, p = p, output = fq_out)
+        debug(commandLine)
+        zcatProcess = Popen('zcat %s' % fq_in, shell = True, stdout = subprocess.PIPE)
+        fqfProcess = Popen(commandLine, shell = True, stdin = zcatProcess.stdout)
     else:
-        fqc_call = "fastq_quality_filter -q " + str(q) + " -p " + str(p) + " -Q33 -z -i " + fq_in + " -o " + fq_out 
-    print fqc_call
-    subprocess.call(fqc_call, shell=True)
-    # to-do: use zcat | wc -l to determine how many lines were removed after filtering (print to screen)
-    return
+        commandLine = fqfFileTemplate.substitute(q = q, p = p, output = fq_out, input = fq_in)
+        debug(commandLine)
+        fqfProcess = Popen(commandLine,
+                           shell = True) 
+    fqfProcess.wait() 
 
 def iterative_FASTQ_quality_filter(directory, out_dir, out_name, q, p, read='*'):
     files = os.listdir(directory)
