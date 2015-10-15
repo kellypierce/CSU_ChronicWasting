@@ -1,0 +1,146 @@
+---
+title: "Pear Assembly Test"
+output: pdf_document
+---
+
+# Data: Library 12, Lane 8
+
+2x150bp paired-end Illumina HiSeq reads, fragments 276-376bp long before Illumina adapter trimming.
+
+Most reads will overlap.
+
+# Pear Assembly
+
+Minimum assembly length of 150bp (length of a single read).
+10bp overlap between reads is required -- 280bp is therefore the maximum assembly length.
+
+Earlier runs showed that if these bounds were not enforced, a large number of short assemblies and a smaller number of large assemblies were retained. I am not sure how it is possible to assemble a 50bp read from our 2x150bp data, because all reads pass the FASTQC read length filter.
+
+## Assembly diagnostics
+
+They are not automatically saved to file, so I've pasted them here (with the % progress outputs removed):
+
+```
+Merging overlapping reads 1 & 2 with PEAR.
+ ____  _____    _    ____ 
+|  _ \| ____|  / \  |  _ \
+| |_) |  _|   / _ \ | |_) |
+|  __/| |___ / ___ \|  _ <
+|_|   |_____/_/   \_\_| \_\
+
+PEAR v0.9.8 [April 9, 2015]
+
+Citation - PEAR: a fast and accurate Illumina Paired-End reAd mergeR
+Zhang et al (2014) Bioinformatics 30(5): 614-620 | doi:10.1093/bioinformatics/btt593
+
+Forward reads file.................: /home/antolinlab/Downloads/CWD_RADseq/Library12_S65_L008_R1_001.fastq.gz
+Reverse reads file.................: /home/antolinlab/Downloads/CWD_RADseq/Library12_S65_L008_R2_001.fastq.gz
+PHRED..............................: 33
+Using empirical frequencies........: YES
+Statistical method.................: OES
+Maximum assembly length............: 280
+Minimum assembly length............: 150
+p-value............................: 0.010000
+Quality score threshold (trimming).: 0
+Minimum read size after trimming...: 1
+Maximal ratio of uncalled bases....: 1.000000
+Minimum overlap....................: 10
+Scoring method.....................: Scaled score
+Threads............................: 1
+
+Allocating memory..................: 200,000,000 bytes
+Computing empirical frequencies....: DONE
+  A: 0.291163
+  C: 0.207728
+  G: 0.217223
+  T: 0.283886
+  1117246 uncalled bases
+
+Assembled reads ...................: 2,587,799 / 3,105,374 (83.333%)
+Discarded reads ...................: 1,449 / 3,105,374 (0.047%)
+Not assembled reads ...............: 516,126 / 3,105,374 (16.620%)
+Assembled reads file...............: /home/antolinlab/Downloads/CWD_RADseq/pear_merged_Library12_L8.assembled.fastq
+Discarded reads file...............: /home/antolinlab/Downloads/CWD_RADseq/pear_merged_Library12_L8.discarded.fastq
+Unassembled forward reads file.....: /home/antolinlab/Downloads/CWD_RADseq/pear_merged_Library12_L8.unassembled.forward.fastq
+Unassembled reverse reads file.....: /home/antolinlab/Downloads/CWD_RADseq/pear_merged_Library12_L8.unassembled.reverse.fastq
+
+```
+
+# Post-assembly sequence quality diagnostics
+
+The one-liners used to generate these files are also copied to run_integrated_pipeline_real_data_test.py.
+
+## Distribution of assembled fragment sizes
+
+```
+sed -n '2~4p' pear_merged_Library12_L8.assembled.fastq | awk '{print length}' 
+>> pear_merged_Library12_L8_assembled_seq_length.txt
+```
+
+```{r}
+pear <- read.table('~/Downloads/CWD_RADseq/pear_merged_Library12_L8_assembled_seq_length.txt')
+hist(pear[,1], xlab='Sequence Length', main='', freq = F)
+
+```
+
+## Recovery of expected cutsites
+
+### Read 1
+
+```
+sed -n '2~4p' pear_merged_Library12_L8.assembled.fastq | 
+cut -c 6-10 | sort | uniq -c | sort -nr -k 1 
+>> pear_merged_Library12_L8_assembled_R1cut_check.txt
+```
+
+```{r}
+r1 <- read.table('~/Downloads/CWD_RADseq/pear_merged_Library12_L8_assembled_R1cut_check.txt')
+head(r1)
+```
+
+The first two rows contain the sequences we expect: `r r1[1,2]` and `r r1[2,2]`.
+
+The total number of reads with exact cutsite matches is `r r1[1,1]+r1[2,1]`.
+
+There were 2,587,799 of 3,105,374 reads retained according to the PEAR output.
+
+```{r}
+
+rawIn <- 3105374
+rawOut <- 2587799
+correctR1 <- r1[1,1] + r1[2,1]
+
+barplot(c(rawIn, rawOut, correctR1), ylim=c(0, 3500000), ylab='Number of Reads', 
+        names=c('Raw', 'Assembled', 'Correct R1 Cutsite'))
+
+```
+
+### Read 2
+
+```
+sed -n '2~4p' pear_merged_Library12_L8.assembled.fastq | 
+rev | cut -c 11-14 | sort | uniq -c | sort -nr -k 1 
+>> pear_merged_Library12_L8_assembled_R2cut_check.txt
+```
+
+```{r}
+r2 <- read.table('~/Downloads/CWD_RADseq/pear_merged_Library12_L8_assembled_R2cut_check.txt')
+head(r2)
+```
+
+The first row contains the sequence we expect: `r r2[1,2]`. The second row is a pretty close match (`r r2[2,2]`), as is the third row (`r r2[3,2]`).
+
+The total number of reads with exact or close cutsite matches is `r r2[1,1]+r2[2,1]+r2[3,1]`.
+
+Again, there were 2,587,799 of 3,105,374 reads retained according to the PEAR output.
+
+```{r}
+
+rawIn <- 3105374
+rawOut <- 2587799
+correctR2 <- r2[1,1] + r2[2,1]
+
+barplot(c(rawIn, rawOut, correctR1), ylim=c(0, 3500000), ylab='Number of Reads', 
+        names=c('Raw', 'Assembled', 'Correct R2 Cutsite'))
+
+```
