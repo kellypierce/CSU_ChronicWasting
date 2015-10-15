@@ -11,13 +11,14 @@ from subprocess import call, Popen, PIPE
 import os as os
 from os import linesep, path, R_OK, X_OK
 import re
-import DBR_Parsing
-import string as str
+from DBR_Parsing import *
+import string as string
 from string import Template, join
 import logging as logging
 from logging import debug, critical, error, info
 import sys as sys
 import warnings
+import fnmatch
 
 def configureLogging(verbose = False):
     '''
@@ -45,7 +46,7 @@ def checkFile(filename):
     try:
         if os.path.exists(os.path.abspath(filename)) and os.path.isfile(os.path.abspath(filename)) and os.access(os.path.abspath(filename), R_OK):
             return True
-        fullPath = str.join(os.getcwd(), filename[1:])
+        fullPath = string.join(os.getcwd(), filename[1:])
         return os.path.exists(fullPath) and os.path.isfile(fullPath) and os.access(fullPath, R_OK)
     except IOError:
         return False
@@ -59,36 +60,99 @@ def checkExe(filename):
     return (os.path.exists(filename) and os.path.isfile(filename) and os.access(filename, X_OK))
 
 ################################## GLOBALS ####################################
+
 # run configureLogging first
 configureLogging(False)
+
+# PEAR assembly
+pearPath = '/home/antolinlab//Downloads/PEAR/src/pear'
+pearSimpleTemplate = Template('%s -f $f -r $r -o $o' % pearPath)
+pearExtraParamsTemplate = Template('%s -f $f -r $r -o $o $e' % pearPath)
+
+# Fastq filtering of assembled data
 #qualityFilter = '/Users/Kelly/Downloads/bin/fastq_quality_filter'
 qualityFilter = '/home/antolinlab/Downloads/fastx_toolkit-0.0.14/src/fastq_quality_filter/fastq_quality_filter'
 fqfStdinTemplate = Template('%s -q $q -p $p -Q33 -z -o $output' % qualityFilter)
 fqfFileTemplate = Template('%s -q $q -p $p -Q33 -z -i $input -o $output' % qualityFilter)
+
+# DBR extraction
+#dbrStdinTemplate =
+#dbrFileTemplate =
+
+# Demultiplexing
+#demultiplexStdinTemplate =
+#demultiplexFileTemplate =
+
+# Trimming
+
+# Stacks de novo assembly
+
+# Extract reference from Stacks consensus, index
+
+# Reference-based assembly
+
+# DBR filter
+
+
 ###############################################################################
 
-def PEAR_assemble(in_dir, forward, reverse, out_dir, out_name,  extra_params=None):
-    print 'Merging overlapping reads 1 & 2 with PEAR.'
-    # extra params is a list of optional args to pass to PEAR
-    if extra_params:
-        pear_call = 'pear' + ' -f ' + in_dir + forward + ' -r ' + in_dir + reverse + ' -o ' + out_dir + out_name + ' ' + extra_params
-    else:
-        pear_call = 'pear' + ' -f ' + in_dir + forward + ' -r ' + in_dir + reverse + ' -o ' + out_dir + out_name
-    subprocess.call(pear_call, shell=True)
-    return
+def iterative_PEAR_assemble(in_dir, out_dir, out_name, extra_params, r1='*', r2='*'):
+    files = os.listdir(in_dir)
+    if not os.path.exists(out_dir):
+        os.makedirs(out_dir)
+    for f in files:
+        if re.findall(r1, f):
+            forward = f
+            reverse = re.sub(r1, r2, f)
+            PEAR_assemble(in_dir, forward, reverse, out_dir, out_name, extra_params)
 
-def FASTQ_R1_R2_merge(in_dir, fq_r1, fq_r2, fq_out):
-    print 'Taking reverse complement of read 2 with FASTX Toolkit.\n'
-    rc_call = 'fastx_reverse_complement -i ' + in_dir + fq_r2 + ' -o ' + in_dir + fq_out
-    subprocess.call(rc_call, shell=True)
+def PEAR_assemble(in_dir, forward, reverse, out_dir, out_name,  extra_params=None):
+    if not checkFile(in_dir + forward):
+        raise IOError("Where is the forward read file: %s" % forward)
+    if not checkFile(in_dir + reverse):
+        raise IOError("where is the reverse read file: %s" % reverse)
     
-    print 'Merging read 1 and read 2 reverse complement into a single FASTQ file.'
-    merge_call = 'paste ' + in_dir + fq_r1 + ' ' + in_dir + fq_out + ' > ' + in_dir + fq_out + '_merged.fq'
-    subprocess.call(merge_call, shell=True)
-    rm_tab_call = "sed 's/[ \t]//g' " + in_dir + fq_out + '_merged.fq' + ' >> ' + in_dir + fq_out + '_untabbed_merged.fq'
-    subprocess.call(rm_tab_call, shell=True)
-    return
+    if not forward.endswith(".fastq.gz"):
+        warnings.warn("Expect raw sequence data in .fastq.gz format")
+    if not reverse.endswith(".fastq.gz"):
+        warnings.warn("Expect raw sequence data in .fastq.gz format")
+        
+    if not checkExe(pearPath):
+        raise Exception("could not find %s in the filesystem for execution, is the environment setup correctly?" % pearPath)
+    info('Merging overlapping reads %s and %s with PEAR.' % (forward, reverse))
     
+    out_split = os.path.splitext(forward)
+    out_suffix = re.sub(r'R\d{1}', '', out_split[0])
+    out_full = out_dir + out_name + out_suffix
+    
+    info('Saving outputs to %s' % out_full)
+    
+    if extra_params:
+        commandLine = pearExtraParamsTemplate.substitute(f = in_dir + forward,
+                                                         r = in_dir + reverse,
+                                                         o = out_full,
+                                                         e = extra_params)
+    else:
+        commandLine = pearSimpleTemplate.substitute(f = in_dir + forward,
+                                                         r = in_dir + reverse,
+                                                         o = out_full)
+    pearProcess = Popen(commandLine, shell=True)
+    pearProcess.wait()
+
+def iterative_FASTQ_quality_filter(directory, out_dir, out_name, q, p, read='*'):
+    files = os.listdir(directory)
+    if not os.path.exists(out_dir):
+        os.makedirs(out_dir)
+    info('Quality filtering files containing %s' % read)
+    info('Results saved to %s' % out_dir)
+    for f in files:
+        r2 = re.findall(read, f)
+        if r2: 
+            fileRoot = os.path.splitext(f)
+            out_file = directory + fileRoot[0] + out_name
+            in_file = directory + f
+            FASTQ_quality_filter(in_file, out_file, q, p)
+ 
 def FASTQ_quality_filter(fq_in, fq_out, q, p, qualityFilter = qualityFilter):
     if not checkFile(fq_in):
         raise IOError("where is the input file: %s" % fq_in)
@@ -96,7 +160,7 @@ def FASTQ_quality_filter(fq_in, fq_out, q, p, qualityFilter = qualityFilter):
         warnings.warn("prefer to pass compressed files, consider gzipping the inputs")
     if not checkExe(qualityFilter):
         raise Exception("could not find %s in the filesystem for execution, is the environment setup correctly?" % qualityFilter)
-    info("Quality filtering with FASTX Toolkit.")
+    info("Quality filtering with FASTX Toolkit. Output file %s" % fq_out)
     if fq_in.endswith('gz'): # chain a gz decompressor thread to fqf
         commandLine = fqfStdinTemplate.substitute(q = q, p = p, output = fq_out)
         debug(commandLine)
@@ -109,19 +173,21 @@ def FASTQ_quality_filter(fq_in, fq_out, q, p, qualityFilter = qualityFilter):
                            shell = True) 
     fqfProcess.wait() 
 
-def iterative_FASTQ_quality_filter(directory, out_dir, out_name, q, p, read='*'):
-    files = os.listdir(directory)
-    out = directory + out_dir
-    if not os.path.exists(out):
-        os.makedirs(out)
-    print 'Quality filtering files containing ' + read
-    print 'Results saved to ' + out
+def iterative_DBR_dict(in_dir, seqType, read, save_path):
+    if seqType == 'pear':
+        # read the 8 bases at the end
+        dbr_start = -9
+        dbr_stop = None
+    else:
+        # read the 8 bases at the beginning
+        dbr_start = 0
+        dbr_stop = 9
+    files = os.listdir(in_dir)
     for f in files:
-        r2 = re.findall(read, f)
-        if r2: 
-            in_file = directory + f
-            out_file = out_dir + f + out_name
-            FASTQ_quality_filter(in_file, out_file, q, p)
+        toRead = re.findall(read, f)
+        if toRead: 
+            DBR_dict(f, dbr_start, dbr_stop, test_dict=True, save_path=save_path)
+
 
 def Demultiplex(in_file, barcode_file, out_dir, out_prefix):    
     print 'Demultiplexing sequence data with FASTX Toolkit.\n'
@@ -235,3 +301,16 @@ def refmap_BWA(in_dir, out_dir, BWA_path, pseudoref_full_path):
             subprocess.call(bwa_mem_call, shell=True)
     return
 
+''' Deprecated
+def FASTQ_R1_R2_merge(in_dir, fq_r1, fq_r2, fq_out):
+    print 'Taking reverse complement of read 2 with FASTX Toolkit.\n'
+    rc_call = 'fastx_reverse_complement -i ' + in_dir + fq_r2 + ' -o ' + in_dir + fq_out
+    subprocess.call(rc_call, shell=True)
+    
+    print 'Merging read 1 and read 2 reverse complement into a single FASTQ file.'
+    merge_call = 'paste ' + in_dir + fq_r1 + ' ' + in_dir + fq_out + ' > ' + in_dir + fq_out + '_merged.fq'
+    subprocess.call(merge_call, shell=True)
+    rm_tab_call = "sed 's/[ \t]//g' " + in_dir + fq_out + '_merged.fq' + ' >> ' + in_dir + fq_out + '_untabbed_merged.fq'
+    subprocess.call(rm_tab_call, shell=True)
+    return
+'''
