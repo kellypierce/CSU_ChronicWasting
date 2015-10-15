@@ -50,7 +50,11 @@ def DBR_dict(fq_path, dbr_start, dbr_stop, test_dict = False, save_path = None):
     dbr = {}
     fq_line = 1
     # gzip.open() will work with both compressed and uncompressed files
-    with gzip.open(fq_path, 'r') as db:
+    if fq_path.endswith('gz'):
+        openFxn = gzip.open
+    else:
+        openFxn = open
+    with openFxn(fq_path, 'r') as db:
         for line in db:
             if fq_line == 1:
                 ID = re.split('(\d[:|_]\d+[:|_]\d+[:|_]\d+)', line)[1]
@@ -69,13 +73,18 @@ def DBR_dict(fq_path, dbr_start, dbr_stop, test_dict = False, save_path = None):
         x = itertools.islice(dbr.iteritems(), 0, 4)
         for key, value in x:
             print key, value
+        print dbr['8:1101:15808:1492'] # this is the first entry in /home/antolinlab/Downloads/CWD_RADseq/pear_merged_Library12_L8.assembled.fastq
     if save_path:
         print 'Writing dictionary to ' + save_path
         with open(save_path, 'w') as fp:          
             json.dump(dbr, fp)
 
 # test functions:
-#DBR_dict('/home/antolinlab/Downloads/Sample1_ACTTGA_L008_R2_001.fastq.gz', True)  
+#DBR_dict(fq_path = '/home/antolinlab/Downloads/Sample1_ACTTGA_L008_R2_001.fastq', 
+#         dbr_start=0, dbr_stop=8, test_dict=True)
+# if using Pear assembled data, need to read the string from the other end...
+#DBR_dict(fq_path = '/home/antolinlab/Downloads/CWD_RADseq/pear_merged_Library12_L8.assembled.fastq', 
+#         dbr_start=-9, dbr_stop=None, test_dict=True) #-9:None captures the last 8 values in the sequence string
 #R1_dict('/home/antolinlab/Downloads/Sample1_ACTTGA_L008_R1_001_filtered.fastq', True)
 
 
