@@ -50,6 +50,16 @@ def checkFile(filename):
         return os.path.exists(fullPath) and os.path.isfile(fullPath) and os.access(fullPath, R_OK)
     except IOError:
         return False
+        
+def checkDir(dirname):
+	'''
+	return true if this is a directory and is readable on the current filesystem
+	'''
+	try:
+		if os.path.exists(os.path.abspath(dirname) and os.path.isdir(os.path.abspath(dirname)) and os.access(os.path.abspath(dirname), R_OK):
+			return True
+	except IOError:
+		return False
 
 def checkExe(filename):
     '''
@@ -79,9 +89,18 @@ fqfFileTemplate = Template('%s -q $q -p $p -Q33 -z -i $input -o $output' % quali
 #dbrStdinTemplate =
 #dbrFileTemplate =
 
+# Trimming
+trim_call = "/usr/local/bin/fastx_trimmer -f " + str(first_base) + ' -l ' + str(last_base) + " -i " + full_path + " -o " + new_path
+trimmer = '/home/antolinlab/Downloads/fastx_toolkit-0.0.14/src/fastx_trimmer'
+uniformLengthTemplate = Template('%s -f $f -l $l -i $in_path -o $out_path' % trimmer)
+# I guess we don't need different templates, just different first and last bases (-f and -l)
+removeR1AdapterCutsiteTemplate = Template('%s ' % trimmer)
+removeR2DBRCutsiteTemplate = Template('%s ' % trimmer)
+
 # Demultiplexing
-#demultiplexStdinTemplate =
-#demultiplexFileTemplate =
+# fastx_barcode_splitter always takes input as stdin
+demultiplexer = '/home/antolinlab/Downloads/fastx_toolkit-0.0.14/src/fastx_barcode_splitter'
+demultiplexStdinTemplate = Template('%s --bcfile $b --prefix $p --bol' % demultiplexer)
 
 # Trimming
 
@@ -173,7 +192,9 @@ def FASTQ_quality_filter(fq_in, fq_out, q, p, qualityFilter = qualityFilter):
                            shell = True) 
     fqfProcess.wait() 
 
-def iterative_DBR_dict(in_dir, seqType, read, save_path):
+def iterative_DBR_dict(in_dir, seqType, read, save):
+    if not checkDir(in_dir):
+        raise IOError("Input is not a directory: %s" % in_dir)
     if seqType == 'pear':
         # read the 8 bases at the end
         dbr_start = -9
@@ -184,26 +205,72 @@ def iterative_DBR_dict(in_dir, seqType, read, save_path):
         dbr_stop = 9
     files = os.listdir(in_dir)
     for f in files:
+    	# may want to check if toRead is a fastq file?
         toRead = re.findall(read, f)
         if toRead: 
-            DBR_dict(f, dbr_start, dbr_stop, test_dict=True, save_path=save_path)
+            DBR_dict(f, dbr_start, dbr_stop, test_dict=True, save=save)
 
-
-def Demultiplex(in_file, barcode_file, out_dir, out_prefix):    
-    print 'Demultiplexing sequence data with FASTX Toolkit.\n'
-    
-    prefix_path = out_dir + out_prefix
-    
-    if not os.path.exists(out_dir):
-        os.makedirs(out_dir)
-    
-    demultiplex_call = 'zcat ' + in_file + ' | /usr/local/bin/fastx_barcode_splitter.pl --bcfile ' + barcode_file + ' --prefix ' + prefix_path + ' --bol'
-    
-    subprocess.call(demultiplex_call, shell=True)
-    return
+## TRIM R2 END OF MERGED SEQUENCE BEFORE DEMULTIPLEXING TO ENFORCE UNIFORM READ LENGTH?
 
 def Trim(in_dir, out_dir, suffix, first_base, last_base=None):    
-    print 'Trimming DBR and enzyme cut sites with FASTX Toolkit.\n'
+    info('Trimming DBR and enzyme cut sites from %s with FASTX Toolkit.' %)
+    
+    # new directory for trimmed files
+    if not os.path.exists(out_dir):
+        os.makedirs(out_dir)
+
+    for i in os.listdir(in_dir):
+        # the proper file name
+        proper_file_trim = i+suffix
+    
+        # full path to file for trimming
+        full_path=os.path.join(in_dir, i)
+        new_path=os.path.join(out_dir, proper_file_trim)
+    
+        # Remove barcodes and R1 enzyme cut site (first
+        trim_call = "/usr/local/bin/fastx_trimmer -f " + str(first_base) + ' -l ' + str(last_base) + " -i " + full_path + " -o " + new_path
+        subprocess.call(trim_call, shell=True)
+    return
+
+def iterative_Demultiplex(in_dir, barcode_file, out_dir, out_prefix):
+	if not checkDir(in_dir):
+        raise IOError("Input is not a directory: %s" % in_dir)
+	if not checkFile(barcode_file):
+        raise IOError("Where is the barcode file? %s" % barcode_file)
+	files = os.listdir(in_dir)
+    	for f in files:
+    		# will all the files in the directory be pear assemblies?
+    		# if they aren't, how should we handle?
+			Demultiplex(f, barcode_file, out_dir, out_prefix)
+
+def Demultiplex(in_file, barcode_file, out_dir, out_prefix): 
+	if not checkFile(in_file):
+        raise IOError("Input is not a file: %s" % in_file)
+	if not checkFile(barcode_file):
+        raise IOError("Where is the barcode file? %s" % barcode_file)   
+    
+    prefix_path = out_dir + out_prefix
+
+    info('Demultiplexing %s with FASTX Toolkit; output files saved in %s' % (in_file, prefix_path))
+        
+    if not os.path.exists(out_dir):
+        os.makedirs(out_dir)
+
+    commandLine = demultiplexStdinTemplate.substitute(b = barcode_file, p = prefix_path)
+        
+    if in_file.endswith('gz'): # chain a gz decompressor thread to fqf
+        zcatProcess = Popen('zcat %s' % in_file, shell = True, stdout = subprocess.PIPE)
+        demultiplexProcess = Popen(commandLine, shell = True, stdin = zcatProcess.stdout)
+    else:
+        catProcess = Popen('cat %s' % in_file, shell = True, stdout = subprocess.PIPE)
+        demultiplexProcess = Popen(commandLine, shell = True, stdin = zcatProcess.stdout)
+    demultiplexProcess.wait()
+
+## TRIM OUT THE ENZYME CUT SITES FROM R1 END OF MERGED SEQUENCE
+## IS IT POSSIBLE FOR A UNIFIED TRIMMING FUNCTION? PROBABLY...
+
+def Trim(in_dir, out_dir, suffix, first_base, last_base=None):    
+    info('Trimming DBR and enzyme cut sites from %s with FASTX Toolkit.' %)
     
     # new directory for trimmed files
     if not os.path.exists(out_dir):
