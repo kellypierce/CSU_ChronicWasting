@@ -51,15 +51,17 @@ def checkFile(filename):
     except IOError:
         return False
         
+'''
 def checkDir(dirname):
-	'''
-	return true if this is a directory and is readable on the current filesystem
-	'''
-	try:
-		if os.path.exists(os.path.abspath(dirname) and os.path.isdir(os.path.abspath(dirname)) and os.access(os.path.abspath(dirname), R_OK):
-			return True
-	except IOError:
-		return False
+
+    #return true if this is a directory and is readable on the current filesystem
+
+    try:
+        if os.path.exists(os.path.abspath(dirname)) and os.path.isdir(os.path.abspath(dirname)) and os.access(os.path.abspath(dirname), R_OK):
+            return True
+    except IOError:
+        return False
+'''
 
 def checkExe(filename):
     '''
@@ -74,35 +76,33 @@ def checkExe(filename):
 # run configureLogging first
 configureLogging(False)
 
-# PEAR assembly
+# paths to executables
 pearPath = '/home/antolinlab//Downloads/PEAR/src/pear'
+qualityFilter = '/home/antolinlab/Downloads/fastx_toolkit-0.0.14/src/fastq_quality_filter/fastq_quality_filter'
+trimmer = '/home/antolinlab/Downloads/fastx_toolkit-0.0.14/src/fastx_trimmer'
+demultiplexer = '/home/antolinlab/Downloads/fastx_toolkit-0.0.14/src/fastx_barcode_splitter'
+denovo_path = '/home/antolinlab/Downloads/stacks-1.31/scripts/denovo_map.pl '
+stacks_executables = '/home/antolinlab/Downloads/stacks-1.31/scripts'
+#stacks =
+#BWA =
+
+
+
+# PEAR assembly
 pearSimpleTemplate = Template('%s -f $f -r $r -o $o' % pearPath)
 pearExtraParamsTemplate = Template('%s -f $f -r $r -o $o $e' % pearPath)
 
 # Fastq filtering of assembled data
-#qualityFilter = '/Users/Kelly/Downloads/bin/fastq_quality_filter'
-qualityFilter = '/home/antolinlab/Downloads/fastx_toolkit-0.0.14/src/fastq_quality_filter/fastq_quality_filter'
 fqfStdinTemplate = Template('%s -q $q -p $p -Q33 -z -o $output' % qualityFilter)
 fqfFileTemplate = Template('%s -q $q -p $p -Q33 -z -i $input -o $output' % qualityFilter)
 
-# DBR extraction
-#dbrStdinTemplate =
-#dbrFileTemplate =
-
-# Trimming
-trim_call = "/usr/local/bin/fastx_trimmer -f " + str(first_base) + ' -l ' + str(last_base) + " -i " + full_path + " -o " + new_path
-trimmer = '/home/antolinlab/Downloads/fastx_toolkit-0.0.14/src/fastx_trimmer'
-uniformLengthTemplate = Template('%s -f $f -l $l -i $in_path -o $out_path' % trimmer)
-# I guess we don't need different templates, just different first and last bases (-f and -l)
-removeR1AdapterCutsiteTemplate = Template('%s ' % trimmer)
-removeR2DBRCutsiteTemplate = Template('%s ' % trimmer)
-
 # Demultiplexing
 # fastx_barcode_splitter always takes input as stdin
-demultiplexer = '/home/antolinlab/Downloads/fastx_toolkit-0.0.14/src/fastx_barcode_splitter'
+# files across all libraries should go to the same directory
 demultiplexStdinTemplate = Template('%s --bcfile $b --prefix $p --bol' % demultiplexer)
 
 # Trimming
+uniformLengthTemplate = Template('%s -f $f -l $l -i $in_path -o $out_path' % trimmer)
 
 # Stacks de novo assembly
 
@@ -115,10 +115,8 @@ demultiplexStdinTemplate = Template('%s --bcfile $b --prefix $p --bol' % demulti
 
 ###############################################################################
 
-def iterative_PEAR_assemble(in_dir, out_dir, out_name, extra_params, r1='*', r2='*'):
+def iterative_PEAR_assemble(in_dir, out_dir, out_name, extra_params, regexR1='*', regexR2='*'):
     files = os.listdir(in_dir)
-    if not os.path.exists(out_dir):
-        os.makedirs(out_dir)
     for f in files:
         if re.findall(r1, f):
             forward = f
@@ -139,6 +137,9 @@ def PEAR_assemble(in_dir, forward, reverse, out_dir, out_name,  extra_params=Non
     if not checkExe(pearPath):
         raise Exception("could not find %s in the filesystem for execution, is the environment setup correctly?" % pearPath)
     info('Merging overlapping reads %s and %s with PEAR.' % (forward, reverse))
+    
+    if not os.path.exists(out_dir):
+        os.makedirs(out_dir)
     
     out_split = os.path.splitext(forward)
     out_suffix = re.sub(r'R\d{1}', '', out_split[0])
@@ -192,28 +193,28 @@ def FASTQ_quality_filter(fq_in, fq_out, q, p, qualityFilter = qualityFilter):
                            shell = True) 
     fqfProcess.wait() 
 
-def iterative_DBR_dict(in_dir, seqType, read, save):
+def iterative_DBR_dict(in_dir, seqType, save):
     if not checkDir(in_dir):
         raise IOError("Input is not a directory: %s" % in_dir)
     if seqType == 'pear':
         # read the 8 bases at the end
         dbr_start = -9
         dbr_stop = None
-    else:
+    elif seqType == 'read2':
+        warnings.warn('Expect directory containing only Read 2 files; any other files present in %s will be incorporated into DBR dictionary.' % in_dir)
         # read the 8 bases at the beginning
         dbr_start = 0
         dbr_stop = 9
+    else:
+        raise IOError("Input sequence type specified as %s. Options are 'pear' or 'read2'." % seqType)
     files = os.listdir(in_dir)
     for f in files:
-    	# may want to check if toRead is a fastq file?
-        toRead = re.findall(read, f)
-        if toRead: 
-            DBR_dict(f, dbr_start, dbr_stop, test_dict=True, save=save)
+    	DBR_dict(f, dbr_start, dbr_stop, test_dict=True, save=save)
 
 ## TRIM R2 END OF MERGED SEQUENCE BEFORE DEMULTIPLEXING TO ENFORCE UNIFORM READ LENGTH?
 
 def Trim(in_dir, out_dir, suffix, first_base, last_base=None):    
-    info('Trimming DBR and enzyme cut sites from %s with FASTX Toolkit.' %)
+    info('Trimming DBR and enzyme cut sites from %s with FASTX Toolkit.' % in_dir)
     
     # new directory for trimmed files
     if not os.path.exists(out_dir):
@@ -233,21 +234,22 @@ def Trim(in_dir, out_dir, suffix, first_base, last_base=None):
     return
 
 def iterative_Demultiplex(in_dir, barcode_file, out_dir, out_prefix):
-	if not checkDir(in_dir):
-        raise IOError("Input is not a directory: %s" % in_dir)
-	if not checkFile(barcode_file):
-        raise IOError("Where is the barcode file? %s" % barcode_file)
-	files = os.listdir(in_dir)
-    	for f in files:
-    		# will all the files in the directory be pear assemblies?
-    		# if they aren't, how should we handle?
-			Demultiplex(f, barcode_file, out_dir, out_prefix)
+    #if not checkDir(in_dir):
+    #    raise IOError("Input is not a directory: %s" % in_dir)
+    #if not checkFile(barcode_file):
+    #    raise IOError("Where is the barcode file? %s" % barcode_file)
+
+    files = os.listdir(in_dir)
+    for f in files:
+    	# will all the files in the directory be pear assemblies?
+    	# if they aren't, how should we handle?
+		Demultiplex(f, barcode_file, out_dir, out_prefix)
 
 def Demultiplex(in_file, barcode_file, out_dir, out_prefix): 
-	if not checkFile(in_file):
-        raise IOError("Input is not a file: %s" % in_file)
-	if not checkFile(barcode_file):
-        raise IOError("Where is the barcode file? %s" % barcode_file)   
+#	if not checkFile(in_file):
+#        raise IOError("Input is not a file: %s" % in_file)
+#	if not checkFile(barcode_file):
+#        raise IOError("Where is the barcode file? %s" % barcode_file)   
     
     prefix_path = out_dir + out_prefix
 
@@ -265,29 +267,6 @@ def Demultiplex(in_file, barcode_file, out_dir, out_prefix):
         catProcess = Popen('cat %s' % in_file, shell = True, stdout = subprocess.PIPE)
         demultiplexProcess = Popen(commandLine, shell = True, stdin = zcatProcess.stdout)
     demultiplexProcess.wait()
-
-## TRIM OUT THE ENZYME CUT SITES FROM R1 END OF MERGED SEQUENCE
-## IS IT POSSIBLE FOR A UNIFIED TRIMMING FUNCTION? PROBABLY...
-
-def Trim(in_dir, out_dir, suffix, first_base, last_base=None):    
-    info('Trimming DBR and enzyme cut sites from %s with FASTX Toolkit.' %)
-    
-    # new directory for trimmed files
-    if not os.path.exists(out_dir):
-        os.makedirs(out_dir)
-
-    for i in os.listdir(in_dir):
-        # the proper file name
-        proper_file_trim = i+suffix
-    
-        # full path to file for trimming
-        full_path=os.path.join(in_dir, i)
-        new_path=os.path.join(out_dir, proper_file_trim)
-    
-        # Remove barcodes and R1 enzyme cut site (first
-        trim_call = "/usr/local/bin/fastx_trimmer -f " + str(first_base) + ' -l ' + str(last_base) + " -i " + full_path + " -o " + new_path
-        subprocess.call(trim_call, shell=True)
-    return
 
 def denovo_Stacks(in_dir, denovo_path, stacks_executables, out_dir, m, n, b, D):    
     print 'Assembling sequences de novo using Stacks denovo_map.pl\n'
@@ -321,7 +300,11 @@ def denovo_Stacks(in_dir, denovo_path, stacks_executables, out_dir, m, n, b, D):
     build_args = [denovo_path, ' -e ', stacks_executables, ' -o ', out_dir, ' -m ', str(m), ' -n ', str(n), ' -t ', '-b ', str(b), ' -D ', D, ' -S ', formatted_list]
     denovo_call = ''.join(build_args)
     subprocess.call(denovo_call, shell=True)
+    
+    ### Add a line to move the files!
+    
     return
+
 
 def GeneratePseudoref(in_dir, out_dir, out_name, BWA_path):    
     print "Preparing pseudoreference genome by extracting Stacks denovo consensus sequence.\n"
