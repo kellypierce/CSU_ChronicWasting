@@ -26,9 +26,7 @@ def configureLogging(verbose = False):
     '''
     logger = logging.getLogger()
     logger.handlers = []
-
     logger.setLevel(logging.DEBUG if verbose else logging.INFO)
-    
     consoleLogHandler = logging.StreamHandler()
 
     # do not need colors if logging to a non-shell
@@ -36,7 +34,6 @@ def configureLogging(verbose = False):
         consoleLogHandler.setFormatter(logging.Formatter("\033[93m%(filename)s:%(lineno)s\033[0m: %(message)s"))
     else:
         consoleLogHandler.setFormatter(logging.Formatter("%(message)s"))
-
     logger.addHandler(consoleLogHandler)
 
 def checkFile(filename):
@@ -53,9 +50,7 @@ def checkFile(filename):
         
 '''
 def checkDir(dirname):
-
     #return true if this is a directory and is readable on the current filesystem
-
     try:
         if os.path.exists(os.path.abspath(dirname)) and os.path.isdir(os.path.abspath(dirname)) and os.access(os.path.abspath(dirname), R_OK):
             return True
@@ -86,8 +81,6 @@ stacks_executables = '/home/antolinlab/Downloads/stacks-1.31/scripts'
 #stacks =
 #BWA =
 
-
-
 # PEAR assembly
 pearSimpleTemplate = Template('%s -f $f -r $r -o $o' % pearPath)
 pearExtraParamsTemplate = Template('%s -f $f -r $r -o $o $e' % pearPath)
@@ -105,22 +98,18 @@ demultiplexStdinTemplate = Template('%s --bcfile $b --prefix $p --bol' % demulti
 uniformLengthTemplate = Template('%s -f $f -l $l -i $in_path -o $out_path' % trimmer)
 
 # Stacks de novo assembly
-
 # Extract reference from Stacks consensus, index
-
 # Reference-based assembly
-
 # DBR filter
-
 
 ###############################################################################
 
 def iterative_PEAR_assemble(in_dir, out_dir, out_name, extra_params, regexR1='*', regexR2='*'):
     files = os.listdir(in_dir)
     for f in files:
-        if re.findall(r1, f):
+        if re.findall(regexR1, f):
             forward = f
-            reverse = re.sub(r1, r2, f)
+            reverse = re.sub(regexR1, regexR2, f)
             PEAR_assemble(in_dir, forward, reverse, out_dir, out_name, extra_params)
 
 def PEAR_assemble(in_dir, forward, reverse, out_dir, out_name,  extra_params=None):
@@ -194,8 +183,8 @@ def FASTQ_quality_filter(fq_in, fq_out, q, p, qualityFilter = qualityFilter):
     fqfProcess.wait() 
 
 def iterative_DBR_dict(in_dir, seqType, save):
-    if not checkDir(in_dir):
-        raise IOError("Input is not a directory: %s" % in_dir)
+    #if not checkDir(in_dir):
+    #    raise IOError("Input is not a directory: %s" % in_dir)
     if seqType == 'pear':
         # read the 8 bases at the end
         dbr_start = -9
