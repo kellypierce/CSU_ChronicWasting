@@ -44,7 +44,7 @@ def R1_dict(fq_path, test_dict = False, save_path = None):
         with open(save_path, 'w') as fp:          
             json.dump(R1, fp)
 
-def DBR_dict(fq_path, dbr_start, dbr_stop, test_dict = False, save = False):
+def DBR_dict(fq_path, dbr_start, dbr_stop, test_dict = False, save = None):
     if not checkFile(fq_path):
         raise IOError("where is the input file: %s" % fq_path)
     info('Creating {ID: dbr} dictionary from %s.' % fq_path)
@@ -76,7 +76,7 @@ def DBR_dict(fq_path, dbr_start, dbr_stop, test_dict = False, save = False):
         #print dbr['8:1101:15808:1492'] # this is the first entry in /home/antolinlab/Downloads/CWD_RADseq/pear_merged_Library12_L8.assembled.fastq
     if save:
     	fq_name = os.path.splitext(fq_path)[0]
-    	save_path = fq_name + '_DBRdict'
+    	save_path = save + '_DBRdict'
         print 'Writing dictionary to ' + save_path
         with open(save_path, 'w') as fp:          
             json.dump(dbr, fp)
