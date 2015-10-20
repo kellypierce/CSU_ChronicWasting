@@ -6,6 +6,9 @@ output: pdf_document
 ## numbers >= 10^5 will be denoted in scientific notation
 ## and rounded to 2 digits
 options(scipen = 0, digits = 2)
+source('~/Desktop/CSU_ChronicWasting/PlotPrevCI.r')
+library(magicaxis)
+library(scales)
 ```
 # Background
   
@@ -173,7 +176,7 @@ library(flexmix)
 ```
 
 ## *gamlss* Package
-```{r, echo=FALSE}
+```{r, echo=FALSE, eval=FALSE}
 library(gamlss)
 gl.test <- histDist(dbr.pilot[,1], "NBII")
 
@@ -195,7 +198,7 @@ The script
 ```
 quality_dbr_sensitivity.py
 ```
-Performs a sensitivity analysis on the quality filters employed by FASTX-Toolkit's *fastq\_qualit\y_filter* function, and then using *sed* to extract the DBR sequences and save them to a file.
+Performs a sensitivity analysis on the quality filters employed by FASTX-Toolkit's *fastq\_quality\_filter* function, and then using *sed* to extract the DBR sequences and save them to a file.
 
 The quality for each base is given as an ASCII-33 score (inferred from looking at the characters used in the quality line and the values reported in this table: http://drive5.com/usearch/manual/quality\_score.html). The *fastq\_quality\_filter* takes two important arguments, one for the minimum base score and one for the fraction of bases that have to have at least that median. I have required that at least 50% of bases have the minimum score, meaning that the median score will be no less than the minimum. ASCII-33 scores range from 1-41.
 
@@ -214,7 +217,9 @@ Reciprocally transforming count data will give a weird distribution -- 1/1 = 1; 
 
 I also plotted after removing singletons. However, we WANT DBRs with a low frequency of occurrence. Especially if they are high quality. Singletons should not be removed at this phase (removing singleton DNA sequences once DBRs are removed, however, is sensible).
 
-```{r}
+Note: plot removed because it's too big for the PDF.
+
+```{r, echo=T, eval=F}
 #png(file='~/Desktop/CSU_ChronicWasting/PilotAnalysis/DBR_Distr_Qual_Sensitivity.png', width=30, height=40, units='cm', res=300)
 par(mfrow=c(4,2))
 for(file in qual.counts){
@@ -232,10 +237,12 @@ for(file in qual.counts){
 
 Expressing DBR frequency as a fraction of all reads is arguably better for downstream analysis because we will ultimately gauge DBR occurrence in assembled loci against DBR occurrence in the original (quality filtered) data. If we used raw counts, DBR occurrence in the assembled loci would almost always be less than the expected overall count.
 
-Another benefit of using the fraction of reads with a given DBR is that expressing count frequency as a proportion allows us to use the logit transformation. The distribution of DBR fractions is highly, highly right skewed. After performing the logit transformation we can better see the shape of the distribution and confirm that it is (1) unimodal and (2) likely to fit a 
+Another benefit of using the fraction of reads with a given DBR is that expressing count frequency as a proportion allows us to use the logit transformation. The distribution of DBR fractions is highly, highly right skewed. After performing the logit transformation we can better see the shape of the distribution and confirm that it is (1) unimodal and (2) likely to fit a gamma distribution (though this requires a translation of the data to positive values).
 
-```{r}
-png(file='~/Desktop/CSU_ChronicWasting/DBR_distributions.png', height=40, width=30, units='cm', res=300)
+Note: again, the images are removed because they're otherwise too large for the PDF.
+
+```{r, eval=F}
+#png(file='~/Desktop/CSU_ChronicWasting/DBR_distributions.png', height=40, width=30, units='cm', res=300)
 par(mfrow=c(4,3))
 for(file in qual.counts){
   dbr.counts=read.table(file)
@@ -247,5 +254,89 @@ for(file in qual.counts){
   hist(no.single.counts.frac, main=paste('Minimum Median Quality = ', substr(file, 1, 2)), xlab='Fraction of Reads with DBR (no singletons)', freq=FALSE)
   hist(counts.logit-min(counts.logit), main=paste('Minimum Median Quality = ', substr(file, 1, 2)), xlab='translated logit(Fraction of Reads with DBR)')
 }
-dev.off()
+#dev.off()
 ```
+
+The translated, logit transformed data look like they could be fitted with a gamma distribution... However, that won't really help us evaluate a specific DBR frequency.
+
+```{r}
+setwd('/home/antolinlab/Desktop/CSU_ChronicWasting/PilotAnalysis/QualDBR_Sensitivity/')
+dbr.counts=read.table("35median_quality_degeneracy_count.txt")
+counts.fraction=dbr.counts[,1]/sum(dbr.counts[,1])
+no.singletons=dbr.counts[dbr.counts[,1]>1,]
+no.single.counts.frac=no.singletons[,1]/sum(no.singletons[,1])
+counts.logit=log((counts.fraction)/(1-counts.fraction))
+no.single.counts.logit=log((no.single.counts.frac)/(1-no.single.counts.frac))
+
+par(mfrow=c(1,2))
+hist(counts.logit-min(counts.logit), main='Singletons Included \n Minimum Median Quality = 35', xlab='translated logit(Fraction of Reads with DBR)')
+hist(no.single.counts.logit-min(no.single.counts.logit), main='Singletons Excluded \n Minimum Median Quality = 35', xlab='translated logit(Fraction of Reads with DBR)')
+```
+
+```{r eval=FALSE}
+my.gamma=function(s, a, x){
+  y = (1/((s^a)*Gamma(a)))*(x^(a-1))*(exp(-1*(x/s)))
+  return(y)
+}
+
+#Note: to fit the non-linear regression we need to input a dataset with x and y values. Since we don't have x values for our data, we'll instead use DBR rank. Ties will be ranked as the average between the two ranks.
+
+dbr.ranks<-rank(counts.logit, ties.method = 'average')
+dbr.full.data<-cbind(dbr.ranks, counts.logit, dbr.counts)
+names(dbr.full.data)<-c('rank', 'logit(faction)', 'raw count', 'sequence')
+
+fit.my.gamma<-nls(counts ~ (1/((s^a)*Gamma(a)))*(rank^(a-1))*(exp(-1*(x/s))), data=list(counts.logit), start=c(a=1, s=2))
+
+```
+
+
+
+```{r, cache=T}
+dbr.ranks<-rank(counts.logit, ties.method = 'average')
+dbr.full.data<-cbind(dbr.ranks, counts.logit, dbr.counts)
+names(dbr.full.data)<-c('rank', 'logit(faction)', 'raw count', 'sequence')
+
+plot(rank(no.singletons[,1]), log(no.singletons[,1]/sum(no.singletons[,1])), pch=16, col=alpha('black', 0.2))
+
+dbr.CI<-KL.CI(proportion = no.singletons[,1]/sum(no.singletons[,1]),
+              num.pos = no.singletons[,1],
+              sample.size = sum(no.singletons[,1]),
+              data = no.singletons)
+
+plot(rank(no.singletons[,1])-min(rank(no.singletons[,1])), log(no.singletons[,1]/sum(no.singletons[,1])), 
+     ylim=c(-18, 0), pch=16, col=alpha('white', 0.2), axes=F, ylab='log(DBR Proportion)', xlab='DBR Rank', main='Binomial CI')
+polygon(x=c(rank(no.singletons[,1])-min(rank(no.singletons[,1])), rev(rank(no.singletons[,1])-min(rank(no.singletons[,1])))), 
+            y=c(log(dbr.CI$ci.u), rev(log(dbr.CI$ci.l))), col='slategray2', border=NA)
+points(rank(no.singletons[,1])-min(rank(no.singletons[,1])), log(no.singletons[,1]/sum(no.singletons[,1])), 
+       ylim=c(0,-20), pch=20, col=alpha('black', 0.1))
+#options(scipen=999)
+options(scipen=0)
+magaxis(side=2, unlog=T, las=1)
+magaxis(side=1)
+
+library(MultinomialCI)
+mci<-multinomialCI(no.singletons[,1], alpha=0.05, verbose=F)
+
+plot(rank(no.singletons[,1])-min(rank(no.singletons[,1])), log(no.singletons[,1]/sum(no.singletons[,1])), main='Multinomial CI',
+     ylim=c(-18, 0), xlim=c(0,1000), pch=16, col=alpha('white', 0.2), axes=F, ylab='log(DBR Proportion)', xlab='DBR Rank')
+polygon(x=c(rank(no.singletons[,1])-min(rank(no.singletons[,1])), rev(rank(no.singletons[,1])-min(rank(no.singletons[,1])))), 
+            y=c(log(mci[,2]), rev(log(mci[,1]+0.00000000000000001))), col='slategray2', border=NA)
+points(rank(no.singletons[,1])-min(rank(no.singletons[,1])), log(no.singletons[,1]/sum(no.singletons[,1])), pch=16, col=alpha('black', 0.2))
+magaxis(side=2, unlog=T, las=1)
+magaxis(side=1)
+
+plot(rank(no.singletons[,1])-min(rank(no.singletons[,1])), log(no.singletons[,1]/sum(no.singletons[,1])), main='Multinomial CI, upper only',
+     ylim=c(-18, 0), xlim=c(0,1000), pch=16, col=alpha('white', 0.2), axes=F, ylab='log(DBR Proportion)', xlab='DBR Rank')
+polygon(x=c(rank(no.singletons[,1])-min(rank(no.singletons[,1])), rev(rank(no.singletons[,1])-min(rank(no.singletons[,1])))), 
+            y=c(log(mci[,2]), rev(log(no.singletons[,1]/sum(no.singletons[,1])))), col='slategray2', border=NA)
+points(rank(no.singletons[,1])-min(rank(no.singletons[,1])), log(no.singletons[,1]/sum(no.singletons[,1])), pch=16, col=alpha('black', 0.2))
+magaxis(side=2, unlog=T, las=1)
+magaxis(side=1)
+```
+
+I think actually what we learn from this is there are only 4 barcodes we'd really expect to see more than once in a locus of 10 reads:
+
+```{r}
+head(mci)
+```
+
