@@ -49,12 +49,42 @@ def checkExe(filename):
     return (os.path.exists(filename) and os.path.isfile(filename) and os.access(filename, X_OK))
 
 ################################## GLOBALS ####################################
+
+# $var is specific to templates
+# %s %x %d are for string replacement
+
 # run configureLogging first
 configureLogging(False)
+
+# PEAR assembly
+pearStdinTemplate =
+pearFileTemplate =
+
+# Fastq filtering of assembled data
 #qualityFilter = '/Users/Kelly/Downloads/bin/fastq_quality_filter'
 qualityFilter = '/home/antolinlab/Downloads/fastx_toolkit-0.0.14/src/fastq_quality_filter/fastq_quality_filter'
 fqfStdinTemplate = Template('%s -q $q -p $p -Q33 -z -o $output' % qualityFilter)
 fqfFileTemplate = Template('%s -q $q -p $p -Q33 -z -i $input -o $output' % qualityFilter)
+
+# DBR extraction
+dbrStdinTemplate =
+dbrFileTemplate =
+
+# Demultiplexing
+demultiplexStdinTemplate =
+demultiplexFileTemplate =
+
+# Trimming
+
+# Stacks de novo assembly
+
+# Extract reference from Stacks consensus, index
+
+# Reference-based assembly
+
+# DBR filter
+
+
 ###############################################################################
 
 # function to iteratively call "fastq_quality_filter"
@@ -136,4 +166,4 @@ def FASTQ_quality_filter(fq_in, fq_out, q, p, qualityFilter = qualityFilter):
     # why I structured it this way, but I'm sure there was a reason... But I'll apply the lessons learned here 
     # to the other functions and hopefully improve their performance a bit. Thanks for your help!
     
-FASTQ_quality_filter('/home/antolinlab/Downloads/CWD_RADseq/Library12_S65_L008_R2_001.fastq.gz', '/home/antolinlab/Downloads/CWD_RADseq/test_out', q = 30, p = 50)
+#FASTQ_quality_filter('/home/antolinlab/Downloads/CWD_RADseq/Library12_S65_L008_R2_001.fastq.gz', '/home/antolinlab/Downloads/CWD_RADseq/test_out', q = 30, p = 50)
