@@ -4,7 +4,7 @@
 ### De novo pipeline for processing READ 1 only -- PILOT LIBRARY TEST ###
 #########################################################################
 
-import integrated_denovo_pipeline
+from integrated_denovo_pipeline import *
 
 ### Test functions
 '''
@@ -71,17 +71,38 @@ denovo_path = '/home/antolinlab/Downloads/stacks-1.31/scripts/denovo_map.pl '
 stacks_executables = '/home/antolinlab/Downloads/stacks-1.31/scripts'
 out_dir = '/home/antolinlab/Desktop/CSU_ChronicWasting/PilotAnalysis/'
 denovo_Stacks(in_dir, denovo_path, stacks_executables, out_dir, m=10, n=2, b=1, D= 'initial_assembly')
+'''
+### PHASE 2: DENOVO ASSEMBLY OF DBR FILTERED DATA
+in_file = '/home/antolinlab/Desktop/CSU_ChronicWasting/PilotAnalysis/DBR_filtered_sequences.fastq'
+mp_dir = '/home/antolinlab/Desktop/CSU_ChronicWasting/PilotAnalysis/Demultiplexed_Phase2/'
+prefix = 'pilot_demultiplex_phase2_'
+barcode_file = '/home/antolinlab/Desktop/CSU_ChronicWasting/PilotAnalysis/pilot_barcode_file'
+#Demultiplex(in_file, barcode_file, mp_dir, prefix)
 
+in_dir = '/home/antolinlab/Desktop/CSU_ChronicWasting/PilotAnalysis/Demultiplexed_Phase2/'
+out_dir = '/home/antolinlab/Desktop/CSU_ChronicWasting/PilotAnalysis/Demultiplexed_Phase2_Trimmed/'
+suffix = '_phase2_trimmed.fq' # eventually make cmd arg
+first_base = 6
+#Trim(in_dir, out_dir, suffix, first_base)
+
+in_dir = '/home/antolinlab/Desktop/CSU_ChronicWasting/PilotAnalysis/Demultiplexed_Phase2_Trimmed/'
+denovo_path = '/home/antolinlab/Downloads/stacks-1.31/scripts/denovo_map.pl '
+stacks_executables = '/home/antolinlab/Downloads/stacks-1.31/scripts'
+out_dir = '/home/antolinlab/Desktop/CSU_ChronicWasting/PilotAnalysis/'
+denovo_Stacks(in_dir, denovo_path, stacks_executables, out_dir, m=10, n=2, b=1, D= 'phase2_assembly')
+
+'''
 # CREATE PSEUDOREFERENCE
 in_dir = '/home/antolinlab/Desktop/CSU_ChronicWasting/PilotAnalysis/'
 out_dir = '/home/antolinlab/Desktop/CSU_ChronicWasting/PilotAnalysis/'
 BWA_path = '/home/antolinlab/Downloads/bwa.kit/bwa'
 out_name = 'pseudoref.fa'
 GeneratePseudoref(in_dir, out_dir, out_name, BWA_path)
-'''
+
 # INITIAL PSEUDOREFERENCE-MAPPED ASSEMBLY
 out_dir = '/home/antolinlab/Desktop/CSU_ChronicWasting/PilotAnalysis/Assembled/'
 in_dir = '/home/antolinlab/Desktop/CSU_ChronicWasting/PilotAnalysis/Demultiplexed_Trimmed/'
 BWA_path = '/home/antolinlab/Downloads/bwa.kit/bwa'
 pseudoref_full_path = '/home/antolinlab/Desktop/CSU_ChronicWasting/PilotAnalysis/pseudoref.fa'
 #refmap_BWA(in_dir, out_dir, BWA_path, pseudoref_full_path)
+'''
