@@ -75,7 +75,7 @@ configureLogging(False)
 pearPath = '/home/antolinlab//Downloads/PEAR/src/pear'
 qualityFilter = '/home/antolinlab/Downloads/fastx_toolkit-0.0.14/src/fastq_quality_filter/fastq_quality_filter'
 trimmer = '/home/antolinlab/Downloads/fastx_toolkit-0.0.14/src/fastx_trimmer'
-demultiplexer = '/home/antolinlab/Downloads/fastx_toolkit-0.0.14/src/fastx_barcode_splitter'
+demultiplexer = '/home/antolinlab/Downloads/fastx_toolkit-0.0.14/scripts/fastx_barcode_splitter.pl'
 denovo_path = '/home/antolinlab/Downloads/stacks-1.31/scripts/denovo_map.pl '
 stacks_executables = '/home/antolinlab/Downloads/stacks-1.31/scripts'
 #stacks =
@@ -218,8 +218,12 @@ def Trim(in_dir, out_dir, suffix, first_base, last_base=None):
         new_path=os.path.join(out_dir, proper_file_trim)
     
         # Remove barcodes and R1 enzyme cut site (first
-        trim_call = "/usr/local/bin/fastx_trimmer -f " + str(first_base) + ' -l ' + str(last_base) + " -i " + full_path + " -o " + new_path
-        subprocess.call(trim_call, shell=True)
+        if last_base:
+            trim_call = "/usr/local/bin/fastx_trimmer -f " + str(first_base) + ' -l ' + str(last_base) + " -i " + full_path + " -o " + new_path
+            subprocess.call(trim_call, shell=True)
+        else:
+            trim_call = "/usr/local/bin/fastx_trimmer -Q33 -f " + str(first_base) + " -i " + full_path + " -o " + new_path
+            subprocess.call(trim_call, shell=True)
     return
 
 def iterative_Demultiplex(in_dir, barcode_file, out_dir, out_prefix):
@@ -254,7 +258,7 @@ def Demultiplex(in_file, barcode_file, out_dir, out_prefix):
         demultiplexProcess = Popen(commandLine, shell = True, stdin = zcatProcess.stdout)
     else:
         catProcess = Popen('cat %s' % in_file, shell = True, stdout = subprocess.PIPE)
-        demultiplexProcess = Popen(commandLine, shell = True, stdin = zcatProcess.stdout)
+        demultiplexProcess = Popen(commandLine, shell = True, stdin = catProcess.stdout)
     demultiplexProcess.wait()
 
 def denovo_Stacks(in_dir, denovo_path, stacks_executables, out_dir, m, n, b, D):    
