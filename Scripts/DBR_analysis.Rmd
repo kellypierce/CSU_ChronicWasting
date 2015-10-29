@@ -204,7 +204,11 @@ The quality for each base is given as an ASCII-33 score (inferred from looking a
 
 Load the data:
 ```{r}
-setwd('~/Desktop/CSU_ChronicWasting/PilotAnalysis/QualDBR_Sensitivity/')
+#setwd('~/Desktop/CSU_ChronicWasting/PilotAnalysis/QualDBR_Sensitivity/')
+qual.files=list.files(getwd())
+qual.counts=grep('.txt', qual.files, value=T)
+
+setwd('~/Desktop/CSU_ChronicWasting/')
 qual.files=list.files(getwd())
 qual.counts=grep('.txt', qual.files, value=T)
 ```
@@ -296,12 +300,15 @@ dbr.ranks<-rank(counts.logit, ties.method = 'average')
 dbr.full.data<-cbind(dbr.ranks, counts.logit, dbr.counts)
 names(dbr.full.data)<-c('rank', 'logit(faction)', 'raw count', 'sequence')
 
+par(mfrow=c(1,1))
 plot(rank(no.singletons[,1]), log(no.singletons[,1]/sum(no.singletons[,1])), pch=16, col=alpha('black', 0.2))
 
 dbr.CI<-KL.CI(proportion = no.singletons[,1]/sum(no.singletons[,1]),
               num.pos = no.singletons[,1],
               sample.size = sum(no.singletons[,1]),
               data = no.singletons)
+
+library(magicaxis)
 
 plot(rank(no.singletons[,1])-min(rank(no.singletons[,1])), log(no.singletons[,1]/sum(no.singletons[,1])), 
      ylim=c(-18, 0), pch=16, col=alpha('white', 0.2), axes=F, ylab='log(DBR Proportion)', xlab='DBR Rank', main='Binomial CI')
