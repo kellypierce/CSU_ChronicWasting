@@ -4,8 +4,7 @@
 ### De novo pipeline for processing READ 1 only -- PILOT LIBRARY TEST ###
 #########################################################################
 
-from integrated_denovo_pipeline import *, filterOutDir, demultiplexOutDir,\
-    demultiplexInDir, trimInDir, trimOutDir
+from integrated_denovo_pipeline import *
 from DBR_Parsing import *
 from setuptools.extension import Library
 
@@ -26,6 +25,10 @@ from setuptools.extension import Library
 #sed -n '2~4p' pear_merged_Library12_L8.assembled.fastq | cut -c 6-10 | sort | uniq -c | sort -nr -k 1 >> pear_merged_Library12_L8_assembled_R1cut_check.txt
 # count up the R2 cutsites
 #sed -n '2~4p' pear_merged_Library12_L8.assembled.fastq | rev | cut -c 11-14 | sort | uniq -c | sort -nr -k 1 >> pear_merged_Library12_L8_assembled_R2cut_check.txt
+
+# PATHS TO EXECUTABLES
+denovo_path = '/home/antolinlab/Downloads/stacks-1.31/scripts/denovo_map.pl '
+stacks_executables = '/home/antolinlab/Downloads/stacks-1.31/scripts'
 
 # PATHS TO INPUTS AND OUTPUTS
 # user only needs to specify parent directory; the remaining directories should be automatically generated
@@ -49,8 +52,8 @@ BWAoutDir = parentDir + '/BWA/'
 
 # ASSEMBLE ITERATIVELY WITH PEAR 
 out_name = 'pear_merged_'
-extra_params = '-m 299 -n 199'
-iterative_PEAR_assemble(in_dir = pearOutDir, 
+extra_params = '-m 309 -n 209'
+iterative_PEAR_assemble(in_dir = pearInDir, 
                         out_dir = pearOutDir, 
                         out_name = out_name, 
                         extra_params = extra_params,
@@ -61,23 +64,25 @@ out_name = '.qual_filtered' # gets appended to input file name
 q = 30
 p = 50
 read = '.assembled.fastq' # extension for pear-assembled reads
-iterative_FASTQ_quality_filter(director = filterInDir, 
+iterative_FASTQ_quality_filter(directory = filterInDir, 
                                out_dir = filterOutDir, 
                                out_name = out_name, 
                                q = q, 
                                p = p, 
-                               read=read)
+                               read = read)
 
 # MAKE DBR DICTIONARIES FOR QUAL FILTERED PEAR DATA
 seq_type = 'pear'
 iterative_DBR_dict(in_dir = dbrInDir, 
                    seqType = seq_type,
-                   save = dbrOutDir)
+                   save = dbrOutDir,
+                   dbr_start = -10,
+                   dbr_stop = -2)
 
 # DEMULTIPLEX
 out_prefix = '/demultiplexed_'
 iterative_Demultiplex(in_dir = demultiplexInDir, 
-                      barcode_file = , 
+                      barcode_dir = '/home/antolinlab/Desktop/CSU_ChronicWasting/BarcodesRound1/', 
                       out_dir = demultiplexOutDir, 
                       out_prefix = out_prefix)
 
@@ -93,8 +98,14 @@ Trim(in_dir = trimInDir,
 
 # RUN STACKS SIMULTANEOUSLY ON ALL LIBRARIES
 denovo_Stacks(in_dir = stacksInDir, 
-              denovo_path, stacks_executables, out_dir, m, n, b, D)
-
+              denovo_path = denovo_path, 
+              stacks_executables = stacks_executables, 
+              out_dir = stacksOutDir, 
+              m = 10, 
+              n = 2, 
+              b = 1, 
+              D = '_initial_assembly')
+'''
 # GENERATE THE PSEUDOREFERENCE GENOME
 GeneratePseudoref(in_dir, out_dir, out_name, BWA_path)
 
@@ -103,7 +114,7 @@ refmap_BWA(in_dir, out_dir, BWA_path, pseudoref_full_path)
 
 # FILTER THE DBRS -- THIS REQUIRES A REVISION TO CREATE A FUNCTION IN assembled_DBR_filtering
 filterDBR(sample_list, dbrDict)
-'''
+
 sample_list = the samples from a given Library
 dbrDict = the DBR dictionary generated from that Library
 '''
