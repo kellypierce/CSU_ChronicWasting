@@ -11,7 +11,6 @@ from subprocess import call, Popen, PIPE
 import os as os
 from os import linesep, path, R_OK, X_OK
 import re
-from DBR_Parsing import *
 import string as string
 from string import Template, join
 import logging as logging
@@ -19,6 +18,9 @@ from logging import debug, critical, error, info
 import sys as sys
 import warnings
 import fnmatch
+import json
+import itertools
+import gzip
 
 def configureLogging(verbose = False):
     '''
@@ -104,12 +106,90 @@ uniformLengthTemplate = Template('%s -f $f -l $l -i $in_path -o $out_path' % tri
 
 ###############################################################################
 
+def R1_dict(fq_path, test_dict = False, save = None): 
+    print 'Creating {ID: (full seq, +, qual)} dictionary.'
+    R1 = {}
+    fq_line = 1
+    if fq_path.endswith('gz'):
+        openFxn = gzip.open
+    else:
+        openFxn = open
+        
+    with openFxn(fq_path, 'r') as r1:
+        for line in r1:
+
+            if fq_line == 1:
+                #print re.split('(\d[:|_]\d+[:|_]\d+[:|_]\d+)', line)
+                ID = re.split('(\d[:|_]\d+[:|_]\d+[:|_]\d+)', line)[1]
+                fq_line = 2
+            elif fq_line == 2:
+                seq = line
+                fq_line = 3
+            elif fq_line == 3:
+                fq_line = 4
+            elif fq_line == 4:
+                qual = line
+                R1[ID]=(seq, '+', qual)
+                fq_line = 1
+    if test_dict:
+        print 'Checking Read 1 dictionary format.'
+        x = itertools.islice(R1.iteritems(), 0, 4)
+        for key, value in x:
+            print key, value
+    if save:
+        print 'Writing dictionary to ' + save
+        with open(save, 'w') as fp:          
+            json.dump(R1, fp)
+
+def DBR_dict(fq_path, dbr_start, dbr_stop, test_dict = False, save = None):
+    # DBR is in read 2
+    # if merged, it will be the last -2 to -9 (inclusive) bases, starting with base 0 and counting from the end
+    # if not merged, it will be bases 2 to 9
+    if not checkFile(fq_path):
+        raise IOError("where is the input file: %s" % fq_path)
+    info('Creating {ID: dbr} dictionary from %s.' % fq_path)
+    dbr = {}
+    fq_line = 1
+    if fq_path.endswith('gz'):
+        openFxn = gzip.open
+    else:
+        openFxn = open
+    with openFxn(fq_path, 'r') as db:
+        for line in db:
+            if fq_line == 1:
+                ID = re.split('(\d[:|_]\d+[:|_]\d+[:|_]\d+)', line)[1]
+                fq_line = 2
+            elif fq_line == 2:
+                seq = list(line) # split the sequence line into a list
+                tag = ''.join(seq[dbr_start:dbr_stop])
+                dbr[ID] = tag
+                fq_line = 3
+            elif fq_line == 3:
+                fq_line = 4
+            elif fq_line == 4:
+                fq_line = 1
+    if test_dict:
+        print 'Checking DBR dictionary format.'
+        x = itertools.islice(dbr.iteritems(), 0, 4)
+        for key, value in x:
+            print key, value
+        #print dbr['8:1101:15808:1492'] # this is the first entry in /home/antolinlab/Downloads/CWD_RADseq/pear_merged_Library12_L8.assembled.fastq
+    if save:
+        fq_name = os.path.splitext(fq_path)[0]
+        print 'Writing dictionary to ' + save
+        with open(save, 'w') as fp:          
+            json.dump(dbr, fp)
+            
 def iterative_PEAR_assemble(in_dir, out_dir, out_name, extra_params, regexR1='*', regexR2='*'):
     files = os.listdir(in_dir)
+    #print(in_dir, files)
     for f in files:
+        info('Pear assembling %s' % f)
         if re.findall(regexR1, f):
+            info('Identified read 1 as %s' % f)
             forward = f
             reverse = re.sub(regexR1, regexR2, f)
+            info('Identified read 2 as %s' % reverse)
             PEAR_assemble(in_dir, forward, reverse, out_dir, out_name, extra_params)
 
 def PEAR_assemble(in_dir, forward, reverse, out_dir, out_name,  extra_params=None):
@@ -152,9 +232,9 @@ def iterative_FASTQ_quality_filter(directory, out_dir, out_name, q, p, read='*')
     files = os.listdir(directory)
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
-    info('Quality filtering files containing %s' % read)
-    info('Results saved to %s' % out_dir)
     for f in files:
+        info('Quality filtering %s' % f)
+        info('Results saved to %s' % out_dir)
         r2 = re.findall(read, f)
         if r2: 
             fileRoot = os.path.splitext(f)
@@ -170,35 +250,40 @@ def FASTQ_quality_filter(fq_in, fq_out, q, p, qualityFilter = qualityFilter):
     if not checkExe(qualityFilter):
         raise Exception("could not find %s in the filesystem for execution, is the environment setup correctly?" % qualityFilter)
     info("Quality filtering with FASTX Toolkit. Output file %s" % fq_out)
+    
+    # all the files will be saved as gzipped, so they need a .gz extension... but people (me) will probably forget to put gz in the file name
+    if 'gz' in fq_out:
+        out = fq_out
+    else:
+        out = fq_out + '.gz'
+    
     if fq_in.endswith('gz'): # chain a gz decompressor thread to fqf
-        commandLine = fqfStdinTemplate.substitute(q = q, p = p, output = fq_out)
+        commandLine = fqfStdinTemplate.substitute(q = q, p = p, output = out)
         debug(commandLine)
         zcatProcess = Popen('zcat %s' % fq_in, shell = True, stdout = subprocess.PIPE)
         fqfProcess = Popen(commandLine, shell = True, stdin = zcatProcess.stdout)
     else:
-        commandLine = fqfFileTemplate.substitute(q = q, p = p, output = fq_out, input = fq_in)
+        commandLine = fqfFileTemplate.substitute(q = q, p = p, output = out, input = fq_in)
         debug(commandLine)
         fqfProcess = Popen(commandLine,
                            shell = True) 
     fqfProcess.wait() 
 
-def iterative_DBR_dict(in_dir, seqType, save):
+def iterative_DBR_dict(in_dir, seqType, save, dbr_start, dbr_stop):
     #if not checkDir(in_dir):
     #    raise IOError("Input is not a directory: %s" % in_dir)
-    if seqType == 'pear':
-        # read the 8 bases at the end
-        dbr_start = -9
-        dbr_stop = None
-    elif seqType == 'read2':
+    if seqType == 'read2':
         warnings.warn('Expect directory containing only Read 2 files; any other files present in %s will be incorporated into DBR dictionary.' % in_dir)
         # read the 8 bases at the beginning
-        dbr_start = 0
-        dbr_stop = 9
+        #dbr_start = 0
+        #dbr_stop = 9
+    elif seqType == 'pear':
+        files = os.listdir(in_dir)
+        for f in files:
+            DBR_dict(f, dbr_start, dbr_stop, test_dict=True, save=save)
     else:
         raise IOError("Input sequence type specified as %s. Options are 'pear' or 'read2'." % seqType)
-    files = os.listdir(in_dir)
-    for f in files:
-    	DBR_dict(f, dbr_start, dbr_stop, test_dict=True, save=save)
+    
 
 ## TRIM R2 END OF MERGED SEQUENCE BEFORE DEMULTIPLEXING TO ENFORCE UNIFORM READ LENGTH?
 
@@ -226,7 +311,7 @@ def Trim(in_dir, out_dir, suffix, first_base, last_base=None):
             subprocess.call(trim_call, shell=True)
     return
 
-def iterative_Demultiplex(in_dir, barcode_file, out_dir, out_prefix):
+def iterative_Demultiplex(in_dir, barcode_dir, out_dir, out_prefix):
     #if not checkDir(in_dir):
     #    raise IOError("Input is not a directory: %s" % in_dir)
     #if not checkFile(barcode_file):
@@ -234,9 +319,14 @@ def iterative_Demultiplex(in_dir, barcode_file, out_dir, out_prefix):
 
     files = os.listdir(in_dir)
     for f in files:
+        sampleID = re.match(".*(\d{3}[a-z]?).*", f).groups()[0]
     	# will all the files in the directory be pear assemblies?
     	# if they aren't, how should we handle?
-		Demultiplex(f, barcode_file, out_dir, out_prefix)
+        bcs = os.listdir(barcode_dir)
+        for b in bcs:
+            if sampleID in b:
+                barcode_file = b
+                Demultiplex(f, barcode_file, out_dir, out_prefix)
 
 def Demultiplex(in_file, barcode_file, out_dir, out_prefix): 
 #	if not checkFile(in_file):
@@ -244,7 +334,7 @@ def Demultiplex(in_file, barcode_file, out_dir, out_prefix):
 #	if not checkFile(barcode_file):
 #        raise IOError("Where is the barcode file? %s" % barcode_file)   
     
-    prefix_path = out_dir + out_prefix
+    prefix_path = out_dir + '/' + out_prefix
 
     info('Demultiplexing %s with FASTX Toolkit; output files saved in %s' % (in_file, prefix_path))
         
@@ -264,9 +354,13 @@ def Demultiplex(in_file, barcode_file, out_dir, out_prefix):
 def denovo_Stacks(in_dir, denovo_path, stacks_executables, out_dir, m, n, b, D):    
     print 'Assembling sequences de novo using Stacks denovo_map.pl\n'
     
+    if not os.path.exists(out_dir):
+        os.makedirs(out_dir)
+    
     # Generate "-s" arguments to Stacks denovo_map.pl; trim out barcode and cut site sequences
     s_list=[]
     rm_unmatched = False
+    
     for i in os.listdir(in_dir):
         # don't proceed if the inputs don't have the proper extension
         assert '.fq' in i, "%s needs extension .fq for Stacks compatibility" % i
@@ -343,7 +437,22 @@ def refmap_BWA(in_dir, out_dir, BWA_path, pseudoref_full_path):
             print bwa_mem_call
             subprocess.call(bwa_mem_call, shell=True)
     return
+'''
+samtoolsPath =
+samtoolsView = Template('%s view -F $f -b -S -o $bam_out $sam_in' % samtools)
+samtoolsSort = Template('%s sort $bam_out $sort_out' % samtools)
+samtoolsIndex = Template('%s index $sort_in' % samtools)
+samtoolsMpileup = Template('%s mpileup -DuIf $reference -C50 ')
+bcftoolsView
 
+def callGeno(f, bam_out, sam_in):
+    for i in os.listdir(in_dir):
+        samtools view -F 4 -b -S -o sample1.bam sample1.sam
+    samtools sort sample1.bam sample1.sorted
+    samtools index sample1.sorted.bam
+    samtools mpileup -DuIf /path/to/pseudoreference.fa -C50 /path/to/all/samples/*.sorted.bam > pseudoref_mapped_genotypes.bcf
+    bcftools view -v -c -g pseudoref_mapped_genotypes.bcf > pseudoref_mapped_genotypes.vcf
+'''
 ''' Deprecated
 def FASTQ_R1_R2_merge(in_dir, fq_r1, fq_r2, fq_out):
     print 'Taking reverse complement of read 2 with FASTX Toolkit.\n'
