@@ -11,11 +11,12 @@ import json
 import re
 import itertools
 import gzip
+from integrated_denovo_pipeline import checkFile
 
 ## New version 23 September 2015: DBR and R1 dictionaries made directly from FASTQ files
 ## No need for subprocess calls to SED for FASTQ file parsing
         
-def R1_dict(fq_path, test_dict = False, save_path = None): 
+def R1_dict(fq_path, test_dict = False, save = None): 
     print 'Creating {ID: (full seq, +, qual)} dictionary.'
     R1 = {}
     fq_line = 1
@@ -39,9 +40,9 @@ def R1_dict(fq_path, test_dict = False, save_path = None):
         x = itertools.islice(R1.iteritems(), 0, 4)
         for key, value in x:
             print key, value
-    if save_path:
-        print 'Writing dictionary to ' + save_path
-        with open(save_path, 'w') as fp:          
+    if save:
+        print 'Writing dictionary to ' + save
+        with open(save, 'w') as fp:          
             json.dump(R1, fp)
 
 def DBR_dict(fq_path, dbr_start, dbr_stop, test_dict = False, save = None):
@@ -76,9 +77,8 @@ def DBR_dict(fq_path, dbr_start, dbr_stop, test_dict = False, save = None):
         #print dbr['8:1101:15808:1492'] # this is the first entry in /home/antolinlab/Downloads/CWD_RADseq/pear_merged_Library12_L8.assembled.fastq
     if save:
     	fq_name = os.path.splitext(fq_path)[0]
-    	save_path = save + '_DBRdict'
-        print 'Writing dictionary to ' + save_path
-        with open(save_path, 'w') as fp:          
+        print 'Writing dictionary to ' + save
+        with open(save, 'w') as fp:          
             json.dump(dbr, fp)
 
 # test functions:
