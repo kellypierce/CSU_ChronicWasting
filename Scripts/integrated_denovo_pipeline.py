@@ -74,14 +74,23 @@ def checkExe(filename):
 configureLogging(False)
 
 # paths to executables
-pearPath = '/home/antolinlab//Downloads/PEAR/src/pear'
-qualityFilter = '/home/antolinlab/Downloads/fastx_toolkit-0.0.14/src/fastq_quality_filter/fastq_quality_filter'
-trimmer = '/home/antolinlab/Downloads/fastx_toolkit-0.0.14/src/fastx_trimmer'
-demultiplexer = '/home/antolinlab/Downloads/fastx_toolkit-0.0.14/scripts/fastx_barcode_splitter.pl'
-denovo_path = '/home/antolinlab/Downloads/stacks-1.31/scripts/denovo_map.pl '
-stacks_executables = '/home/antolinlab/Downloads/stacks-1.31/scripts'
+#pearPath = '/home/antolinlab//Downloads/PEAR/src/pear'
+#qualityFilter = '/home/antolinlab/Downloads/fastx_toolkit-0.0.14/src/fastq_quality_filter/fastq_quality_filter'
+#trimmer = '/home/antolinlab/Downloads/fastx_toolkit-0.0.14/src/fastx_trimmer'
+#demultiplexer = '/home/antolinlab/Downloads/fastx_toolkit-0.0.14/scripts/fastx_barcode_splitter.pl'
+#denovo_path = '/home/antolinlab/Downloads/stacks-1.31/scripts/denovo_map.pl '
+#stacks_executables = '/home/antolinlab/Downloads/stacks-1.31/scripts'
 #stacks =
 #BWA =
+
+# paths to executables on cluster (all paths are in ~./bashrc)
+pearPath = 'pear-0.9.6-bin-64'
+qualityFilter = 'fastq_quality_filter'
+trimmer = 'fastx_trimmer'
+demultiplexer = 'fastx_barcode_splitter'
+denovo_path = 'denovo_map.pl'
+stacks_executables = 'opt/software/stacks-1.26/scripts'
+BWA = 'bwa'
 
 # PEAR assembly
 pearSimpleTemplate = Template('%s -f $f -r $r -o $o' % pearPath)
@@ -203,8 +212,8 @@ def PEAR_assemble(in_dir, forward, reverse, out_dir, out_name,  extra_params=Non
     if not reverse.endswith(".fastq.gz"):
         warnings.warn("Expect raw sequence data in .fastq.gz format")
         
-    if not checkExe(pearPath):
-        raise Exception("could not find %s in the filesystem for execution, is the environment setup correctly?" % pearPath)
+    #if not checkExe(pearPath):
+    #    raise Exception("could not find %s in the filesystem for execution, is the environment setup correctly?" % pearPath)
     info('Merging overlapping reads %s and %s with PEAR.' % (forward, reverse))
     
     if not os.path.exists(out_dir):
