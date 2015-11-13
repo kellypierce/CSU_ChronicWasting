@@ -27,12 +27,12 @@ from setuptools.extension import Library
 #sed -n '2~4p' pear_merged_Library12_L8.assembled.fastq | rev | cut -c 11-14 | sort | uniq -c | sort -nr -k 1 >> pear_merged_Library12_L8_assembled_R2cut_check.txt
 
 # PATHS TO EXECUTABLES
-denovo_path = '/home/antolinlab/Downloads/stacks-1.31/scripts/denovo_map.pl '
-stacks_executables = '/home/antolinlab/Downloads/stacks-1.31/scripts'
+#denovo_path = '/home/antolinlab/Downloads/stacks-1.31/scripts/denovo_map.pl '
+#stacks_executables = '/home/antolinlab/Downloads/stacks-1.31/scripts'
 
 # PATHS TO INPUTS AND OUTPUTS
 # user only needs to specify parent directory; the remaining directories should be automatically generated
-parentDir = '/home/antolinlab/Downloads/CWD_RADseq/'
+parentDir = '/home/pierce/CWD_RADseq/raw/'
 pearInDir = parentDir
 pearOutDir = parentDir + '/pear_merged/'
 filterInDir = pearOutDir
