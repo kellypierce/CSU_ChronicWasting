@@ -21,6 +21,7 @@ import fnmatch
 import json
 import itertools
 import gzip
+import multiprocessing as mp
 
 def configureLogging(verbose = False):
     '''
@@ -192,15 +193,15 @@ def DBR_dict(fq_path, dbr_start, dbr_stop, test_dict = False, save = None):
 def iterative_PEAR_assemble(in_dir, out_dir, out_name, extra_params, regexR1='*', regexR2='*'):
     files = os.listdir(in_dir)
     #print(in_dir, files)
-    for f in files:
-        info('Pear assembling %s' % f)
-        if re.findall(regexR1, f):
-            info('Identified read 1 as %s' % f)
-            forward = f
-            reverse = re.sub(regexR1, regexR2, f)
-            info('Identified read 2 as %s' % reverse)
-            PEAR_assemble(in_dir, forward, reverse, out_dir, out_name, extra_params)
-
+    read1 = fnmatch.filter(files, '*'+regexR1+'*')
+    pool = mp.Pool(processes = 6)
+    merged = [pool.apply_async(PEAR_assemble, args=(in_dir, 
+                                                    r1, 
+                                                    re.sub(regexR1, regexR2, r1), 
+                                                    out_dir, 
+                                                    out_name, 
+                                                    extra_params)) for r1 in read1]
+    
 def PEAR_assemble(in_dir, forward, reverse, out_dir, out_name,  extra_params=None):
     if not checkFile(in_dir + forward):
         raise IOError("Where is the forward read file: %s" % forward)
@@ -223,6 +224,8 @@ def PEAR_assemble(in_dir, forward, reverse, out_dir, out_name,  extra_params=Non
     out_suffix = re.sub(r'R\d{1}', '', out_split[0])
     out_full = out_dir + out_name + out_suffix
     
+    info('Identified read 1 as %s' % forward)
+    info('Identified read 2 as %s' % reverse)
     info('Saving outputs to %s' % out_full)
     
     if extra_params:
@@ -234,8 +237,9 @@ def PEAR_assemble(in_dir, forward, reverse, out_dir, out_name,  extra_params=Non
         commandLine = pearSimpleTemplate.substitute(f = in_dir + forward,
                                                          r = in_dir + reverse,
                                                          o = out_full)
-    pearProcess = Popen(commandLine, shell=True)
-    pearProcess.wait()
+    subprocess.call(commandLine, shell=True)
+    #pearProcess = Popen(commandLine, shell=True)
+    #pearProcess.wait()
 
 def iterative_FASTQ_quality_filter(directory, out_dir, out_name, q, p, read='*'):
     files = os.listdir(directory)
