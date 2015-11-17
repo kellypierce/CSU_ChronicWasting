@@ -183,14 +183,12 @@ def DBR_dict(fq_path, dbr_start, dbr_stop, test_dict = False, save = None):
 def iterative_PEAR_assemble(in_dir, out_dir, out_name, extra_params, regexR1='*', regexR2='*'):
     files = os.listdir(in_dir)
     #print(in_dir, files)
-    for f in files:
-        info('Pear assembling %s' % f)
-        if re.findall(regexR1, f):
-            info('Identified read 1 as %s' % f)
-            forward = f
-            reverse = re.sub(regexR1, regexR2, f)
-            info('Identified read 2 as %s' % reverse)
-            PEAR_assemble(in_dir, forward, reverse, out_dir, out_name, extra_params)
+    read1 = fnmatch.filter(files, '*'+regexR1+'*')
+    for r in read1:
+        info('Identified read 1 as %s' % r)
+        reverse = re.sub(regexR1, regexR2, r)
+        info('Identified read 2 as %s' % reverse) # should probably check that this file exists before proceeding...
+        #PEAR_assemble(in_dir, forward, reverse, out_dir, out_name, extra_params)
 
 def PEAR_assemble(in_dir, forward, reverse, out_dir, out_name,  extra_params=None):
     if not checkFile(in_dir + forward):
