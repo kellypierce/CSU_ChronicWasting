@@ -23,66 +23,7 @@ import itertools
 import gzip
 import multiprocessing as mp
 
-def configureLogging(verbose = False):
-    '''
-    setup the logger
-    '''
-    logger = logging.getLogger()
-    logger.handlers = []
-    logger.setLevel(logging.DEBUG if verbose else logging.INFO)
-    consoleLogHandler = logging.StreamHandler()
-
-    # do not need colors if logging to a non-shell
-    if sys.stdout.isatty():
-        consoleLogHandler.setFormatter(logging.Formatter("\033[93m%(filename)s:%(lineno)s\033[0m: %(message)s"))
-    else:
-        consoleLogHandler.setFormatter(logging.Formatter("%(message)s"))
-    logger.addHandler(consoleLogHandler)
-
-def checkFile(filename):
-    '''
-    return true if this is a file and is readable on the current filesystem
-    '''
-    try:
-        if os.path.exists(os.path.abspath(filename)) and os.path.isfile(os.path.abspath(filename)) and os.access(os.path.abspath(filename), R_OK):
-            return True
-        fullPath = string.join(os.getcwd(), filename[1:])
-        return os.path.exists(fullPath) and os.path.isfile(fullPath) and os.access(fullPath, R_OK)
-    except IOError:
-        return False
-        
-'''
-def checkDir(dirname):
-    #return true if this is a directory and is readable on the current filesystem
-    try:
-        if os.path.exists(os.path.abspath(dirname)) and os.path.isdir(os.path.abspath(dirname)) and os.access(os.path.abspath(dirname), R_OK):
-            return True
-    except IOError:
-        return False
-'''
-
-def checkExe(filename):
-    '''
-    return true if this is an executable file on the current filesystem
-    '''
-    if not isinstance(filename, str):
-        raise TypeError("need a string, got a %s" % type(filename))
-    return (os.path.exists(filename) and os.path.isfile(filename) and os.access(filename, X_OK))
-
 ################################## GLOBALS ####################################
-
-# run configureLogging first
-configureLogging(False)
-
-# paths to executables
-#pearPath = '/home/antolinlab//Downloads/PEAR/src/pear'
-#qualityFilter = '/home/antolinlab/Downloads/fastx_toolkit-0.0.14/src/fastq_quality_filter/fastq_quality_filter'
-#trimmer = '/home/antolinlab/Downloads/fastx_toolkit-0.0.14/src/fastx_trimmer'
-#demultiplexer = '/home/antolinlab/Downloads/fastx_toolkit-0.0.14/scripts/fastx_barcode_splitter.pl'
-#denovo_path = '/home/antolinlab/Downloads/stacks-1.31/scripts/denovo_map.pl '
-#stacks_executables = '/home/antolinlab/Downloads/stacks-1.31/scripts'
-#stacks =
-#BWA =
 
 # paths to executables on cluster (all paths are in ~./bashrc)
 pearPath = 'pear-0.9.6-bin-64'
@@ -116,40 +57,69 @@ uniformLengthTemplate = Template('%s -f $f -l $l -i $in_path -o $out_path' % tri
 
 ###############################################################################
 
-def R1_dict(fq_path, test_dict = False, save = None): 
-    print 'Creating {ID: (full seq, +, qual)} dictionary.'
-    R1 = {}
-    fq_line = 1
-    if fq_path.endswith('gz'):
-        openFxn = gzip.open
-    else:
-        openFxn = open
-        
-    with openFxn(fq_path, 'r') as r1:
-        for line in r1:
+def configureLogging(verbose = False):
+    '''
+    setup the logger
+    '''
+    logger = logging.getLogger()
+    logger.handlers = []
+    logger.setLevel(logging.DEBUG if verbose else logging.INFO)
+    consoleLogHandler = logging.StreamHandler()
 
-            if fq_line == 1:
-                #print re.split('(\d[:|_]\d+[:|_]\d+[:|_]\d+)', line)
-                ID = re.split('(\d[:|_]\d+[:|_]\d+[:|_]\d+)', line)[1]
-                fq_line = 2
-            elif fq_line == 2:
-                seq = line
-                fq_line = 3
-            elif fq_line == 3:
-                fq_line = 4
-            elif fq_line == 4:
-                qual = line
-                R1[ID]=(seq, '+', qual)
-                fq_line = 1
-    if test_dict:
-        print 'Checking Read 1 dictionary format.'
-        x = itertools.islice(R1.iteritems(), 0, 4)
-        for key, value in x:
-            print key, value
-    if save:
-        print 'Writing dictionary to ' + save
-        with open(save, 'w') as fp:          
-            json.dump(R1, fp)
+    # do not need colors if logging to a non-shell
+    if sys.stdout.isatty():
+        consoleLogHandler.setFormatter(logging.Formatter("\033[93m%(filename)s:%(lineno)s\033[0m: %(message)s"))
+    else:
+        consoleLogHandler.setFormatter(logging.Formatter("%(message)s"))
+    logger.addHandler(consoleLogHandler)
+
+# run configureLogging first
+configureLogging(False)
+
+def checkFile(filename):
+    '''
+    return true if this is a file and is readable on the current filesystem
+    '''
+    try:
+        if os.path.exists(os.path.abspath(filename)) and os.path.isfile(os.path.abspath(filename)) and os.access(os.path.abspath(filename), R_OK):
+            return True
+        fullPath = string.join(os.getcwd(), filename[1:])
+        return os.path.exists(fullPath) and os.path.isfile(fullPath) and os.access(fullPath, R_OK)
+    except IOError:
+        return False
+        
+'''
+def checkDir(dirname):
+    #return true if this is a directory and is readable on the current filesystem
+    try:
+        if os.path.exists(os.path.abspath(dirname)) and os.path.isdir(os.path.abspath(dirname)) and os.access(os.path.abspath(dirname), R_OK):
+            return True
+    except IOError:
+        return False
+'''
+
+def checkExe(filename):
+    '''
+    return true if this is an executable file on the current filesystem
+    '''
+    if not isinstance(filename, str):
+        raise TypeError("need a string, got a %s" % type(filename))
+    return (os.path.exists(filename) and os.path.isfile(filename) and os.access(filename, X_OK))
+
+def iterative_DBR_dict(in_dir, seqType, save, dbr_start, dbr_stop):
+    #if not checkDir(in_dir):
+    #    raise IOError("Input is not a directory: %s" % in_dir)
+    if seqType == 'read2':
+        warnings.warn('Expect directory containing only Read 2 files; any other files present in %s will be incorporated into DBR dictionary.' % in_dir)
+        # read the 8 bases at the beginning
+        #dbr_start = 0
+        #dbr_stop = 9
+    elif seqType == 'pear':
+        files = os.listdir(in_dir)
+        for f in files:
+            DBR_dict(f, dbr_start, dbr_stop, test_dict=True, save=save)
+    else:
+        raise IOError("Input sequence type specified as %s. Options are 'pear' or 'read2'." % seqType)
 
 def DBR_dict(fq_path, dbr_start, dbr_stop, test_dict = False, save = None):
     # DBR is in read 2
@@ -195,12 +165,16 @@ def iterative_PEAR_assemble(in_dir, out_dir, out_name, extra_params, regexR1='*'
     #print(in_dir, files)
     read1 = fnmatch.filter(files, '*'+regexR1+'*')
     pool = mp.Pool(processes = 6)
-    merged = [pool.apply_async(PEAR_assemble, args=(in_dir, 
+    mergedProcess = [mp.Process(PEAR_assemble, args=(in_dir, 
                                                     r1, 
                                                     re.sub(regexR1, regexR2, r1), 
                                                     out_dir, 
                                                     out_name, 
                                                     extra_params)) for r1 in read1]
+    for mP in mergedProcess:
+        mp.start()
+    for mP in mergedProcess:
+        mp.join()
     
 def PEAR_assemble(in_dir, forward, reverse, out_dir, out_name,  extra_params=None):
     if not checkFile(in_dir + forward):
@@ -281,22 +255,6 @@ def FASTQ_quality_filter(fq_in, fq_out, q, p, qualityFilter = qualityFilter):
         fqfProcess = Popen(commandLine,
                            shell = True) 
     fqfProcess.wait() 
-
-def iterative_DBR_dict(in_dir, seqType, save, dbr_start, dbr_stop):
-    #if not checkDir(in_dir):
-    #    raise IOError("Input is not a directory: %s" % in_dir)
-    if seqType == 'read2':
-        warnings.warn('Expect directory containing only Read 2 files; any other files present in %s will be incorporated into DBR dictionary.' % in_dir)
-        # read the 8 bases at the beginning
-        #dbr_start = 0
-        #dbr_stop = 9
-    elif seqType == 'pear':
-        files = os.listdir(in_dir)
-        for f in files:
-            DBR_dict(f, dbr_start, dbr_stop, test_dict=True, save=save)
-    else:
-        raise IOError("Input sequence type specified as %s. Options are 'pear' or 'read2'." % seqType)
-    
 
 ## TRIM R2 END OF MERGED SEQUENCE BEFORE DEMULTIPLEXING TO ENFORCE UNIFORM READ LENGTH?
 
