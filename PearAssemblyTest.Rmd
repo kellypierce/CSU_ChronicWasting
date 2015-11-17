@@ -79,9 +79,14 @@ sed -n '2~4p' pear_merged_Library12_L8.assembled.fastq | awk '{print length}'
 
 ```{r}
 pear <- read.table('~/Downloads/CWD_RADseq/pear_merged_Library12_L8_assembled_seq_length.txt')
-hist(pear[,1], xlab='Sequence Length', main='', freq = F)
+
+par(mfrow=c(1,2))
+hist(pear[,1], xlab='Sequence Length', main='', freq = F, xlim=c(180,310))
+hist(pear[,1]-23, xlab='Sequence Length Post-Trimming', main ='', freq=F, xlim=c(180,310))
 
 ```
+
+How many bases will we lose if
 
 ## Recovery of expected cutsites
 
