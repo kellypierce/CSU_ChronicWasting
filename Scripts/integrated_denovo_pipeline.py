@@ -165,16 +165,16 @@ def iterative_PEAR_assemble(in_dir, out_dir, out_name, extra_params, regexR1='*'
     #print(in_dir, files)
     read1 = fnmatch.filter(files, '*'+regexR1+'*')
     pool = mp.Pool(processes = 6)
-    mergedProcess = [mp.Process(PEAR_assemble, args=(in_dir, 
+    mergedProcess = [mp.Process(target=PEAR_assemble, args=(in_dir, 
                                                     r1, 
                                                     re.sub(regexR1, regexR2, r1), 
                                                     out_dir, 
                                                     out_name, 
                                                     extra_params)) for r1 in read1]
     for mP in mergedProcess:
-        mp.start()
+        mP.start()
     for mP in mergedProcess:
-        mp.join()
+        mP.join()
     
 def PEAR_assemble(in_dir, forward, reverse, out_dir, out_name,  extra_params=None):
     if not checkFile(in_dir + forward):
