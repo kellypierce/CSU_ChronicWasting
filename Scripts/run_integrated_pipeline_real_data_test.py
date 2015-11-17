@@ -32,7 +32,7 @@ stacks_executables = '/home/antolinlab/Downloads/stacks-1.31/scripts'
 
 # PATHS TO INPUTS AND OUTPUTS
 # user only needs to specify parent directory; the remaining directories should be automatically generated
-parentDir = '/home/antolinlab/Downloads/CWD_RADseq/'
+parentDir = '/home/antolinlab/Downloads/CWD_RADseq/raw/'
 pearInDir = parentDir
 pearOutDir = parentDir + '/pear_merged/'
 filterInDir = pearOutDir
@@ -59,6 +59,7 @@ iterative_PEAR_assemble(in_dir = pearInDir,
                         extra_params = extra_params,
                         regexR1='R1', regexR2='R2')
 
+'''
 # QUALITY FILTER PEAR ASSEMBLED DATA
 out_name = '.qual_filtered' # gets appended to input file name
 q = 30
@@ -105,6 +106,7 @@ denovo_Stacks(in_dir = stacksInDir,
               n = 2, 
               b = 1, 
               D = '_initial_assembly')
+'''
 '''
 # GENERATE THE PSEUDOREFERENCE GENOME
 GeneratePseudoref(in_dir, out_dir, out_name, BWA_path)
