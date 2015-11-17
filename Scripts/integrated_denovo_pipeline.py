@@ -164,7 +164,6 @@ def iterative_PEAR_assemble(in_dir, out_dir, out_name, extra_params, regexR1='*'
     files = os.listdir(in_dir)
     #print(in_dir, files)
     read1 = fnmatch.filter(files, '*'+regexR1+'*')
-    pool = mp.Pool(processes = 6)
     mergedProcess = [mp.Process(target=PEAR_assemble, args=(in_dir, 
                                                     r1, 
                                                     re.sub(regexR1, regexR2, r1), 
@@ -220,15 +219,20 @@ def iterative_FASTQ_quality_filter(directory, out_dir, out_name, q, p, read='*')
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
     for f in files:
-        info('Quality filtering %s' % f)
-        info('Results saved to %s' % out_dir)
         r2 = re.findall(read, f)
+        filterProcess = []
         if r2: 
+            info('Quality filtering %s' % f)
+            info('Results saved to %s' % out_dir)
             fileRoot = os.path.splitext(f)
             out_file = directory + fileRoot[0] + out_name
             in_file = directory + f
-            FASTQ_quality_filter(in_file, out_file, q, p)
- 
+            filterProcess.append(mp.Process(target=FASTQ_quality_filter, args=(in_file, out_file, q, p)))
+    for fP in filterProcess:
+        fP.start()
+    for fP in filterProcess:
+        fP.join()
+
 def FASTQ_quality_filter(fq_in, fq_out, q, p, qualityFilter = qualityFilter):
     if not checkFile(fq_in):
         raise IOError("where is the input file: %s" % fq_in)
@@ -362,7 +366,6 @@ def denovo_Stacks(in_dir, denovo_path, stacks_executables, out_dir, m, n, b, D):
     ### Add a line to move the files!
     
     return
-
 
 def GeneratePseudoref(in_dir, out_dir, out_name, BWA_path):    
     print "Preparing pseudoreference genome by extracting Stacks denovo consensus sequence.\n"
