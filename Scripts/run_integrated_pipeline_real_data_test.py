@@ -34,7 +34,7 @@ from setuptools.extension import Library
 # user only needs to specify parent directory; the remaining directories should be automatically generated
 parentDir = '/home/pierce/CWD_RADseq/raw/'
 pearInDir = parentDir
-pearOutDir = parentDir + '/pear_merged/'
+pearOutDir = parentDir + '/pear_merged_parallel/'
 filterInDir = pearOutDir
 filterOutDir =  parentDir + '/qual_filtered/'
 dbrInDir = filterOutDir
