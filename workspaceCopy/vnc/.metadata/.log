@@ -1,0 +1,17 @@
+
+!ENTRY org.python.pydev.shared_core 4 4 2015-11-20 13:57:28.474
+!MESSAGE /home/antolinlab/workspace/vnc/.metadata/.plugins/com.python.pydev.analysis/python_v1_dfi1k6jaci7jvmiyvi91i7pah/python.pydevsysteminfo (No such file or directory)
+!STACK 0
+java.io.FileNotFoundException: /home/antolinlab/workspace/vnc/.metadata/.plugins/com.python.pydev.analysis/python_v1_dfi1k6jaci7jvmiyvi91i7pah/python.pydevsysteminfo (No such file or directory)
+	at java.io.FileOutputStream.open(Native Method)
+	at java.io.FileOutputStream.<init>(FileOutputStream.java:221)
+	at java.io.FileOutputStream.<init>(FileOutputStream.java:171)
+	at com.python.pydev.analysis.additionalinfo.AbstractAdditionalTokensInfo.save(AbstractAdditionalTokensInfo.java:690)
+	at com.python.pydev.analysis.additionalinfo.AbstractAdditionalTokensInfo.save(AbstractAdditionalTokensInfo.java:684)
+	at com.python.pydev.analysis.additionalinfo.AbstractAdditionalInfoWithBuild.save(AbstractAdditionalInfoWithBuild.java:205)
+	at com.python.pydev.analysis.additionalinfo.AbstractAdditionalDependencyInfo.updateKeysIfNeededAndSave(AbstractAdditionalDependencyInfo.java:282)
+	at com.python.pydev.analysis.system_info_builder.InterpreterInfoBuilder.syncInfoToPythonPath(InterpreterInfoBuilder.java:151)
+	at com.python.pydev.analysis.system_info_builder.InterpreterInfoBuilder.syncInfoToPythonPath(InterpreterInfoBuilder.java:79)
+	at org.python.pydev.editor.codecompletion.revisited.SynchSystemModulesManager.synchronizeManagerToNameToInfoPythonpath(SynchSystemModulesManager.java:390)
+	at org.python.pydev.editor.codecompletion.revisited.SyncSystemModulesManagerScheduler$SynchJob.run(SyncSystemModulesManagerScheduler.java:261)
+	at org.eclipse.core.internal.jobs.Worker.run(Worker.java:54)
