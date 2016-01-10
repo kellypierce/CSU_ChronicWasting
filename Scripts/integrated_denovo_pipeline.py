@@ -117,11 +117,12 @@ def iterative_DBR_dict(in_dir, seqType, save, dbr_start, dbr_stop):
     elif seqType == 'pear':
         files = os.listdir(in_dir)
         for f in files:
-            DBR_dict(f, dbr_start, dbr_stop, test_dict=True, save=save)
+	    inFile = in_dir + f
+            DBR_dict(inFile, dbr_start, dbr_stop, test_dict=True, save=save, f=f)
     else:
         raise IOError("Input sequence type specified as %s. Options are 'pear' or 'read2'." % seqType)
 
-def DBR_dict(fq_path, dbr_start, dbr_stop, test_dict = False, save = None):
+def DBR_dict(fq_path, dbr_start, dbr_stop, test_dict = False, save = None, f=None):
     # DBR is in read 2
     # if merged, it will be the last -2 to -9 (inclusive) bases, starting with base 0 and counting from the end
     # if not merged, it will be bases 2 to 9
@@ -155,9 +156,12 @@ def DBR_dict(fq_path, dbr_start, dbr_stop, test_dict = False, save = None):
             print key, value
         #print dbr['8:1101:15808:1492'] # this is the first entry in /home/antolinlab/Downloads/CWD_RADseq/pear_merged_Library12_L8.assembled.fastq
     if save:
-        fq_name = os.path.splitext(fq_path)[0]
-        print 'Writing dictionary to ' + save
-        with open(save, 'w') as fp:          
+        if not os.path.exists(save):
+		os.makedirs(save)
+	fq_name = os.path.splitext(f)[0]
+	fq_dbr_out = save + fq_name + '.json'
+        print 'Writing dictionary to ' + fq_dbr_out
+        with open(fq_dbr_out, 'w') as fp:          
             json.dump(dbr, fp)
             
 def iterative_PEAR_assemble(in_dir, out_dir, out_name, extra_params, regexR1='*', regexR2='*'):
@@ -218,16 +222,17 @@ def iterative_FASTQ_quality_filter(directory, out_dir, out_name, q, p, read='*')
     files = os.listdir(directory)
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
+    filterProcess = []
     for f in files:
         r2 = re.findall(read, f)
-        filterProcess = []
         if r2: 
+            fileRoot = os.path.splitext(f)
+            # untested: file path for outputs. they went to the wrong place in part3, so I fixed what I thought was the bug in the file path, but just moved the data to the expected directory manually isntead of re-running
+            out_file = out_dir + fileRoot[0] + out_name
+            in_file = directory + f
             info('Quality filtering %s' % f)
             info('Results saved to %s' % out_dir)
-            fileRoot = os.path.splitext(f)
-            out_file = directory + fileRoot[0] + out_name
-            in_file = directory + f
-            filterProcess.append(mp.Process(target=FASTQ_quality_filter, args=(in_file, out_file, q, p)))
+	    filterProcess.append(mp.Process(target=FASTQ_quality_filter, args=(in_file, out_file, q, p)))
     for fP in filterProcess:
         fP.start()
     for fP in filterProcess:
@@ -238,8 +243,8 @@ def FASTQ_quality_filter(fq_in, fq_out, q, p, qualityFilter = qualityFilter):
         raise IOError("where is the input file: %s" % fq_in)
     if not fq_in.endswith("gz"):
         warnings.warn("prefer to pass compressed files, consider gzipping the inputs")
-    if not checkExe(qualityFilter):
-        raise Exception("could not find %s in the filesystem for execution, is the environment setup correctly?" % qualityFilter)
+    #if not checkExe(qualityFilter):
+    #    raise Exception("could not find %s in the filesystem for execution, is the environment setup correctly?" % qualityFilter)
     info("Quality filtering with FASTX Toolkit. Output file %s" % fq_out)
     
     # all the files will be saved as gzipped, so they need a .gz extension... but people (me) will probably forget to put gz in the file name
