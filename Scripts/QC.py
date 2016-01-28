@@ -62,8 +62,8 @@ def run_FastQC(directory, out_name):
 		fastqc_call = '/opt/software/FastQC/fastqc ' + directory + f + " -o " + out_dir
 		subprocess.call(fastqc_call, shell=True)
 
-#barcode_r1('/home/antolinlab/Downloads/CWD_RADseq/', 'barcode_check')
-#cutsite_r1('/home/antolinlab/Downloads/CWD_RADseq/', 'cutsite_check')
-#cutsite_r2('/home/antolinlab/Downloads/CWD_RADseq/', 'cutsite_r2_check')
-#degeneracy_r2('/home/antolinlab/Downloads/CWD_RADseq/', 'degeneracy_check')
-
+barcode_r1('/home/antolinlab/Downloads/CWD_RADseq/', 'barcode_check')
+cutsite_r1('/home/antolinlab/Downloads/CWD_RADseq/', 'cutsite_check')
+cutsite_r2('/home/antolinlab/Downloads/CWD_RADseq/', 'cutsite_r2_check')
+degeneracy_r2('/home/antolinlab/Downloads/CWD_RADseq/', 'degeneracy_check')
+run_FastQC('/home/antolinlab/Downloads/CWD_RADseq/', 'fastQC')
