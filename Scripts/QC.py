@@ -63,8 +63,8 @@ def run_FastQC(directory, out_name):
 		subprocess.call(fastqc_call, shell=True)
 
 # data on correns cluster
-barcode_r1('~/CWD_RADseq/', 'barcode_check')
-cutsite_r1('~/CWD_RADseq/', 'cutsite_check')
-cutsite_r2('~/CWD_RADseq/', 'cutsite_r2_check')
-degeneracy_r2('~/CWD_RADseq/', 'degeneracy_check')
-run_FastQC('~/CWD_RADseq/', 'fastQC')
+barcode_r1('/home/pierce/CWD_RADseq/', 'barcode_check')
+cutsite_r1('/home/pierce/CWD_RADseq/', 'cutsite_check')
+cutsite_r2('/home/pierce/CWD_RADseq/', 'cutsite_r2_check')
+degeneracy_r2('/home/pierce/CWD_RADseq/', 'degeneracy_check')
+run_FastQC('/home/pierce/CWD_RADseq/', 'fastQC')
