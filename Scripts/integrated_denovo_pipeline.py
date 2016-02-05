@@ -300,16 +300,17 @@ def iterative_Demultiplex(in_dir, barcode_dir, out_dir, out_prefix):
     #pdb.set_trace()
     files = os.listdir(in_dir)
     for f in files:
-        sampleID = re.match(".*(Library\d{2,3}).*", f).groups()[0]
+        sampleID_match = re.match(".*(Library\d{2,3}).*", f)
         #sampleID = re.match(".*(\d{3}[a-z]?).*", f).groups()[0]
-    	# will all the files in the directory be pear assemblies?
-    	# if they aren't, how should we handle?
-        bcs = os.listdir(barcode_dir)
-        for b in bcs:
-            if sampleID in b:
-                barcode_file = barcode_dir + '/' + b
-                in_f = in_dir + '/' + f
-                Demultiplex(in_f, barcode_file, out_dir, out_prefix)
+        if sampleID_match: # if we get a match
+            sampleID = sampleID_match.groups()[0] # extract that match
+            bcs = os.listdir(barcode_dir)
+            for b in bcs:
+                if sampleID in b:
+                    barcode_file = barcode_dir + '/' + b
+                    in_f = in_dir + '/' + f
+                    Demultiplex(in_f, barcode_file, out_dir, out_prefix)
+                
 
 def Demultiplex(in_file, barcode_file, out_dir, out_prefix): 
 #	if not checkFile(in_file):
