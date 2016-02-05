@@ -30,7 +30,7 @@ import pdb
 pearPath = 'pear-0.9.6-bin-64'
 qualityFilter = 'fastq_quality_filter'
 trimmer = 'fastx_trimmer'
-demultiplexer = 'fastx_barcode_splitter'
+demultiplexer = 'fastx_barcode_splitter.pl'
 denovo_path = 'denovo_map.pl'
 stacks_executables = 'opt/software/stacks-1.26/scripts'
 BWA = 'bwa'
