@@ -307,7 +307,7 @@ def iterative_Demultiplex(in_dir, barcode_dir, out_dir, out_prefix):
         bcs = os.listdir(barcode_dir)
         for b in bcs:
             if sampleID in b:
-                barcode_file = b
+                barcode_file = barcode_dir + '/' + b
                 in_f = in_dir + '/' + f
                 Demultiplex(in_f, barcode_file, out_dir, out_prefix)
 
