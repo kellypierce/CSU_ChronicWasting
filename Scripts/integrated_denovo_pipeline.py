@@ -22,6 +22,7 @@ import json
 import itertools
 import gzip
 import multiprocessing as mp
+import pdb
 
 ################################## GLOBALS ####################################
 
@@ -296,10 +297,11 @@ def iterative_Demultiplex(in_dir, barcode_dir, out_dir, out_prefix):
     #    raise IOError("Input is not a directory: %s" % in_dir)
     #if not checkFile(barcode_file):
     #    raise IOError("Where is the barcode file? %s" % barcode_file)
-
+    #pdb.set_trace()
     files = os.listdir(in_dir)
     for f in files:
-        sampleID = re.match(".*(\d{3}[a-z]?).*", f).groups()[0]
+        sampleID = re.match(".*(Library\d{2,3}).*", f).groups()[0]
+        #sampleID = re.match(".*(\d{3}[a-z]?).*", f).groups()[0]
     	# will all the files in the directory be pear assemblies?
     	# if they aren't, how should we handle?
         bcs = os.listdir(barcode_dir)
