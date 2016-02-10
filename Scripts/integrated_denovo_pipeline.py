@@ -285,10 +285,10 @@ def Trim(in_dir, out_dir, suffix, first_base, last_base=None):
     
         # Remove barcodes and R1 enzyme cut site (first
         if last_base:
-            trim_call = "/usr/local/bin/fastx_trimmer -f " + str(first_base) + ' -l ' + str(last_base) + " -i " + full_path + " -o " + new_path
+            trim_call = "fastx_trimmer -f " + str(first_base) + ' -l ' + str(last_base) + " -i " + full_path + " -o " + new_path
             subprocess.call(trim_call, shell=True)
         else:
-            trim_call = "/usr/local/bin/fastx_trimmer -Q33 -f " + str(first_base) + " -i " + full_path + " -o " + new_path
+            trim_call = "fastx_trimmer -Q33 -f " + str(first_base) + " -i " + full_path + " -o " + new_path
             subprocess.call(trim_call, shell=True)
     return
 
