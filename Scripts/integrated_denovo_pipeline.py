@@ -32,7 +32,7 @@ qualityFilter = 'fastq_quality_filter'
 trimmer = 'fastx_trimmer'
 demultiplexer = 'fastx_barcode_splitter.pl'
 denovo_path = 'denovo_map.pl'
-stacks_executables = 'opt/software/stacks-1.26/scripts'
+stacks_executables = 'opt/software/stacks-1.26/' # this is where ustacks lives, which should be all we need. other stacks scripts are in /opt/software/stacks-1.26/scripts
 BWA = 'bwa'
 
 # PEAR assembly
