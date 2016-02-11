@@ -368,8 +368,8 @@ def denovo_Stacks(in_dir, denovo_path, stacks_executables, out_dir, m, n, b, D):
     formatted_list = ''.join(s_list)
 
     # Run denovo_map.pl
-    #build_args = [denovo_path, ' -e ', stacks_executables, ' -o ', out_dir, ' -m ', str(m), ' -n ', str(n), ' -t ', '-b ', str(b), ' -D ', D, ' -S ', formatted_list]
-    build_args = [denovo_path, ' -o ', out_dir, ' -m ', str(m), ' -n ', str(n), ' -t ', '-b ', str(b), ' -D ', D, ' -S ', formatted_list]
+    build_args = [denovo_path, ' -e ', stacks_executables, ' -o ', out_dir, ' -m ', str(m), ' -n ', str(n), ' -t ', '-b ', str(b), ' -D ', D, ' -S ', formatted_list]
+    #build_args = [denovo_path, ' -o ', out_dir, ' -m ', str(m), ' -n ', str(n), ' -t ', '-b ', str(b), ' -D ', D, ' -S ', formatted_list]
     denovo_call = ''.join(build_args)
     subprocess.call(denovo_call, shell=True)
     
