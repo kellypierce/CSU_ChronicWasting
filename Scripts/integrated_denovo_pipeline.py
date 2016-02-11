@@ -32,7 +32,7 @@ qualityFilter = 'fastq_quality_filter'
 trimmer = 'fastx_trimmer'
 demultiplexer = 'fastx_barcode_splitter.pl'
 denovo_path = 'denovo_map.pl'
-stacks_executables = '/opt/software/stacks-1.26/' # this is where ustacks lives, which should be all we need. other stacks scripts are in /opt/software/stacks-1.26/scripts
+stacks_executables = '/home/pierce/bin/stacks-1.35/' # this is where ustacks lives, which should be all we need. other stacks scripts are in /opt/software/stacks-1.26/scripts
 BWA = 'bwa'
 
 # PEAR assembly
@@ -368,7 +368,8 @@ def denovo_Stacks(in_dir, denovo_path, stacks_executables, out_dir, m, n, b, D):
     formatted_list = ''.join(s_list)
 
     # Run denovo_map.pl
-    build_args = [denovo_path, ' -e ', stacks_executables, ' -o ', out_dir, ' -m ', str(m), ' -n ', str(n), ' -t ', '-b ', str(b), ' -D ', D, ' -S ', formatted_list]
+    #build_args = [denovo_path, ' -e ', stacks_executables, ' -o ', out_dir, ' -m ', str(m), ' -n ', str(n), ' -t ', '-b ', str(b), ' -D ', D, ' -S ', formatted_list]
+    build_args = [denovo_path, ' -o ', out_dir, ' -m ', str(m), ' -n ', str(n), ' -t ', '-b ', str(b), ' -D ', D, ' -S ', formatted_list]
     denovo_call = ''.join(build_args)
     subprocess.call(denovo_call, shell=True)
     
