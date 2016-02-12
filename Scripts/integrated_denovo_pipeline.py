@@ -317,11 +317,12 @@ def iterative_Demultiplex(in_dir, # directory of un-demultiplexed libraries
         if sampleID_match: # if we get a match
             sampleID = sampleID_match.groups()[0] # extract that match
             bcs = os.listdir(barcode_dir)
+            out_name = out_prefix + sampleID + '_'
             for b in bcs:
                 if sampleID in b:
                     barcode_file = barcode_dir + '/' + b
                     in_f = in_dir + '/' + f
-                    Demultiplex(in_f, barcode_file, out_dir, out_prefix)
+                    Demultiplex(in_f, barcode_file, out_dir, out_name)
                 
 
 def Demultiplex(in_file, barcode_file, out_dir, out_prefix): 
