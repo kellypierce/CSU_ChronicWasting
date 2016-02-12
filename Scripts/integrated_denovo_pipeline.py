@@ -35,6 +35,15 @@ denovo_path = 'denovo_map.pl'
 stacks_executables = '/home/pierce/bin/stacks-1.35/' # this is where ustacks lives, which should be all we need. other stacks scripts are in /opt/software/stacks-1.26/scripts
 BWA = 'bwa'
 
+# a note on Stacks:
+# The standard installation does not configure the installation directory as expected. Consequently, denovo_map.pl can't find the other executable files.
+# Manually editing denovo_map.pl does not seem to help (I'm sure there's a way, but picking apart the code is not something I'm anxious to do).
+# The work-around is this:
+# - install Stacks in home directory (not system-wide, because subsequent file path edits may cause problems for others)
+# - move all the contents of /your/install/location/stacks-X.XX/scripts up one level so they are in .../stacks-X.XX (this is necessary because ustacks et al. are not in scripts, but we really want all those executables in the same place)
+# - ensure that all those scripts have execution privileges
+# - run denovo_map.pl with the "-e" command that specifies the path to executables as /your/install/location/stacks-X.XX
+
 # PEAR assembly
 pearSimpleTemplate = Template('%s -f $f -r $r -o $o' % pearPath)
 pearExtraParamsTemplate = Template('%s -f $f -r $r -o $o $e' % pearPath)
@@ -292,13 +301,16 @@ def Trim(in_dir, out_dir, suffix, first_base, last_base=None):
             subprocess.call(trim_call, shell=True)
     return
 
-def iterative_Demultiplex(in_dir, barcode_dir, out_dir, out_prefix):
+def iterative_Demultiplex(in_dir, # directory of un-demultiplexed libraries
+                          barcode_dir, #directory containing the barcodes for each library
+                          out_dir, # full path for outputs 
+                          out_prefix): # text string to add to file names
     #if not checkDir(in_dir):
     #    raise IOError("Input is not a directory: %s" % in_dir)
     #if not checkFile(barcode_file):
     #    raise IOError("Where is the barcode file? %s" % barcode_file)
     #pdb.set_trace()
-    files = os.listdir(in_dir)
+    files = os.listdir(in_dir) 
     for f in files:
         sampleID_match = re.match(".*(Library\d{2,3}).*", f)
         #sampleID = re.match(".*(\d{3}[a-z]?).*", f).groups()[0]
@@ -377,7 +389,7 @@ def denovo_Stacks(in_dir, denovo_path, stacks_executables, out_dir, m, n, b, D):
     
     return
 
-def GeneratePseudoref(in_dir, out_dir, out_name, BWA_path):    
+def GeneratePseudoref(in_dir, out_file, BWA_path):    
     print "Preparing pseudoreference genome by extracting Stacks denovo consensus sequence.\n"
 
     ref_path = in_dir + 'batch_1.catalog.tags.tsv'
@@ -393,14 +405,15 @@ def GeneratePseudoref(in_dir, out_dir, out_name, BWA_path):
     fastq_flat = [val for pair in zip(ids, seqs) for val in pair]
     fastq_interleaved = '\n'.join(fastq_flat)
 
-    out_path=os.path.join(out_dir, out_name)
-    print "Writing pseudoreference genome to file " + out_path + '\n'
-    with open(out_path, 'w') as fq: # need to check if it already exists
+    #out_path=os.path.join(out_dir, out_name)
+    print "Writing pseudoreference genome to file " + out_file + '\n'
+    #with open(out_path, 'w') as fq: # need to check if it already exists
+    with open(out_file, 'w') as fq:
         fq.write(fastq_interleaved)
     
     # Index the new pseudoreference genome
     print 'Indexing the reference genome using BWA.\n'
-    index_call =  BWA_path + ' index ' + out_path # index = BWA function to use
+    index_call =  BWA_path + ' index ' + out_file # index = BWA function to use
     print index_call
     subprocess.call(index_call, shell = True)
     return
