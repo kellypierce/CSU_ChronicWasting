@@ -6,6 +6,7 @@
 
 from integrated_denovo_pipeline import *
 from DBR_Parsing import *
+from assembled_DBR_filtering import *
 #from setuptools.extension import Library
 
 ### Test functions
@@ -113,10 +114,10 @@ GeneratePseudoref(in_dir = pseudorefInDir,
                   BWA_path = BWA) # imported from integrated_denovo_pipeline.py
 
 # REFERENCE MAP QUALITY FILTERED/DEMULTIPLEXED MERGED READS TO THE PSEUDOREFERENCE
-refmap_BWA(in_dir = trimOutDir, # input demultiplexed, trimmed reads
-           out_dir = BWAoutDir, 
-           BWA_path = BWA, # imported from integrated_denovo_pipeline.py 
-           pseudoref_full_path = pseudorefOutDir)
+#refmap_BWA(in_dir = trimOutDir, # input demultiplexed, trimmed reads
+#           out_dir = BWAoutDir, 
+#           BWA_path = BWA, # imported from integrated_denovo_pipeline.py 
+#           pseudoref_full_path = pseudorefOutDir)
 
 
 DBR_Filter(assembled_dir = BWA, # the SAM files for the data mapped to pseudoreference
