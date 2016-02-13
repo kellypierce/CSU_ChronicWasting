@@ -15,7 +15,7 @@ import sys
 import json
 import re
 import itertools
-import numpy as np
+#import numpy as np
 import time
 
 # To do
@@ -28,11 +28,11 @@ import time
 #               n_expected = 2)
 
 
-phred_dict = {'"':1,"#":2,"$":3,"%":4,"&":5,"'":6,"(":7,")":8,"*":9,"+":10,
-              ",":11,"-":12,".":13,"/":14,"0":15,"1":16,"2":17,"3":18,"4":19,"5":20,
-              "6":21,"7":22,"8":23,"9":24,":":25,";":26,"<":27,"+":28,">":29,"?":30,
-              "@":31,"A":32,"B":33,"C":34,"D":35,"E":36,"F":37,"G":38,"H":39,"I":40,
-              "J":41,"K":42}
+phred_dict = {'"':1.0,"#":2.0,"$":3.0,"%":4.0,"&":5.0,"'":6.0,"(":7.0,")":8.0,"*":9.0,"+":10.0,
+              ",":11.0,"-":12.0,".":13.0,"/":14.0,"0":15.0,"1":16,"2":17.0,"3":18.0,"4":19.0,"5":20.0,
+              "6":21.0,"7":22.0,"8":23.0,"9":24.0,":":25.0,";":26,"<":27.0,"+":28.0,">":29.0,"?":30.0,
+              "@":31.0,"A":32.0,"B":33.0,"C":34.0,"D":35.0,"E":36,"F":37.0,"G":38.0,"H":39.0,"I":40.0,
+              "J":41.0,"K":42.0}
 # conversion reference: http://drive5.com/usearch/manual/quality_score.html
 
 ''' stuff from the pilot library
@@ -47,7 +47,14 @@ def qual_mode(QUAL, phred_dict):
     list_intQUAL =[]
     for q in listQUAL:
         list_intQUAL.append(phred_dict[q])
-    return np.median(list_intQUAL)
+    #return np.median(list_intQUAL)
+    qsort = list_intQUAL.sort()
+    qlen = len(qsort)
+    if qlen % 2 == 0: # even length list -- take the average of the two middle values
+        median_qual = (qsort[(qlen/2)-1]+qsort[(qlen/2)])/2
+    else: # odd length list -- take the middle value (list length / 2 will be automatically rounded up by python integer division)
+        median_qual = qsort[qlen/2]
+    return median_qual
 
 '''
 def iterative_DBR_filter(in_dir, # directory of ref-mapped sequence data
