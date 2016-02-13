@@ -421,6 +421,9 @@ def GeneratePseudoref(in_dir, out_file, BWA_path):
 
 def refmap_BWA(in_dir, out_dir, BWA_path, pseudoref_full_path):    
     
+    #### NEED TO CHECK IF LIBRARIES SPLIT ACROSS LANES (AND IN DIFFERENT FASTQ FILES) HAVE SAMPLES OVERWRITTEN HERE
+    #### I SUSPECT THIS IS THE CASE; IF SO FASTQ FILES SHOULD BE CONSOLIDATED BY LIBRARY (JUST CAT THE FILES)
+    
     print 'Mapping sequence data to pseudoreference genome using BWA.\n'
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
