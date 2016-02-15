@@ -44,6 +44,7 @@ barcode_file = '/home/antolinlab/Desktop/CSU_ChronicWasting/PilotAnalysis/pilot_
 '''
 
 def qual_mode(QUAL, phred_dict):
+    pdb.set_trace()
     listQUAL = list(QUAL)
     list_intQUAL =[]
     for q in listQUAL:
