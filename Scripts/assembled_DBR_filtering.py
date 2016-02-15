@@ -103,7 +103,7 @@ def find_DBRdictionary(library, directory):
             return None
                 
 def DBR_Filter(assembled_dir, # the SAM files for the data mapped to pseudoreference
-               out_seqs, # the output file, full path, ending with .fasta
+               out_dir, # the output file, full path, ending with .fasta
                n_expected, # the number of differences to be tolerated
                barcode_dir, # the barcodes for individuals in the library referenced in dict_in
                dict_dir, # a single dictionary of DBRs (for one library only)
@@ -143,7 +143,10 @@ def DBR_Filter(assembled_dir, # the SAM files for the data mapped to pseudorefer
             print 'barcode file', bcf 
             print 'dictionary file', dict_in
             
-            out_seqs_final = out_seqs + libraryID + '.fastq'
+            if not os.path.exists(out_dir):
+                os.makedirs(out_dir)
+                
+            out_seqs_final = out_dir + '/DBR_filtered_sequences_' + libraryID + '.fastq'
             
             #os.path.isfile(fname)
 
