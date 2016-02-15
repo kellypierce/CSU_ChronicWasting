@@ -57,7 +57,7 @@ def qual_mode(QUAL, phred_dict):
     return median_qual
     
 def find_SampleID(filename):
-    sampleID_match = re.match(".*(\d{3}[a-z]?).*", filename).groups()[0]
+    sampleID_match = re.match(".*(\d{3}[a-z]?).*", filename)
     if sampleID_match:
         sampleID = sampleID_match.groups()[0]
         return sampleID
