@@ -121,31 +121,34 @@ def DBR_Filter(assembled_dir, # the SAM files for the data mapped to pseudorefer
     #pdb.set_trace()
     logfile = os.path.splitext(out_seqs)[0] + '_logfile.csv'
     
-    with open(out_seqs, 'w') as out_file: 
-        # for each sample -- each file in assembled_dir is a sam file for a single sample
-        for i in os.listdir(assembled_dir):
+    # for each sample -- each file in assembled_dir is a sam file for a single sample
+    for i in os.listdir(assembled_dir):
             
-            if 'unmatched' not in i: # skip the SAM files with sequences that didn't match
-                
-                # extract the sample ID with a regex
-                sampleID = find_SampleID(i)
-                
-                # extract the library ID with a regex
-                libraryID = find_LibraryID(i)
-                
-                # use the library ID to find the right barcode file
-                bcf = find_BarcodeFile(libraryID, barcode_dir)
-                
-                # use the library ID to find the right DBR dictionary
-                dict_in = find_DBRdictionary(libraryID, dict_dir)
-                
-                print 'sample', sampleID 
-                print 'library', libraryID
-                print 'barcode file', bcf 
-                print 'dictionary file', dict_in
+        if 'unmatched' not in i: # skip the SAM files with sequences that didn't match
+            
+            # extract the sample ID with a regex
+            sampleID = find_SampleID(i)
+            
+            # extract the library ID with a regex
+            libraryID = find_LibraryID(i)
+            
+            # use the library ID to find the right barcode file
+            bcf = find_BarcodeFile(libraryID, barcode_dir)
+            
+            # use the library ID to find the right DBR dictionary
+            dict_in = find_DBRdictionary(libraryID, dict_dir)
+            
+            print 'sample', sampleID 
+            print 'library', libraryID
+            print 'barcode file', bcf 
+            print 'dictionary file', dict_in
+            
+            out_seqs = out_seqs + libraryID + '.fastq'
 
-                if sampleID and libraryID and bcf and dict_in: # if all of these != None
-
+            if sampleID and libraryID and bcf and dict_in: # if all of these != None
+                
+                with open(out_seqs, 'w') as out_file:
+                    
                     bc_dict = {} # define empty container for barcode dictionary
             
                     with open(bcf, 'r') as bc:
