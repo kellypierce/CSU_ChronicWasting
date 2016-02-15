@@ -50,13 +50,13 @@ def qual_mode(QUAL, phred_dict):
     for q in listQUAL:
         list_intQUAL.append(phred_dict[q])
     #return np.median(list_intQUAL)
-    pdb.set_trace()
-    qsort = list_intQUAL.sort()
-    qlen = len(qsort)
+    #pdb.set_trace()
+    list_intQUAL.sort() # this modifies the list in place -- you can't assign it to a new variable. alt, qsort = sorted(list_intQUAL) if we need the original list preserved for some reason
+    qlen = len(list_intQUAL)
     if qlen % 2 == 0: # even length list -- take the average of the two middle values
-        median_qual = (qsort[(qlen/2)-1]+qsort[(qlen/2)])/2
+        median_qual = (list_intQUAL[(qlen/2)-1]+list_intQUAL[(qlen/2)])/2
     else: # odd length list -- take the middle value (list length / 2 will be automatically rounded up by python integer division)
-        median_qual = qsort[qlen/2]
+        median_qual = list_intQUAL[qlen/2]
     return median_qual
     
 def find_SampleID(filename):
