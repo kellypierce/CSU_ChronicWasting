@@ -50,7 +50,7 @@ pseudorefInDir = stacksOutDir
 pseudorefOutDir = parentDir + '/pseudoreference.fastq'
 BWAinDir = parentDir
 BWAoutDir = parentDir + '/BWA/'
-DBRfilteredseqs = BWAoutDir + '/DBR_filtered_sequences.fastq'
+DBRfilteredseqs = BWAoutDir + '/DBR_filtered_sequences'
 
 # ASSEMBLE ITERATIVELY WITH PEAR 
 out_name = 'pear_merged_'
@@ -120,7 +120,7 @@ GeneratePseudoref(in_dir = pseudorefInDir,
 #           pseudoref_full_path = pseudorefOutDir)
 
 
-DBR_Filter(assembled_dir = BWA, # the SAM files for the data mapped to pseudoreference
+DBR_Filter(assembled_dir = BWAoutDir, # the SAM files for the data mapped to pseudoreference
            out_seqs = DBRfilteredseqs, # the output file, full path, ending with .fasta
            n_expected = 2, # the number of differences to be tolerated
            barcode_dir = '/home/pierce/CSU_ChronicWasting/BarcodesRound1/', # the barcodes for individuals in the library referenced in dict_in
