@@ -17,6 +17,7 @@ import re
 import itertools
 #import numpy as np
 import time
+import pdb
 
 # To do
 # 1. Check that SAM files contain a map for all the sequences so that FASTQ filtering doesn't leave some bad quality data behind
@@ -115,6 +116,7 @@ def DBR_Filter(assembled_dir, # the SAM files for the data mapped to pseudorefer
     # alternatively we can just give a new barcode, but then we'd need to track a secondary barcode file for all the individuals
     # that sounds not-fun
     
+    pdb.set_trace()
     logfile = os.path.splitext(out_seqs)[0] + '_logfile.csv'
     
     with open(out_seqs, 'w') as out_file: 
