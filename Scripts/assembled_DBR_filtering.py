@@ -143,11 +143,13 @@ def DBR_Filter(assembled_dir, # the SAM files for the data mapped to pseudorefer
             print 'barcode file', bcf 
             print 'dictionary file', dict_in
             
-            out_seqs = out_seqs + libraryID + '.fastq'
+            out_seqs_final = out_seqs + libraryID + '.fastq'
+            
+            #os.path.isfile(fname)
 
             if sampleID and libraryID and bcf and dict_in: # if all of these != None
                 
-                with open(out_seqs, 'w') as out_file:
+                with open(out_seqs_final, 'a') as out_file:
                     
                     bc_dict = {} # define empty container for barcode dictionary
             
