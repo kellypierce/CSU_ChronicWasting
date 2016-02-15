@@ -116,7 +116,7 @@ def DBR_Filter(assembled_dir, # the SAM files for the data mapped to pseudorefer
     # alternatively we can just give a new barcode, but then we'd need to track a secondary barcode file for all the individuals
     # that sounds not-fun
     
-    pdb.set_trace()
+    #pdb.set_trace()
     logfile = os.path.splitext(out_seqs)[0] + '_logfile.csv'
     
     with open(out_seqs, 'w') as out_file: 
@@ -137,8 +137,10 @@ def DBR_Filter(assembled_dir, # the SAM files for the data mapped to pseudorefer
                 # use the library ID to find the right DBR dictionary
                 dict_in = find_DBRdictionary(libraryID, dict_dir)
                 
-                print 'sample', sampleID, ' ; library', libraryID
-                print 'barcode file', bcf, ' ; dictionary file', dict_in
+                print 'sample', sampleID 
+                print 'library', libraryID
+                print 'barcode file', bcf 
+                print 'dictionary file', dict_in
 
                 if sampleID and libraryID and bcf and dict_in: # if all of these != None
 
