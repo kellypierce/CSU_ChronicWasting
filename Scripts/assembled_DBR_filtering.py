@@ -119,7 +119,8 @@ def DBR_Filter(assembled_dir, # the SAM files for the data mapped to pseudorefer
     # that sounds not-fun
     
     #pdb.set_trace()
-    logfile = os.path.splitext(out_seqs)[0] + '_logfile.csv'
+    #logfile = os.path.splitext(out_seqs)[0] + '_logfile.csv'
+    logfile = out_dir + '/DBR_filtered_sequences_logfile.csv'
     
     # for each sample -- each file in assembled_dir is a sam file for a single sample
     for i in os.listdir(assembled_dir):
