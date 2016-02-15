@@ -44,12 +44,13 @@ barcode_file = '/home/antolinlab/Desktop/CSU_ChronicWasting/PilotAnalysis/pilot_
 '''
 
 def qual_mode(QUAL, phred_dict):
-    pdb.set_trace()
+    
     listQUAL = list(QUAL)
     list_intQUAL =[]
     for q in listQUAL:
         list_intQUAL.append(phred_dict[q])
     #return np.median(list_intQUAL)
+    pdb.set_trace()
     qsort = list_intQUAL.sort()
     qlen = len(qsort)
     if qlen % 2 == 0: # even length list -- take the average of the two middle values
