@@ -154,7 +154,7 @@ def DBR_Filter(assembled_dir, # the SAM files for the data mapped to pseudorefer
                         print 'Opening DBR dictionary ' + dict_in  
                         with open(dict_in, 'r') as f:
                             dbr = json.load(f)
-                            '''
+                            
                             original_barcode = bc_dict[sampleID]
                             #print original_barcode
                             # suggestion on error checking: 
@@ -311,15 +311,8 @@ def DBR_Filter(assembled_dir, # the SAM files for the data mapped to pseudorefer
                                     y = itertools.islice(assembly_dict_2.iteritems(), 0, 4)
                                     for keyY, valueY in y:
                                         print keyY, valueY
-                                        '''
         
-'''
-DBR_Filter(assembled_dir=assembled_dir, 
-           dict_in=dict_in, 
-           out_seqs=out_seqs, 
-           n_expected = 2, 
-           barcode_file=barcode_file)
-'''
+
 
 '''
 # OTHER METRICS FOR DESCRIBING OVERALL SEQUENCE QUALITY (QUAL = ASCII character string)
