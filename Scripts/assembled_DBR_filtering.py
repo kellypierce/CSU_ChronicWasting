@@ -18,7 +18,6 @@ import itertools
 #import numpy as np
 import time
 import pdb
-from __builtin__ import None
 
 # To do
 # 1. Check that SAM files contain a map for all the sequences so that FASTQ filtering doesn't leave some bad quality data behind
