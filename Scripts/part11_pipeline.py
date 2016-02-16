@@ -140,10 +140,10 @@ re_demultiplexInDir = DBRfilteredseqs
 re_demultiplexOutDir = parentDir + '/dbrFiltered_demultiplexed/'
 re_trimInDir = re_demultiplexOutDir
 re_trimOutDir = parentDir + '/dbrFiltered_trimmed/'
-re_stacksInDir = re_trimOutDir
-re_stacksOutDir = parentDir + '/dbrFiltered_StacksOutput/' # stacks doesn't allow an output to be specified
-re_pseudorefInDir = re_stacksOutDir
-re_pseudorefOutDir = parentDir + '/dbrFiltered_pseudoreference.fastq'
+#re_stacksInDir = re_trimOutDir
+#re_stacksOutDir = parentDir + '/dbrFiltered_StacksOutput/' # stacks doesn't allow an output to be specified
+#re_pseudorefInDir = re_stacksOutDir
+#re_pseudorefOutDir = parentDir + '/dbrFiltered_pseudoreference.fastq'
 re_BWAinDir = parentDir
 re_BWAoutDir = parentDir + '/dbrFiltered_BWA/'
 
@@ -157,34 +157,36 @@ iterative_Demultiplex(in_dir = re_demultiplexInDir,
 # TRIM TO UNIFORM LENGTH
 suffix = '_re_trimmed.fq'
 ### what are the new first and last bases??? we should just be removing the barcode we added back after DBR filtering... enzyme cut sites & DBRs should be gone
-#first_base = 11
-#last_base = 196
+new_first_base = 6
 Trim(in_dir = re_trimInDir, 
      out_dir = re_trimOutDir, 
      suffix = suffix, 
-     first_base = first_base, 
-     last_base = last_base)
+     first_base = new_first_base)
+
+## no real need to re-run stacks and re-generate a pseudoreference.
+## samtools mpileup can enforce a depth threshold for SNP calls, so stacks that wouldn't have been made
+## with filtered data will not produce SNPs.
 
 # RUN STACKS SIMULTANEOUSLY ON ALL LIBRARIES
-denovo_Stacks(in_dir = re_stacksInDir, 
-              denovo_path = denovo_path, 
-              stacks_executables = stacks_executables, 
-              out_dir = re_stacksOutDir, 
-              m = 10, 
-              n = 2, 
-              b = 1, 
-              D = '_final_assembly')
+#denovo_Stacks(in_dir = re_stacksInDir, 
+#              denovo_path = denovo_path, 
+#              stacks_executables = stacks_executables, 
+#              out_dir = re_stacksOutDir, 
+#              m = 10, 
+#              n = 2, 
+#              b = 1, 
+#              D = '_final_assembly')
 
 # GENERATE THE PSEUDOREFERENCE GENOME
-GeneratePseudoref(in_dir = re_pseudorefInDir, 
-                  out_file = re_pseudorefOutDir,  
-                  BWA_path = BWA) # imported from integrated_denovo_pipeline.py
+#GeneratePseudoref(in_dir = re_pseudorefInDir, 
+#                  out_file = re_pseudorefOutDir,  
+#                  BWA_path = BWA) # imported from integrated_denovo_pipeline.py
 
 # REFERENCE MAP QUALITY FILTERED/DEMULTIPLEXED MERGED READS TO THE PSEUDOREFERENCE
 refmap_BWA(in_dir = re_trimOutDir, # input demultiplexed, trimmed reads
            out_dir = re_BWAoutDir, 
            BWA_path = BWA, # imported from integrated_denovo_pipeline.py 
-           pseudoref_full_path = re_pseudorefOutDir)
+           pseudoref_full_path = pseudorefOutDir)
 
 '''
 And if this works, the only thing left is to write a function that calls samtools mpileup!!
