@@ -33,6 +33,8 @@ from assembled_DBR_filtering import *
 
 # PATHS TO INPUTS AND OUTPUTS
 # user only needs to specify parent directory; the remaining directories should be automatically generated
+
+## For initial assembly and DBR filtering
 parentDir = '/home/pierce/CWD_RADseq/raw/'
 pearInDir = parentDir
 pearOutDir = parentDir + '/pear_merged_parallel/'
@@ -109,9 +111,9 @@ last_base = 196
 #              D = '_initial_assembly')
 
 # GENERATE THE PSEUDOREFERENCE GENOME
-GeneratePseudoref(in_dir = pseudorefInDir, 
-                  out_file = pseudorefOutDir,  
-                  BWA_path = BWA) # imported from integrated_denovo_pipeline.py
+#GeneratePseudoref(in_dir = pseudorefInDir, 
+#                  out_file = pseudorefOutDir,  
+#                  BWA_path = BWA) # imported from integrated_denovo_pipeline.py
 
 # REFERENCE MAP QUALITY FILTERED/DEMULTIPLEXED MERGED READS TO THE PSEUDOREFERENCE
 #refmap_BWA(in_dir = trimOutDir, # input demultiplexed, trimmed reads
@@ -129,16 +131,62 @@ DBR_Filter(assembled_dir = BWAoutDir, # the SAM files for the data mapped to pse
            test_dict=True, # optionally print testing info to stdout for checking the dictionary construction
            phred_dict=phred_dict, # dictionary containing ASCII quality filter scores to help with tie breaks
            samMapLen=None)
-'''
-# FILTER THE DBRS -- THIS REQUIRES A REVISION TO CREATE A FUNCTION IN assembled_DBR_filtering
-filterDBR(sample_list, dbrDict)
 
-iterative_DBR_Filter(assembled_dir=assembled_dir,  #assembled_dir = directory of sam files... BWAoutdir?
-           dict_in=dbrOutDir,
-           out_seqs=DBRfilteredseqs, 
-           n_expected = 2, 
-           barcode_file=barcode_file)
 
-sample_list = the samples from a given Library
-dbrDict = the DBR dictionary generated from that Library
+### Part 2: Re-assembling the filtered sequences
+
+## For final assembly post DBR filtering
+re_demultiplexInDir = DBRfilteredseqs
+re_demultiplexOutDir = parentDir + '/dbrFiltered_demultiplexed/'
+re_trimInDir = re_demultiplexOutDir
+re_trimOutDir = parentDir + '/dbrFiltered_trimmed/'
+re_stacksInDir = re_trimOutDir
+re_stacksOutDir = parentDir + '/dbrFiltered_StacksOutput/' # stacks doesn't allow an output to be specified
+re_pseudorefInDir = re_stacksOutDir
+re_pseudorefOutDir = parentDir + '/dbrFiltered_pseudoreference.fastq'
+re_BWAinDir = parentDir
+re_BWAoutDir = parentDir + '/dbrFiltered_BWA/'
+
+# DEMULTIPLEX
+out_prefix = '/re_demultiplexed_'
+iterative_Demultiplex(in_dir = re_demultiplexInDir, 
+                      barcode_dir = '/home/pierce/CSU_ChronicWasting/BarcodesRound1/', 
+                      out_dir = re_demultiplexOutDir, 
+                      out_prefix = out_prefix)
+
+# TRIM TO UNIFORM LENGTH
+suffix = '_re_trimmed.fq'
+### what are the new first and last bases??? we should just be removing the barcode we added back after DBR filtering... enzyme cut sites & DBRs should be gone
+#first_base = 11
+#last_base = 196
+Trim(in_dir = re_trimInDir, 
+     out_dir = re_trimOutDir, 
+     suffix = suffix, 
+     first_base = first_base, 
+     last_base = last_base)
+
+# RUN STACKS SIMULTANEOUSLY ON ALL LIBRARIES
+denovo_Stacks(in_dir = re_stacksInDir, 
+              denovo_path = denovo_path, 
+              stacks_executables = stacks_executables, 
+              out_dir = re_stacksOutDir, 
+              m = 10, 
+              n = 2, 
+              b = 1, 
+              D = '_final_assembly')
+
+# GENERATE THE PSEUDOREFERENCE GENOME
+GeneratePseudoref(in_dir = re_pseudorefInDir, 
+                  out_file = re_pseudorefOutDir,  
+                  BWA_path = BWA) # imported from integrated_denovo_pipeline.py
+
+# REFERENCE MAP QUALITY FILTERED/DEMULTIPLEXED MERGED READS TO THE PSEUDOREFERENCE
+refmap_BWA(in_dir = re_trimOutDir, # input demultiplexed, trimmed reads
+           out_dir = re_BWAoutDir, 
+           BWA_path = BWA, # imported from integrated_denovo_pipeline.py 
+           pseudoref_full_path = re_pseudorefOutDir)
+
 '''
+And if this works, the only thing left is to write a function that calls samtools mpileup!!
+'''
+
