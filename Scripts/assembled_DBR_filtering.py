@@ -18,6 +18,7 @@ import itertools
 #import numpy as np
 import time
 import pdb
+from __builtin__ import None
 
 # To do
 # 1. Check that SAM files contain a map for all the sequences so that FASTQ filtering doesn't leave some bad quality data behind
@@ -76,31 +77,36 @@ def find_LibraryID(filename):
         return None
 
 def find_BarcodeFile(library, directory):
-    
-    if os.path.isdir(directory):
-        bcs = os.listdir(directory)
-        for b in bcs:
-            if library in b:
-                bcf = directory + '/' + b
-                return bcf
-    else: # if it's just a single file
-        if os.path.isfile(directory):
-            return directory
-        else:
-            return None
+    if library:
+        if os.path.isdir(directory):
+            bcs = os.listdir(directory)
+            for b in bcs:
+                if library in b:
+                    bcf = directory + '/' + b
+                    return bcf
+        else: # if it's just a single file
+            if os.path.isfile(directory):
+                return directory
+            else:
+                return None
+    else:
+        return None
     
 def find_DBRdictionary(library, directory):
-    if os.path.isdir(directory):
-        dcs = os.listdir(directory)
-        for d in dcs:
-            if library in d:
-                dcf = directory + '/' + d
-                return dcf
-    else: # if it's just a single file
-        if os.path.isfile(directory):
-            return directory
-        else:
-            return None
+    if library: # library can also be returned as 'None' for files with improper naming
+        if os.path.isdir(directory):
+            dcs = os.listdir(directory)
+            for d in dcs:
+                if library in d:
+                    dcf = directory + '/' + d
+                    return dcf
+        else: # if it's just a single file
+            if os.path.isfile(directory):
+                return directory
+            else:
+                return None
+    else:
+        return None
                 
 def DBR_Filter(assembled_dir, # the SAM files for the data mapped to pseudoreference
                out_dir, # the output file, full path, ending with .fasta
