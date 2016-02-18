@@ -99,15 +99,15 @@ last_base = 196
 #           pseudoref_full_path = pseudorefOutDir)
 
 
-DBR_Filter(assembled_dir = BWAoutDir, # the SAM files for the data mapped to pseudoreference
-           out_dir = DBRfilteredseqs, # the output file, full path, ending with .fasta
-           n_expected = 2, # the number of differences to be tolerated
-           barcode_dir = '/home/pierce/CSU_ChronicWasting/BarcodesRound1/', # the barcodes for individuals in the library referenced in dict_in
-           dict_dir = dbrOutDir, # a single dictionary of DBRs (for one library only)
-           barcode_file=None, # if just a single library is being used, can directly pass the barcode file
-           test_dict=True, # optionally print testing info to stdout for checking the dictionary construction
-           phred_dict=phred_dict, # dictionary containing ASCII quality filter scores to help with tie breaks
-           samMapLen=None)
+#DBR_Filter(assembled_dir = BWAoutDir, # the SAM files for the data mapped to pseudoreference
+#           out_dir = DBRfilteredseqs, # the output file, full path, ending with .fasta
+#           n_expected = 2, # the number of differences to be tolerated
+#           barcode_dir = '/home/pierce/CSU_ChronicWasting/BarcodesRound1/', # the barcodes for individuals in the library referenced in dict_in
+#           dict_dir = dbrOutDir, # a single dictionary of DBRs (for one library only)
+#           barcode_file=None, # if just a single library is being used, can directly pass the barcode file
+#           test_dict=True, # optionally print testing info to stdout for checking the dictionary construction
+#           phred_dict=phred_dict, # dictionary containing ASCII quality filter scores to help with tie breaks
+#           samMapLen=None)
 
 
 ### Part 2: Re-assembling the filtered sequences
