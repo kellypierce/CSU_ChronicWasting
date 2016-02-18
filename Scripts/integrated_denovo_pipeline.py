@@ -71,8 +71,8 @@ uniformLengthTemplate = Template('%s -f $f -l $l -i $in_path -o $out_path' % tri
 samtoolsView = Template('%s view -F 4 -b -S -o $output $input' % samtoolsPath)
 samtoolsSort = Template('%s sort -o $output $input' % samtoolsPath)
 samtoolsIndex = Template('%s index $input' % samtoolsPath)
-samtoolsMpileup = Template('%s mpileup -DuIf $reference -C50 $input > $bcf_out' % samtoolsPath)
-bcftoolsView = Template('%s view -v -c -g $input > $output' % bcftoolsPath)
+samtoolsMpileup = Template('%s mpileup -t DP -uIf $reference -C50 $input > $bcf_out' % samtoolsPath)
+bcftoolsView = Template('%s call -v -m $input > $output' % bcftoolsPath)
     
 
 ###############################################################################
