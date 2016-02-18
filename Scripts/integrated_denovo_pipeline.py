@@ -453,6 +453,7 @@ def callGeno(sam_in, pseudoref, BCFout, VCFout):
     
     # set up the individual files for transfer from sam to bam and bam indexing
     print 'Processing sam files into sorted bam files.'
+    
     for sam in os.listdir(sam_in):
         # TODO: add if 'sam' in sam (check that we don't already have bam files)
         # samtools view -F 4 will filter OUT reads with bitwise flag 0004 -- these are unmapped reads
@@ -461,19 +462,15 @@ def callGeno(sam_in, pseudoref, BCFout, VCFout):
         samPath = sam_in + '/' + sam
         bam = sam_in + '/' + fname + '.bam' # for bam output
         sorted = sam_in + '/' + fname + '.sorted.bam' # for sorting output
-        #sorted_bam = sam_in + '/' + fname + '.sorted.bam'
         
         view_cmd = samtoolsView.substitute(output = bam, input = samPath)
-        #print view_cmd
-        subprocess.call(view_cmd, shell=True)
+        #subprocess.call(view_cmd, shell=True)
         
         sort_cmd = samtoolsSort.substitute(output = sorted, input = bam)
-        #print sort_cmd
-        subprocess.call(sort_cmd, shell=True)
+        #subprocess.call(sort_cmd, shell=True)
         
         index_cmd = samtoolsIndex.substitute(input = sorted)
-        #print index_cmd
-        subprocess.call(index_cmd, shell=True)
+        #subprocess.call(index_cmd, shell=True)
     
     # take the sorted, indexed bam files and perform the genotype calling with mpileup
     print 'Calling genotypes with samtools mpileup'
@@ -481,15 +478,15 @@ def callGeno(sam_in, pseudoref, BCFout, VCFout):
     mpileup_cmd = samtoolsMpileup.substitute(reference = pseudoref, 
                                              sort_bam_in = wildcard_in, 
                                              bcf_out = BCFout)
-    #print mpileup_cmd
-    subprocess.call(mpileup_cmd, shell=True)
+    print mpileup_cmd
+    #subprocess.call(mpileup_cmd, shell=True)
     
     # convert the resulting bcf file to a vcf file
     print 'Converting genotypes file to VCF format'
     bcfView_cmd = bcftoolsView.substitute(bcf_out = BCFout,
                                           vcf_out = VCFout)
-    #print bcfView_cmd
-    subprocess.call(bcfView_cmd, shell=True)
+    print bcfView_cmd
+    #subprocess.call(bcfView_cmd, shell=True)
     print 'RUN COMPLETED.'
         
 ''' Deprecated
