@@ -454,6 +454,7 @@ def callGeno(sam_in, pseudoref, BCFout, VCFout):
     # set up the individual files for transfer from sam to bam and bam indexing
     print 'Processing sam files into sorted bam files.'
     for sam in os.listdir(sam_in):
+        # TODO: add if 'sam' in sam (check that we don't already have bam files)
         # samtools view -F 4 will filter OUT reads with bitwise flag 0004 -- these are unmapped reads
         fname = os.path.splitext(sam)[0]
         
@@ -479,14 +480,14 @@ def callGeno(sam_in, pseudoref, BCFout, VCFout):
     wildcard_in = sam_in + '/*.sorted.bam'
     mpileup_cmd = samtoolsMpileup.substitute(reference = pseudoref, 
                                              sort_bam_in = wildcard_in, 
-                                             bcf_out = finalBCFout)
+                                             bcf_out = BCFout)
     #print mpileup_cmd
     subprocess.call(mpileup_cmd, shell=True)
     
     # convert the resulting bcf file to a vcf file
     print 'Converting genotypes file to VCF format'
-    bcfView_cmd = bcftoolsView.substitute(bcf_out = finalBCFout,
-                                          vcf_out = finalVCFout)
+    bcfView_cmd = bcftoolsView.substitute(bcf_out = BCFout,
+                                          vcf_out = VCFout)
     #print bcfView_cmd
     subprocess.call(bcfView_cmd, shell=True)
     print 'RUN COMPLETED.'
