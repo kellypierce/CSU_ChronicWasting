@@ -450,8 +450,9 @@ def refmap_BWA(in_dir, out_dir, BWA_path, pseudoref_full_path):
     return
 
 def callGeno(sam_in, pseudoref, BCFout, VCFout):
-    
+    print sam_in, pseudoref, BCFout, VCFout
     # set up the individual files for transfer from sam to bam and bam indexing
+    '''
     print 'Processing sam files into sorted bam files.'
     
     for sam in os.listdir(sam_in):
@@ -488,6 +489,7 @@ def callGeno(sam_in, pseudoref, BCFout, VCFout):
     print bcfView_cmd
     #subprocess.call(bcfView_cmd, shell=True)
     print 'RUN COMPLETED.'
+    '''
         
 ''' Deprecated
 def FASTQ_R1_R2_merge(in_dir, fq_r1, fq_r2, fq_out):
