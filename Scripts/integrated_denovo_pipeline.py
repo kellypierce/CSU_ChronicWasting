@@ -449,7 +449,7 @@ def refmap_BWA(in_dir, out_dir, BWA_path, pseudoref_full_path):
             subprocess.call(bwa_mem_call, shell=True)
     return
 
-def callGeno(sam_in, pseudoref, finalBCFout, finalVCFout):
+def callGeno(sam_in, pseudoref, BCFout, VCFout):
     
     # set up the individual files for transfer from sam to bam and bam indexing
     print 'Processing sam files into sorted bam files.'
