@@ -170,5 +170,5 @@ finalVCFout = parentDir + '/dbrFiltered_pseudorefMapped_genotypes.vcf'
 # CALL THE GENOTYPES USING SAMTOOLS MPILEUP; CONVERT OUTPUT TO VCF FILE
 callGeno(sam_in = re_BWAoutDir, 
          pseudoref = pseudorefOutDir, 
-         finalBCFout = finalBCFout, 
-         finalVCFout = finalVCFout)
+         BCFout = finalBCFout, 
+         VCFout = finalVCFout)
