@@ -459,8 +459,8 @@ def callGeno(sam_in, pseudoref, finalBCFout, finalVCFout):
         
         samPath = sam_in + '/' + sam
         bam = sam_in + '/' + fname + '.bam' # for bam output
-        sorted = sam_in + '/' + fname + '.sorted' # for sorting output
-        sorted_bam = sam_in + '/' + fname + '.sorted.bam'
+        sorted = sam_in + '/' + fname + '.sorted.bam' # for sorting output
+        #sorted_bam = sam_in + '/' + fname + '.sorted.bam'
         
         view_cmd = samtoolsView.substitute(bam_out = bam, sam_in = samPath)
         #print view_cmd
@@ -470,7 +470,7 @@ def callGeno(sam_in, pseudoref, finalBCFout, finalVCFout):
         #print sort_cmd
         subprocess.call(sort_cmd, shell=True)
         
-        index_cmd = samtoolsIndex.substitute(sort_in = sorted_bam)
+        index_cmd = samtoolsIndex.substitute(sort_in = sorted)
         #print index_cmd
         subprocess.call(index_cmd, shell=True)
     
