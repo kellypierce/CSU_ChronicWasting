@@ -457,12 +457,12 @@ def callGeno(sam_in, pseudoref, finalBCFout, finalVCFout):
         # samtools view -F 4 will filter OUT reads with bitwise flag 0004 -- these are unmapped reads
         fname = os.path.splitext(sam)[0]
         
-        bam = fname + '.bam' # for bam output
-        sorted = fname + '.sorted' # for sorting output
-        sorted_bam = fname + '.sorted.bam'
-        #mpileupIn = sam_in + '/' + sorted_bam
+        samPath = sam_in + '/' + sam
+        bam = sam_in + '/' + fname + '.bam' # for bam output
+        sorted = sam_in + '/' + fname + '.sorted' # for sorting output
+        sorted_bam = sam_in + '/' + fname + '.sorted.bam'
         
-        view_cmd = samtoolsView.substitute(bam_out = bam, sam_in = sam)
+        view_cmd = samtoolsView.substitute(bam_out = bam, sam_in = samPath)
         subprocess.call(view_cmd, shell=True)
         
         sort_cmd = samtoolsSort.substitute(bam_out = bam, sort_out = sorted)
