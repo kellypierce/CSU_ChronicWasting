@@ -462,17 +462,20 @@ def callGeno(sam_in, pseudoref, finalBCFout, finalVCFout):
         sorted = sam_in + '/' + fname + '.sorted' # for sorting output
         sorted_bam = sam_in + '/' + fname + '.sorted.bam'
         
+        samtoolsPipeTemplate = Template('%s view -F 4 -b -S -o $sam_in | samtools sort $out_prefix'  % samtoolsPath)
+        view_sort_cmd = samtoolsPipeTemplate.substitute(sam_in = samPath, out_prefix = sorted)
+        subprocess.call(vew_sort_cmd, shell=True)
         view_cmd = samtoolsView.substitute(bam_out = bam, sam_in = samPath)
-        print view_cmd
+        #print view_cmd
         #subprocess.call(view_cmd, shell=True)
         
         sort_cmd = samtoolsSort.substitute(bam_out = bam, sort_out = sorted)
-        print sort_cmd
+        #print sort_cmd
         #subprocess.call(sort_cmd, shell=True)
         
         index_cmd = samtoolsIndex.substitute(sort_in = sorted_bam)
-        print index_cmd
-        #subprocess.call(index_cmd, shell=True)
+        #print index_cmd
+        subprocess.call(index_cmd, shell=True)
     
     # take the sorted, indexed bam files and perform the genotype calling with mpileup
     print 'Calling genotypes with samtools mpileup'
