@@ -68,10 +68,10 @@ uniformLengthTemplate = Template('%s -f $f -l $l -i $in_path -o $out_path' % tri
 # DBR filter
 
 # Genotype calling
-samtoolsView = Template('%s view -F 4 -b -S -o $bam_out $sam_in' % samtoolsPath)
-samtoolsSort = Template('%s sort -o $bam_out $sort_out' % samtoolsPath)
-samtoolsIndex = Template('%s index $sort_in' % samtoolsPath)
-samtoolsMpileup = Template('%s mpileup -DuIf $reference -C50 $sort_bam_in > $bcf_out' % samtoolsPath)
+samtoolsView = Template('%s view -F 4 -b -S -o $output $input' % samtoolsPath)
+samtoolsSort = Template('%s sort -o $output $input' % samtoolsPath)
+samtoolsIndex = Template('%s index $input' % samtoolsPath)
+samtoolsMpileup = Template('%s mpileup -DuIf $reference -C50 $input > $bcf_out' % samtoolsPath)
 bcftoolsView = Template('%s view -v -c -g $bcf_out > $vcf_out' % bcftoolsPath)
 
 
@@ -462,15 +462,15 @@ def callGeno(sam_in, pseudoref, finalBCFout, finalVCFout):
         sorted = sam_in + '/' + fname + '.sorted.bam' # for sorting output
         #sorted_bam = sam_in + '/' + fname + '.sorted.bam'
         
-        view_cmd = samtoolsView.substitute(bam_out = bam, sam_in = samPath)
+        view_cmd = samtoolsView.substitute(output = bam, input = samPath)
         #print view_cmd
         subprocess.call(view_cmd, shell=True)
         
-        sort_cmd = samtoolsSort.substitute(bam_out = bam, sort_out = sorted)
+        sort_cmd = samtoolsSort.substitute(output = sorted, input = bam)
         #print sort_cmd
         subprocess.call(sort_cmd, shell=True)
         
-        index_cmd = samtoolsIndex.substitute(sort_in = sorted)
+        index_cmd = samtoolsIndex.substitute(input = sorted)
         #print index_cmd
         subprocess.call(index_cmd, shell=True)
     
