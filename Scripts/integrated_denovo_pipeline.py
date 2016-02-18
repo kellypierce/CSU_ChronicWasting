@@ -491,7 +491,6 @@ def callGeno(sam_in, pseudoref, BCFout, VCFout):
     print bcfView_cmd
     #subprocess.call(bcfView_cmd, shell=True)
     print 'RUN COMPLETED.'
-    '''
         
 ''' Deprecated
 def FASTQ_R1_R2_merge(in_dir, fq_r1, fq_r2, fq_out):
