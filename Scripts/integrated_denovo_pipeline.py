@@ -34,6 +34,8 @@ demultiplexer = 'fastx_barcode_splitter.pl'
 denovo_path = 'denovo_map.pl'
 stacks_executables = '/home/pierce/bin/stacks-1.35/' # this is where ustacks lives, which should be all we need. other stacks scripts are in /opt/software/stacks-1.26/scripts
 BWA = 'bwa'
+samtoolsPath = 'something'
+bcftoolsPath = 'something'
 
 # a note on Stacks:
 # The standard installation does not configure the installation directory as expected. Consequently, denovo_map.pl can't find the other executable files.
@@ -64,6 +66,14 @@ uniformLengthTemplate = Template('%s -f $f -l $l -i $in_path -o $out_path' % tri
 # Extract reference from Stacks consensus, index
 # Reference-based assembly
 # DBR filter
+
+# Genotype calling
+samtoolsView = Template('%s view -F 4 -b -S -o $bam_out $sam_in' % samtoolsPath)
+samtoolsSort = Template('%s sort $bam_out $sort_out' % samtoolsPath)
+samtoolsIndex = Template('%s index $sort_in' % samtoolsPath)
+samtoolsMpileup = Template('%s mpileup -DuIf $reference -C50 $sort_bam_in > $bcf_out' % samtoolsPath)
+bcftoolsView = Template('%s view -v -c -g $bcf_out > $vcf_out' % bcftoolsPath)
+
 
 ###############################################################################
 
@@ -438,22 +448,37 @@ def refmap_BWA(in_dir, out_dir, BWA_path, pseudoref_full_path):
             print bwa_mem_call
             subprocess.call(bwa_mem_call, shell=True)
     return
-'''
-samtoolsPath =
-samtoolsView = Template('%s view -F $f -b -S -o $bam_out $sam_in' % samtools)
-samtoolsSort = Template('%s sort $bam_out $sort_out' % samtools)
-samtoolsIndex = Template('%s index $sort_in' % samtools)
-samtoolsMpileup = Template('%s mpileup -DuIf $reference -C50 ')
-bcftoolsView
 
-def callGeno(f, bam_out, sam_in):
-    for i in os.listdir(in_dir):
-        samtools view -F 4 -b -S -o sample1.bam sample1.sam
-    samtools sort sample1.bam sample1.sorted
-    samtools index sample1.sorted.bam
-    samtools mpileup -DuIf /path/to/pseudoreference.fa -C50 /path/to/all/samples/*.sorted.bam > pseudoref_mapped_genotypes.bcf
-    bcftools view -v -c -g pseudoref_mapped_genotypes.bcf > pseudoref_mapped_genotypes.vcf
-'''
+def callGeno(sam_in, pseudoref, finalBCFout, finalVCFout):
+    
+    # set up the individual files for transfer from sam to bam and bam indexing
+    print 'Processing sam files into sorted bam files.'
+    for sam in os.listdir(sam_in):
+        # samtools view -F 4 will filter OUT reads with bitwise flag 0004 -- these are unmapped reads
+        fname = os.path.splitext(sam)[0]
+        
+        bam = fname + '.bam' # for bam output
+        sorted = fname + '.sorted' # for sorting output
+        sorted_bam = fname + '.sorted.bam'
+        #mpileupIn = sam_in + '/' + sorted_bam
+        
+        view_cmd = samtoolsView.substitute(bam_out = bam, sam_in = sam)
+        sort_cmd = samtoolsSort.substitute(bam_out = bam, sort_out = sorted)
+        index_cmd = samtoolsIndex.substitute(sort_in = sorted_bam)
+    
+    # take the sorted, indexed bam files and perform the genotype calling with mpileup
+    print 'Calling genotypes with samtools mpileup'
+    wildcard_in = sam_in + '/*.sorted.bam'
+    mpileup_cmd = samtoolsMpileup.substitute(reference = pseudoref, 
+                                             sort_bam_in = wildcard_in, 
+                                             bcf_out = finalBCFout)
+    
+    # convert the resulting bcf file to a vcf file
+    print 'Converting genotypes file to VCF format'
+    bcfView_cmd = bcftoolsView.substitute(bcf_out = finalBCFout,
+                                          vcf_out = finalVCFout)
+    print 'RUN COMPLETED.'
+        
 ''' Deprecated
 def FASTQ_R1_R2_merge(in_dir, fq_r1, fq_r2, fq_out):
     print 'Taking reverse complement of read 2 with FASTX Toolkit.\n'
