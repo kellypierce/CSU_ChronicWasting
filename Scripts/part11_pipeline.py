@@ -7,29 +7,6 @@
 from integrated_denovo_pipeline import *
 from DBR_Parsing import *
 from assembled_DBR_filtering import *
-#from setuptools.extension import Library
-
-### Test functions
-# ASSEMBLE SINGLE SET OF PAIRED READS WITH PEAR 
-#in_dir = '/home/antolinlab/Downloads/CWD_RADseq/'
-#forward = 'Library12_S65_L008_R1_001.fastq.gz'
-#reverse = 'Library12_S65_L008_R2_001.fastq.gz'
-#out_dir = in_dir
-#out_name = 'pear_merged_'
-#extra_params = '-m 309 -n 209'
-#PEAR_assemble(in_dir, forward, reverse, out_dir, out_name, extra_params)
-
-# POST-PEAR QC CHECKS FOR LIBRARY 12 ONLY
-# count up the sequence lengths
-# sed -n '2~4p' pear_merged_Library12_S65_L008__001.fastq.assembled.fastq | awk '{print length}' >> pear_merged_Library12_L8_assembled_seq_length.txt
-# count up the R1 cutsites
-#sed -n '2~4p' pear_merged_Library12_L8.assembled.fastq | cut -c 6-10 | sort | uniq -c | sort -nr -k 1 >> pear_merged_Library12_L8_assembled_R1cut_check.txt
-# count up the R2 cutsites
-#sed -n '2~4p' pear_merged_Library12_L8.assembled.fastq | rev | cut -c 11-14 | sort | uniq -c | sort -nr -k 1 >> pear_merged_Library12_L8_assembled_R2cut_check.txt
-
-# PATHS TO EXECUTABLES
-#denovo_path = '/home/antolinlab/Downloads/stacks-1.31/scripts/denovo_map.pl '
-#stacks_executables = '/home/antolinlab/Downloads/stacks-1.31/scripts'
 
 # PATHS TO INPUTS AND OUTPUTS
 # user only needs to specify parent directory; the remaining directories should be automatically generated
@@ -146,22 +123,24 @@ re_trimOutDir = parentDir + '/dbrFiltered_trimmed/'
 #re_pseudorefOutDir = parentDir + '/dbrFiltered_pseudoreference.fastq'
 re_BWAinDir = parentDir
 re_BWAoutDir = parentDir + '/dbrFiltered_BWA/'
+finalBCFout = parentDir + '/dbrFiltered_pseudorefMapped_genotypes.bcf'
+finalVCFout = parentDir + '/dbrFiltered_pseudorefMapped_genotypes.vcf'
 
 # DEMULTIPLEX
-out_prefix = '/re_demultiplexed_'
-iterative_Demultiplex(in_dir = re_demultiplexInDir, 
-                      barcode_dir = '/home/pierce/CSU_ChronicWasting/BarcodesRound1/', 
-                      out_dir = re_demultiplexOutDir, 
-                      out_prefix = out_prefix)
+#out_prefix = '/re_demultiplexed_'
+#iterative_Demultiplex(in_dir = re_demultiplexInDir, 
+#                      barcode_dir = '/home/pierce/CSU_ChronicWasting/BarcodesRound1/', 
+#                      out_dir = re_demultiplexOutDir, 
+#                      out_prefix = out_prefix)
 
 # TRIM TO UNIFORM LENGTH
-suffix = '_re_trimmed.fq'
+#suffix = '_re_trimmed.fq'
 ### what are the new first and last bases??? we should just be removing the barcode we added back after DBR filtering... enzyme cut sites & DBRs should be gone
-new_first_base = 6
-Trim(in_dir = re_trimInDir, 
-     out_dir = re_trimOutDir, 
-     suffix = suffix, 
-     first_base = new_first_base)
+#new_first_base = 6
+#Trim(in_dir = re_trimInDir, 
+#     out_dir = re_trimOutDir, 
+#     suffix = suffix, 
+#     first_base = new_first_base)
 
 ## no real need to re-run stacks and re-generate a pseudoreference.
 ## samtools mpileup can enforce a depth threshold for SNP calls, so stacks that wouldn't have been made
@@ -183,12 +162,13 @@ Trim(in_dir = re_trimInDir,
 #                  BWA_path = BWA) # imported from integrated_denovo_pipeline.py
 
 # REFERENCE MAP QUALITY FILTERED/DEMULTIPLEXED MERGED READS TO THE PSEUDOREFERENCE
-refmap_BWA(in_dir = re_trimOutDir, # input demultiplexed, trimmed reads
-           out_dir = re_BWAoutDir, 
-           BWA_path = BWA, # imported from integrated_denovo_pipeline.py 
-           pseudoref_full_path = pseudorefOutDir)
+#refmap_BWA(in_dir = re_trimOutDir, # input demultiplexed, trimmed reads
+#           out_dir = re_BWAoutDir, 
+#           BWA_path = BWA, # imported from integrated_denovo_pipeline.py 
+#           pseudoref_full_path = pseudorefOutDir)
 
-'''
-And if this works, the only thing left is to write a function that calls samtools mpileup!!
-'''
-
+# CALL THE GENOTYPES USING SAMTOOLS MPILEUP; CONVERT OUTPUT TO VCF FILE
+callGeno(sam_in = re_BWAoutDir, 
+         pseudoref = pseudorefOutDir, 
+         finalBCFout = finalBCFout, 
+         finalVCFout = finalVCFout)
