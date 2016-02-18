@@ -72,8 +72,8 @@ samtoolsView = Template('%s view -F 4 -b -S -o $output $input' % samtoolsPath)
 samtoolsSort = Template('%s sort -o $output $input' % samtoolsPath)
 samtoolsIndex = Template('%s index $input' % samtoolsPath)
 samtoolsMpileup = Template('%s mpileup -DuIf $reference -C50 $input > $bcf_out' % samtoolsPath)
-bcftoolsView = Template('%s view -v -c -g $bcf_out > $vcf_out' % bcftoolsPath)
-
+bcftoolsView = Template('%s view -v -c -g $input > $output' % bcftoolsPath)
+    
 
 ###############################################################################
 
@@ -452,7 +452,7 @@ def refmap_BWA(in_dir, out_dir, BWA_path, pseudoref_full_path):
 def callGeno(sam_in, pseudoref, BCFout, VCFout):
     print sam_in, pseudoref, BCFout, VCFout
     # set up the individual files for transfer from sam to bam and bam indexing
-    '''
+    
     print 'Processing sam files into sorted bam files.'
     
     for sam in os.listdir(sam_in):
@@ -476,16 +476,18 @@ def callGeno(sam_in, pseudoref, BCFout, VCFout):
     # take the sorted, indexed bam files and perform the genotype calling with mpileup
     print 'Calling genotypes with samtools mpileup'
     wildcard_in = sam_in + '/*.sorted.bam'
-    mpileup_cmd = samtoolsMpileup.substitute(reference = pseudoref, 
-                                             sort_bam_in = wildcard_in, 
+    print wildcard_in
+    mpileup_cmd = samtoolsMpileup.safe_substitute(reference = pseudoref, 
+                                             input = wildcard_in, 
                                              bcf_out = BCFout)
+                                             
     print mpileup_cmd
     #subprocess.call(mpileup_cmd, shell=True)
     
     # convert the resulting bcf file to a vcf file
     print 'Converting genotypes file to VCF format'
-    bcfView_cmd = bcftoolsView.substitute(bcf_out = BCFout,
-                                          vcf_out = VCFout)
+    bcfView_cmd = bcftoolsView.substitute(input = BCFout,
+                                          output = VCFout)
     print bcfView_cmd
     #subprocess.call(bcfView_cmd, shell=True)
     print 'RUN COMPLETED.'
