@@ -34,8 +34,8 @@ demultiplexer = 'fastx_barcode_splitter.pl'
 denovo_path = 'denovo_map.pl'
 stacks_executables = '/home/pierce/bin/stacks-1.35/' # this is where ustacks lives, which should be all we need. other stacks scripts are in /opt/software/stacks-1.26/scripts
 BWA = 'bwa'
-samtoolsPath = 'something'
-bcftoolsPath = 'something'
+samtoolsPath = 'samtools'
+bcftoolsPath = 'bcftools'
 
 # a note on Stacks:
 # The standard installation does not configure the installation directory as expected. Consequently, denovo_map.pl can't find the other executable files.
