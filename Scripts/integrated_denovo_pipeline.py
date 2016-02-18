@@ -450,7 +450,7 @@ def refmap_BWA(in_dir, out_dir, BWA_path, pseudoref_full_path):
     return
 
 def callGeno(sam_in, pseudoref, BCFout, VCFout):
-    print sam_in, pseudoref, BCFout, VCFout
+    #print sam_in, pseudoref, BCFout, VCFout
     # set up the individual files for transfer from sam to bam and bam indexing
     
     print 'Processing sam files into sorted bam files.'
@@ -465,31 +465,31 @@ def callGeno(sam_in, pseudoref, BCFout, VCFout):
         sorted = sam_in + '/' + fname + '.sorted.bam' # for sorting output
         
         view_cmd = samtoolsView.substitute(output = bam, input = samPath)
-        #subprocess.call(view_cmd, shell=True)
+        subprocess.call(view_cmd, shell=True)
         
         sort_cmd = samtoolsSort.substitute(output = sorted, input = bam)
-        #subprocess.call(sort_cmd, shell=True)
+        subprocess.call(sort_cmd, shell=True)
         
         index_cmd = samtoolsIndex.substitute(input = sorted)
-        #subprocess.call(index_cmd, shell=True)
+        subprocess.call(index_cmd, shell=True)
     
     # take the sorted, indexed bam files and perform the genotype calling with mpileup
     print 'Calling genotypes with samtools mpileup'
     wildcard_in = sam_in + '/*.sorted.bam'
-    print wildcard_in
-    mpileup_cmd = samtoolsMpileup.safe_substitute(reference = pseudoref, 
+    #print wildcard_in
+    mpileup_cmd = samtoolsMpileup.substitute(reference = pseudoref, 
                                              input = wildcard_in, 
                                              bcf_out = BCFout)
                                              
-    print mpileup_cmd
-    #subprocess.call(mpileup_cmd, shell=True)
+    #print mpileup_cmd
+    subprocess.call(mpileup_cmd, shell=True)
     
     # convert the resulting bcf file to a vcf file
     print 'Converting genotypes file to VCF format'
     bcfView_cmd = bcftoolsView.substitute(input = BCFout,
                                           output = VCFout)
-    print bcfView_cmd
-    #subprocess.call(bcfView_cmd, shell=True)
+    #print bcfView_cmd
+    subprocess.call(bcfView_cmd, shell=True)
     print 'RUN COMPLETED.'
         
 ''' Deprecated
