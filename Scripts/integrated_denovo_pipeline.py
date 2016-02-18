@@ -69,7 +69,7 @@ uniformLengthTemplate = Template('%s -f $f -l $l -i $in_path -o $out_path' % tri
 
 # Genotype calling
 samtoolsView = Template('%s view -F 4 -b -S -o $bam_out $sam_in' % samtoolsPath)
-samtoolsSort = Template('%s sort $bam_out $sort_out' % samtoolsPath)
+samtoolsSort = Template('%s sort -o $bam_out $sort_out' % samtoolsPath)
 samtoolsIndex = Template('%s index $sort_in' % samtoolsPath)
 samtoolsMpileup = Template('%s mpileup -DuIf $reference -C50 $sort_bam_in > $bcf_out' % samtoolsPath)
 bcftoolsView = Template('%s view -v -c -g $bcf_out > $vcf_out' % bcftoolsPath)
@@ -462,16 +462,13 @@ def callGeno(sam_in, pseudoref, finalBCFout, finalVCFout):
         sorted = sam_in + '/' + fname + '.sorted' # for sorting output
         sorted_bam = sam_in + '/' + fname + '.sorted.bam'
         
-        samtoolsPipeTemplate = Template('%s view -F 4 -b -S -o $sam_in | samtools sort $out_prefix'  % samtoolsPath)
-        view_sort_cmd = samtoolsPipeTemplate.substitute(sam_in = samPath, out_prefix = sorted)
-        subprocess.call(view_sort_cmd, shell=True)
         view_cmd = samtoolsView.substitute(bam_out = bam, sam_in = samPath)
         #print view_cmd
-        #subprocess.call(view_cmd, shell=True)
+        subprocess.call(view_cmd, shell=True)
         
         sort_cmd = samtoolsSort.substitute(bam_out = bam, sort_out = sorted)
         #print sort_cmd
-        #subprocess.call(sort_cmd, shell=True)
+        subprocess.call(sort_cmd, shell=True)
         
         index_cmd = samtoolsIndex.substitute(sort_in = sorted_bam)
         #print index_cmd
@@ -483,15 +480,15 @@ def callGeno(sam_in, pseudoref, finalBCFout, finalVCFout):
     mpileup_cmd = samtoolsMpileup.substitute(reference = pseudoref, 
                                              sort_bam_in = wildcard_in, 
                                              bcf_out = finalBCFout)
-    print mpileup_cmd
-    #subprocess.call(mpileup_cmd, shell=True)
+    #print mpileup_cmd
+    subprocess.call(mpileup_cmd, shell=True)
     
     # convert the resulting bcf file to a vcf file
     print 'Converting genotypes file to VCF format'
     bcfView_cmd = bcftoolsView.substitute(bcf_out = finalBCFout,
                                           vcf_out = finalVCFout)
-    print bcfView_cmd
-    #subprocess.call(bcfView_cmd, shell=True)
+    #print bcfView_cmd
+    subprocess.call(bcfView_cmd, shell=True)
     print 'RUN COMPLETED.'
         
 ''' Deprecated
@@ -499,7 +496,6 @@ def FASTQ_R1_R2_merge(in_dir, fq_r1, fq_r2, fq_out):
     print 'Taking reverse complement of read 2 with FASTX Toolkit.\n'
     rc_call = 'fastx_reverse_complement -i ' + in_dir + fq_r2 + ' -o ' + in_dir + fq_out
     subprocess.call(rc_call, shell=True)
-    
     print 'Merging read 1 and read 2 reverse complement into a single FASTQ file.'
     merge_call = 'paste ' + in_dir + fq_r1 + ' ' + in_dir + fq_out + ' > ' + in_dir + fq_out + '_merged.fq'
     subprocess.call(merge_call, shell=True)
