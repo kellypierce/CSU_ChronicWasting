@@ -463,8 +463,13 @@ def callGeno(sam_in, pseudoref, finalBCFout, finalVCFout):
         #mpileupIn = sam_in + '/' + sorted_bam
         
         view_cmd = samtoolsView.substitute(bam_out = bam, sam_in = sam)
+        subprocess.call(view_cmd, shell=True)
+        
         sort_cmd = samtoolsSort.substitute(bam_out = bam, sort_out = sorted)
+        subprocess.call(sort_cmd, shell=True)
+        
         index_cmd = samtoolsIndex.substitute(sort_in = sorted_bam)
+        subprocess.call(index_cmd, shell=True)
     
     # take the sorted, indexed bam files and perform the genotype calling with mpileup
     print 'Calling genotypes with samtools mpileup'
@@ -472,11 +477,13 @@ def callGeno(sam_in, pseudoref, finalBCFout, finalVCFout):
     mpileup_cmd = samtoolsMpileup.substitute(reference = pseudoref, 
                                              sort_bam_in = wildcard_in, 
                                              bcf_out = finalBCFout)
+    subprocess.call(mpileup_cmd, shell=True)
     
     # convert the resulting bcf file to a vcf file
     print 'Converting genotypes file to VCF format'
     bcfView_cmd = bcftoolsView.substitute(bcf_out = finalBCFout,
                                           vcf_out = finalVCFout)
+    subprocess.call(bcfView_cmd, shell=True)
     print 'RUN COMPLETED.'
         
 ''' Deprecated
