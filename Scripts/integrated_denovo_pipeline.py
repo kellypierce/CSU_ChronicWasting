@@ -464,7 +464,7 @@ def callGeno(sam_in, pseudoref, finalBCFout, finalVCFout):
         
         samtoolsPipeTemplate = Template('%s view -F 4 -b -S -o $sam_in | samtools sort $out_prefix'  % samtoolsPath)
         view_sort_cmd = samtoolsPipeTemplate.substitute(sam_in = samPath, out_prefix = sorted)
-        subprocess.call(vew_sort_cmd, shell=True)
+        subprocess.call(view_sort_cmd, shell=True)
         view_cmd = samtoolsView.substitute(bam_out = bam, sam_in = samPath)
         #print view_cmd
         #subprocess.call(view_cmd, shell=True)
