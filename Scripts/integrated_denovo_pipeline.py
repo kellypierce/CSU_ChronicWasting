@@ -463,13 +463,16 @@ def callGeno(sam_in, pseudoref, finalBCFout, finalVCFout):
         sorted_bam = sam_in + '/' + fname + '.sorted.bam'
         
         view_cmd = samtoolsView.substitute(bam_out = bam, sam_in = samPath)
-        subprocess.call(view_cmd, shell=True)
+        print view_cmd
+        #subprocess.call(view_cmd, shell=True)
         
         sort_cmd = samtoolsSort.substitute(bam_out = bam, sort_out = sorted)
-        subprocess.call(sort_cmd, shell=True)
+        print sort_cmd
+        #subprocess.call(sort_cmd, shell=True)
         
         index_cmd = samtoolsIndex.substitute(sort_in = sorted_bam)
-        subprocess.call(index_cmd, shell=True)
+        print index_cmd
+        #subprocess.call(index_cmd, shell=True)
     
     # take the sorted, indexed bam files and perform the genotype calling with mpileup
     print 'Calling genotypes with samtools mpileup'
@@ -477,13 +480,15 @@ def callGeno(sam_in, pseudoref, finalBCFout, finalVCFout):
     mpileup_cmd = samtoolsMpileup.substitute(reference = pseudoref, 
                                              sort_bam_in = wildcard_in, 
                                              bcf_out = finalBCFout)
-    subprocess.call(mpileup_cmd, shell=True)
+    print mpileup_cmd
+    #subprocess.call(mpileup_cmd, shell=True)
     
     # convert the resulting bcf file to a vcf file
     print 'Converting genotypes file to VCF format'
     bcfView_cmd = bcftoolsView.substitute(bcf_out = finalBCFout,
                                           vcf_out = finalVCFout)
-    subprocess.call(bcfView_cmd, shell=True)
+    print bcfView_cmd
+    #subprocess.call(bcfView_cmd, shell=True)
     print 'RUN COMPLETED.'
         
 ''' Deprecated
