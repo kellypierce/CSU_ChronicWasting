@@ -423,7 +423,7 @@ def denovo_Stacks(in_dir, denovo_path, stacks_executables, out_dir, m, n, b, D):
     cstacks_args = [cstacks_path, ' -b 1 -n ', str(n), ' -o ', out_dir, ' ', formatted_list]
     cstacks_call = ''.join(cstacks_args)
     print cstacks_call
-    subprocess.call(cstacks_call)
+    subprocess.call(cstacks_call, shell=True)
     
     ### Add a line to move the files!
     
