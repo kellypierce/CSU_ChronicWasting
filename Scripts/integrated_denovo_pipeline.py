@@ -399,7 +399,7 @@ def denovo_Stacks(in_dir, denovo_path, stacks_executables, out_dir, m, n, b, D):
     
     for j in os.listdir(out_dir):
         # TODO: find some way to warn when samples are dropped because they don't get tags files after ustacks runs!
-        print j
+        #print j
         if 'tags' in j: # we only want the tags.tsv files for ccstacks
             
             print cstacksMessageTemplate.substitute(name = j)
@@ -423,7 +423,7 @@ def denovo_Stacks(in_dir, denovo_path, stacks_executables, out_dir, m, n, b, D):
     cstacks_args = [cstacks_path, ' -b 1 -o -n ', str(n), out_dir, formatted_list]
     cstacks_call = ''.join(cstacks_args)
     print cstacks_call
-    #subprocess.call(cstacks_call)
+    subprocess.call(cstacks_call)
     
     ### Add a line to move the files!
     
