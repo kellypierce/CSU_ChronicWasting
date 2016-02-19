@@ -155,7 +155,7 @@ denovo_Stacks(in_dir = re_stacksInDir,
               n = 2, 
               b = 1, 
               D = '_final_assembly')
-'''
+
 # GENERATE THE PSEUDOREFERENCE GENOME
 GeneratePseudoref(in_dir = re_pseudorefInDir, 
                   out_file = re_pseudorefOutDir,  
@@ -172,4 +172,3 @@ callGeno(sam_in = re_BWAoutDir,
          pseudoref = re_pseudorefOutDir, 
          BCFout = finalBCFout, 
          VCFout = finalVCFout)
-'''
