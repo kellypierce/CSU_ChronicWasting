@@ -403,7 +403,8 @@ def denovo_Stacks(in_dir, denovo_path, stacks_executables, out_dir, m, n, b, D):
         if 'tags' in j: # we only want the tags.tsv files for ccstacks
             
             print cstacksMessageTemplate.substitute(name = j)
-            tag_path = os.path.join(out_dir, j)
+            basej = os.path.splitext(j)[0]
+            tag_path = os.path.join(out_dir, basej)
             # generate a string for the -s cstacks argument
             s_list.append('-s ')
             s_list.append(tag_path)
