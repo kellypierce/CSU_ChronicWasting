@@ -71,7 +71,7 @@ uniformLengthTemplate = Template('%s -f $f -l $l -i $in_path -o $out_path' % tri
 samtoolsView = Template('%s view -F 4 -b -S -o $output $input' % samtoolsPath)
 samtoolsSort = Template('%s sort -o $output $input' % samtoolsPath)
 samtoolsIndex = Template('%s index $input' % samtoolsPath)
-samtoolsMpileup = Template('%s mpileup -t DP -uIf $reference -C50 $input > $bcf_out' % samtoolsPath)
+samtoolsMpileup = Template('%s mpileup -t DP -C50 -u -I -f $reference -o $bcf_out $input' % samtoolsPath)
 bcftoolsView = Template('%s call -v -m $input > $output' % bcftoolsPath)
     
 
@@ -376,25 +376,39 @@ def denovo_Stacks(in_dir, denovo_path, stacks_executables, out_dir, m, n, b, D):
             print 'Skipping sequences with unmatched barcodes.\n'
             rm_unmatched = True
         else:
+            
             # full path to trimmed file
-            new_path=os.path.join(in_dir, i)
+            new_path=os.path.join(in_dir, i)            
+            # Run ustacks
+            # example usage: ustacks -t fastq -f ./samples/f0_male.fq    -o ./stacks -i 1 -d -r -m 3 -p 15
+            ustacks_path = os.path.join(stacks_executables, '/ustacks')
+            ustacks_args = [ustacks_path, ' t fastq ' + ' -f ' + new_path + ' -o ', out_dir, ' -m ', str(m), ' -r -R']
+            ustacks_call = ''.join(ustacks_args)
+            subprocess.call(ustacks_call, shell=True)
     
-            # generate a string for the -s stacks argument
+    
+    for j in os.listdir(out_dir):
+        # TODO: find some way to warn when samples are dropped because they don't get tags files after ustacks runs!
+        if 'tags' in j: # we only want the tags.tsv files for ccstacks
+            # generate a string for the -s cstacks argument
             s_list.append('-s ')
             s_list.append(new_path)
             s_list.append(' ')
-    
-    # the last file in the dir is "unmatched"... remove it and the final trailing space
-    #s_list = s_list[0:len(s_list)-4]
-    
+        
     # join list into a string to pass to denovo_map.pl
     formatted_list = ''.join(s_list)
 
     # Run denovo_map.pl
-    build_args = [denovo_path, ' -e ', stacks_executables, ' -o ', out_dir, ' -m ', str(m), ' -n ', str(n), ' -t ', '-b ', str(b), ' -D ', D, ' -S ', formatted_list]
-    #build_args = [denovo_path, ' -o ', out_dir, ' -m ', str(m), ' -n ', str(n), ' -t ', '-b ', str(b), ' -D ', D, ' -S ', formatted_list]
-    denovo_call = ''.join(build_args)
-    subprocess.call(denovo_call, shell=True)
+    #build_args = [denovo_path, ' -e ', stacks_executables, ' -o ', out_dir, ' -m ', str(m), ' -n ', str(n), ' -t ', '-b ', str(b), ' -D ', D, ' -S ', formatted_list]
+    #denovo_call = ''.join(build_args)
+    #subprocess.call(denovo_call, shell=True)
+    
+    # Run cstacks
+    # example usage: cstacks -b 1 -o ./stacks -s ./stacks/f0_male -s ./stacks/f0_female -p 15
+    cstacks_path = os.path.join(stacks_executables, '/cstacks')
+    cstacks_args = [cstacks_path, ' -b 1 -o -n ', str(n), out_dir, ' -s ', formatted_list]
+    cstacks_call = ''.join(cstacks_args)
+    subprocess.call(cstacks_call)
     
     ### Add a line to move the files!
     
