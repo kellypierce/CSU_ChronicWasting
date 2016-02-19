@@ -370,8 +370,14 @@ def denovo_Stacks(in_dir, denovo_path, stacks_executables, out_dir, m, n, b, D):
     
     ustacks_path = stacks_executables + '/ustacks'
     print ustacks_path
-    
+    ustacksMessageTemplate = Template('*****Processing sample $n of $total with USTACKS.*****')
+    ntotal = len(os.listdir(in_dir))
+    c = 0
     for i in os.listdir(in_dir):
+        
+        print ustacksMessageTemplate.substitute(n = c, total = ntotal)
+        c += 1
+        
         # don't proceed if the inputs don't have the proper extension
         assert '.fq' in i, "%s needs extension .fq for Stacks compatibility" % i
 
@@ -388,10 +394,15 @@ def denovo_Stacks(in_dir, denovo_path, stacks_executables, out_dir, m, n, b, D):
             ustacks_call = ''.join(ustacks_args)
             subprocess.call(ustacks_call, shell=True)
     
-    
+    cstacksMessageTemplate = Template('*****Processing sample $n with CSTACKS.*****')
+    d = 0
     for j in os.listdir(out_dir):
         # TODO: find some way to warn when samples are dropped because they don't get tags files after ustacks runs!
         if 'tags' in j: # we only want the tags.tsv files for ccstacks
+            
+            print ustacksMessageTemplate.substitute(n = d)
+            d += 1
+            
             # generate a string for the -s cstacks argument
             s_list.append('-s ')
             s_list.append(new_path)
