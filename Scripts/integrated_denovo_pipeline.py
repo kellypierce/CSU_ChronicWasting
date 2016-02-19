@@ -368,6 +368,9 @@ def denovo_Stacks(in_dir, denovo_path, stacks_executables, out_dir, m, n, b, D):
     s_list=[]
     rm_unmatched = False
     
+    ustacks_path = os.path.join(stacks_executables, '/ustacks')
+    print ustacks_path
+    
     for i in os.listdir(in_dir):
         # don't proceed if the inputs don't have the proper extension
         assert '.fq' in i, "%s needs extension .fq for Stacks compatibility" % i
@@ -381,7 +384,6 @@ def denovo_Stacks(in_dir, denovo_path, stacks_executables, out_dir, m, n, b, D):
             new_path=os.path.join(in_dir, i)            
             # Run ustacks
             # example usage: ustacks -t fastq -f ./samples/f0_male.fq    -o ./stacks -i 1 -d -r -m 3 -p 15
-            ustacks_path = os.path.join(stacks_executables, '/ustacks')
             ustacks_args = [ustacks_path, ' t fastq ' + ' -f ' + new_path + ' -o ', out_dir, ' -m ', str(m), ' -r -R']
             ustacks_call = ''.join(ustacks_args)
             subprocess.call(ustacks_call, shell=True)
