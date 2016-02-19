@@ -384,7 +384,7 @@ def denovo_Stacks(in_dir, denovo_path, stacks_executables, out_dir, m, n, b, D):
             new_path=os.path.join(in_dir, i)            
             # Run ustacks
             # example usage: ustacks -t fastq -f ./samples/f0_male.fq    -o ./stacks -i 1 -d -r -m 3 -p 15
-            ustacks_args = [ustacks_path, ' t fastq ' + ' -f ' + new_path + ' -o ', out_dir, ' -m ', str(m), ' -r -R']
+            ustacks_args = [ustacks_path, ' -t fastq ' + ' -f ' + new_path + ' -o ', out_dir, ' -m ', str(m), ' -r -R']
             ustacks_call = ''.join(ustacks_args)
             subprocess.call(ustacks_call, shell=True)
     
