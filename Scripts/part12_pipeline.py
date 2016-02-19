@@ -118,7 +118,7 @@ re_demultiplexOutDir = parentDir + '/dbrFiltered_demultiplexed/'
 re_trimInDir = re_demultiplexOutDir
 re_trimOutDir = parentDir + '/dbrFiltered_trimmed/'
 re_stacksInDir = re_trimOutDir
-re_stacksOutDir = parentDir + 'dbrFiltered_StacksOutput/' # stacks doesn't allow an output to be specified
+re_stacksOutDir = parentDir + '/dbrFiltered_StacksOutput/' # stacks doesn't allow an output to be specified
 re_pseudorefInDir = re_stacksOutDir
 re_pseudorefOutDir = parentDir + '/dbrFiltered_pseudoreference.fastq'
 re_BWAinDir = parentDir
@@ -155,7 +155,7 @@ denovo_Stacks(in_dir = re_stacksInDir,
               n = 2, 
               b = 1, 
               D = '_final_assembly')
-
+'''
 # GENERATE THE PSEUDOREFERENCE GENOME
 GeneratePseudoref(in_dir = re_pseudorefInDir, 
                   out_file = re_pseudorefOutDir,  
@@ -172,3 +172,4 @@ callGeno(sam_in = re_BWAoutDir,
          pseudoref = re_pseudorefOutDir, 
          BCFout = finalBCFout, 
          VCFout = finalVCFout)
+'''
