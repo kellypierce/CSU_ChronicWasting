@@ -384,6 +384,8 @@ def denovo_Stacks(in_dir, denovo_path, stacks_executables, out_dir, m, n, b, D):
             rm_unmatched = True
         else:
             
+            # full path to trimmed file
+            new_path=os.path.join(in_dir, i)            
             # Run ustacks
             # example usage: ustacks -t fastq -f ./samples/f0_male.fq    -o ./stacks -i 1 -d -r -m 3 -p 15
             ustacks_args = [ustacks_path, ' -t fastq ' + ' -f ' + new_path + ' -o ', out_dir, ' -m ', str(m), ' -r -R']
@@ -401,13 +403,10 @@ def denovo_Stacks(in_dir, denovo_path, stacks_executables, out_dir, m, n, b, D):
         if 'tags' in j: # we only want the tags.tsv files for ccstacks
             
             print cstacksMessageTemplate.substitute(name = j)
-            
-            # full path to trimmed file
-            new_path=os.path.join(in_dir, j)            
-            
+            tag_path = os.path.join(out_dir, j)
             # generate a string for the -s cstacks argument
             s_list.append('-s ')
-            s_list.append(new_path)
+            s_list.append(tag_path)
             s_list.append(' ')
         
     # join list into a string to pass to denovo_map.pl
