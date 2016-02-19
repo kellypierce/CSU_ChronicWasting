@@ -368,7 +368,7 @@ def denovo_Stacks(in_dir, denovo_path, stacks_executables, out_dir, m, n, b, D):
     s_list=[]
     rm_unmatched = False
     
-    ustacks_path = os.path.join(stacks_executables, '/ustacks')
+    ustacks_path = stacks_executables + '/ustacks'
     print ustacks_path
     
     for i in os.listdir(in_dir):
