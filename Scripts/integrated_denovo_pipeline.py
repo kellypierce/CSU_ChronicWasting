@@ -398,17 +398,27 @@ def denovo_Stacks(in_dir, denovo_path, stacks_executables, out_dir, m, n, b, D):
     s_list=[]
     
     for j in os.listdir(out_dir):
+        # a clumsy hack to deal with empty allele.tsv files:
+        # the alleles.tsv file is the shortest one; if it only has one line (a header) it will cause a segfault
+        if 'alleles' in j:
+            alleles_file = os.path.join(out_dir, j)
+            with open(alleles_file) as f:
+                lineCount = sum(1 for _ in f)
+            if lineCount > 1:
+                tagsFile = re.sub('alleles', 'tags', alleles_file, count=0, flags=0)
+                print cstacksMessageTemplate.substitute(name = tagsFile)
+                basej = os.path.splitext(os.path.splitext(tagsFile)[0])[0]
+                #tag_path = os.path.join(out_dir, basej)
+                # generate a string for the -s cstacks argument
+                s_list.append('-s ')
+                #s_list.append(tag_path)
+                s_list.append(basej)
+                s_list.append(' ')
         # TODO: find some way to warn when samples are dropped because they don't get tags files after ustacks runs!
         #print j
-        if 'tags' in j: # we only want the tags.tsv files for ccstacks
+        #if 'tags' in j: # we only want the tags.tsv files for cstacks
             
-            print cstacksMessageTemplate.substitute(name = j)
-            basej = os.path.splitext(os.path.splitext(j)[0])[0]
-            tag_path = os.path.join(out_dir, basej)
-            # generate a string for the -s cstacks argument
-            s_list.append('-s ')
-            s_list.append(tag_path)
-            s_list.append(' ')
+            
         
     # join list into a string to pass to denovo_map.pl
     formatted_list = ''.join(s_list)
