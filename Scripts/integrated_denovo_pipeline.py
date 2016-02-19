@@ -393,7 +393,7 @@ def denovo_Stacks(in_dir, denovo_path, stacks_executables, out_dir, m, n, b, D):
             subprocess.call(ustacks_call, shell=True)
     
     cstacksMessageTemplate = Template('*****Preparing sample $name for CSTACKS.*****')
-    
+    segfaultWarningTemplate = Template('### WARNING ### empty .alleles.tsv file for %sample')
     # Generate "-s" arguments to Stacks denovo_map.pl
     s_list=[]
     
@@ -405,7 +405,7 @@ def denovo_Stacks(in_dir, denovo_path, stacks_executables, out_dir, m, n, b, D):
             with open(alleles_file) as f:
                 lineCount = sum(1 for _ in f)
             if lineCount > 1:
-                tagsFile = re.sub('alleles', 'tags', alleles_file, count=0, flags=0)
+                tagsFile = re.sub('alleles', 'tags', alleles_file)
                 print cstacksMessageTemplate.substitute(name = tagsFile)
                 basej = os.path.splitext(os.path.splitext(tagsFile)[0])[0]
                 #tag_path = os.path.join(out_dir, basej)
@@ -414,6 +414,9 @@ def denovo_Stacks(in_dir, denovo_path, stacks_executables, out_dir, m, n, b, D):
                 #s_list.append(tag_path)
                 s_list.append(basej)
                 s_list.append(' ')
+            else:
+                basej = os.path.splitext(os.path.splitext(alleles_file)[0])[0]
+                print segfaultWarningTemplate.substitute(sample = basej)
         # TODO: find some way to warn when samples are dropped because they don't get tags files after ustacks runs!
         #print j
         #if 'tags' in j: # we only want the tags.tsv files for cstacks
