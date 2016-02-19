@@ -420,7 +420,7 @@ def denovo_Stacks(in_dir, denovo_path, stacks_executables, out_dir, m, n, b, D):
     # Run cstacks
     # example usage: cstacks -b 1 -o ./stacks -s ./stacks/f0_male -s ./stacks/f0_female -p 15
     cstacks_path = stacks_executables + '/cstacks'
-    cstacks_args = [cstacks_path, ' -b 1 -o -n ', str(n), out_dir, formatted_list]
+    cstacks_args = [cstacks_path, ' -b 1 -o -n ', str(n), ' ', out_dir, ' ', formatted_list]
     cstacks_call = ''.join(cstacks_args)
     print cstacks_call
     subprocess.call(cstacks_call)
