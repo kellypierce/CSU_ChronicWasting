@@ -322,8 +322,14 @@ def iterative_Demultiplex(in_dir, # directory of un-demultiplexed libraries
     #pdb.set_trace()
     files = os.listdir(in_dir) 
     for f in files:
-        sampleID_match = re.match(".*(Library\d{2,3}).*", f)
-        #sampleID = re.match(".*(\d{3}[a-z]?).*", f).groups()[0]
+        # for libraries with format 'Library#' in name (only numbers to distinguish library)
+        #sampleID_match = re.match(".*(Library\d{2,3}).*", f)
+        
+        # for libraries with formats 'Library#' or 'Library#A' in name (letters and numbers to distinguish library)
+        # this should also work for libraries with only numbers: '\w?' should capture 0 or more words after the digits
+        
+        sampleID_match = re.match(".*(Library\d{1,3}\w?).*", f)
+        
         if sampleID_match: # if we get a match
             sampleID = sampleID_match.groups()[0] # extract that match
             bcs = os.listdir(barcode_dir)
