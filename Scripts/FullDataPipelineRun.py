@@ -82,11 +82,11 @@ extra_params = '-m 309 -n 209'
 #                        regexR1='R1', regexR2='R2')
 
 # QUALITY FILTER PEAR ASSEMBLED DATA
-out_name = '.qual_filtered' # gets appended to input file name
-q = 30
-p = 50
-read = '.assembled.fastq' # extension for pear-assembled reads
-iterative_FASTQ_quality_filter(directory = filterInDir, 
+#out_name = '.qual_filtered' # gets appended to input file name
+#q = 30
+#p = 50
+#read = '.assembled.fastq' # extension for pear-assembled reads
+#iterative_FASTQ_quality_filter(directory = filterInDir, 
                                out_dir = filterOutDir, 
                                out_name = out_name, 
                                q = q, 
@@ -94,12 +94,12 @@ iterative_FASTQ_quality_filter(directory = filterInDir,
                                read = read)
 
 # MAKE DBR DICTIONARIES FOR QUAL FILTERED PEAR DATA
-seq_type = 'pear'
-iterative_DBR_dict(in_dir = dbrInDir, 
-                   seqType = seq_type,
-                   save = dbrOutDir,
-                   dbr_start = -10,
-                   dbr_stop = -2)
+#seq_type = 'pear'
+#iterative_DBR_dict(in_dir = dbrInDir, 
+#                   seqType = seq_type,
+#                   save = dbrOutDir,
+#                   dbr_start = -10,
+#                   dbr_stop = -2)
 
 # DEMULTIPLEX
 out_prefix = '/demultiplexed_'
@@ -143,7 +143,7 @@ refmap_BWA(in_dir = trimOutDir, # input demultiplexed, trimmed reads
 DBR_Filter(assembled_dir = BWAoutDir, # the SAM files for the data mapped to pseudoreference
            out_dir = DBRfilteredseqs, # the output file, full path, ending with .fasta
            n_expected = 2, # the number of differences to be tolerated
-           barcode_dir = '/home/pierce/CSU_ChronicWasting/BarcodesRound1/', # the barcodes for individuals in the library referenced in dict_in
+           barcode_dir = '/home/pierce/CSU_ChronicWasting/RevisedBarcodes', # the barcodes for individuals in the library referenced in dict_in
            dict_dir = dbrOutDir, # a single dictionary of DBRs (for one library only)
            barcode_file=None, # if just a single library is being used, can directly pass the barcode file
            test_dict=True, # optionally print testing info to stdout for checking the dictionary construction
