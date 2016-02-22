@@ -87,11 +87,11 @@ extra_params = '-m 309 -n 209'
 #p = 50
 #read = '.assembled.fastq' # extension for pear-assembled reads
 #iterative_FASTQ_quality_filter(directory = filterInDir, 
-                               out_dir = filterOutDir, 
-                               out_name = out_name, 
-                               q = q, 
-                               p = p, 
-                               read = read)
+#                               out_dir = filterOutDir, 
+#                               out_name = out_name, 
+#                               q = q, 
+#                               p = p, 
+#                               read = read)
 
 # MAKE DBR DICTIONARIES FOR QUAL FILTERED PEAR DATA
 #seq_type = 'pear'
