@@ -63,7 +63,7 @@ def find_SampleID(filename):
     #sampleID_match = re.match(".*(\d{3}[a-z]?).*", filename)
     # this revision is VERY specific to my technical replicates
     # TODO: find a way to pass the regex capture group as an argument so that this (and related functions) are more flexible
-    sampleID_match = re.match(".*(\d{1,3}\-?T?).*", filename)
+    sampleID_match = re.match(".*(\d{1,3}T?).*", filename)
     if sampleID_match:
         sampleID = sampleID_match.groups()[0]
         return sampleID
@@ -72,7 +72,7 @@ def find_SampleID(filename):
     
 def find_LibraryID(filename):
     #libraryID_match = re.match(".*(Library\d{2,3}).*", filename)
-    libraryID_match = re.match(".*(Library\d{1,3}\w?).*", filename)
+    libraryID_match = re.match(".*(Library\d{1,3}[A|B]?).*", filename)
     if libraryID_match: # if we get a match (this allows the script to proceed if a file has a mismatched name)
         libraryID = libraryID_match.groups()[0] # extract the library ID match
         return libraryID 
