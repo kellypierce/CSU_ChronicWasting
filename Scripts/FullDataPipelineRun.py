@@ -108,7 +108,7 @@ extra_params = '-m 309 -n 209'
 #                      out_dir = demultiplexOutDir, 
 #                      out_prefix = out_prefix)
 
- TRIM TO UNIFORM LENGTH
+# TRIM TO UNIFORM LENGTH
 suffix = '_trimmed.fq'
 first_base = 11
 last_base = 196
