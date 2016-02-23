@@ -102,21 +102,21 @@ extra_params = '-m 309 -n 209'
 #                   dbr_stop = -2)
 
 # DEMULTIPLEX
-out_prefix = '/demultiplexed_'
-iterative_Demultiplex(in_dir = demultiplexInDir, 
-                      barcode_dir = '/home/pierce/CSU_ChronicWasting/RevisedBarcodes', 
-                      out_dir = demultiplexOutDir, 
-                      out_prefix = out_prefix)
+#out_prefix = '/demultiplexed_'
+#iterative_Demultiplex(in_dir = demultiplexInDir, 
+#                      barcode_dir = '/home/pierce/CSU_ChronicWasting/RevisedBarcodes', 
+#                      out_dir = demultiplexOutDir, 
+#                      out_prefix = out_prefix)
 
 # TRIM TO UNIFORM LENGTH
-suffix = '_trimmed.fq'
-first_base = 11
-last_base = 196
-Trim(in_dir = trimInDir, 
-     out_dir = trimOutDir, 
-     suffix = suffix, 
-     first_base = first_base, 
-     last_base = last_base)
+#suffix = '_trimmed.fq'
+#first_base = 11
+#last_base = 196
+#Trim(in_dir = trimInDir, 
+#     out_dir = trimOutDir, 
+#     suffix = suffix, 
+#     first_base = first_base, 
+#     last_base = last_base)
 
 # RUN STACKS SIMULTANEOUSLY ON ALL LIBRARIES
 denovo_Stacks(in_dir = stacksInDir, 
