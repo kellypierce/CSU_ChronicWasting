@@ -108,15 +108,15 @@ extra_params = '-m 309 -n 209'
 #                      out_dir = demultiplexOutDir, 
 #                      out_prefix = out_prefix)
 
-# TRIM TO UNIFORM LENGTH
-#suffix = '_trimmed.fq'
-#first_base = 11
-#last_base = 196
-#Trim(in_dir = trimInDir, 
-#     out_dir = trimOutDir, 
-#     suffix = suffix, 
-#     first_base = first_base, 
-#     last_base = last_base)
+ TRIM TO UNIFORM LENGTH
+suffix = '_trimmed.fq'
+first_base = 11
+last_base = 196
+Trim(in_dir = trimInDir, 
+     out_dir = trimOutDir, 
+     suffix = suffix, 
+     first_base = first_base, 
+     last_base = last_base)
 
 # RUN STACKS SIMULTANEOUSLY ON ALL LIBRARIES
 denovo_Stacks(in_dir = stacksInDir, 
