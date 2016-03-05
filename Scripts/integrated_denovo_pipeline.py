@@ -365,8 +365,8 @@ def Demultiplex(in_file, barcode_file, out_dir, out_prefix):
         demultiplexProcess = Popen(commandLine, shell = True, stdin = catProcess.stdout)
     demultiplexProcess.wait()
 
-def denovo_Stacks(in_dir, denovo_path, stacks_executables, out_dir, m, n, b, D):    
-    print 'Assembling sequences de novo using Stacks denovo_map.pl\n'
+def denovo_Ustacks(in_dir, denovo_path, stacks_executables, out_dir, m, n, b, D):    
+    print 'Assembling sequences de novo using ustacks\n'
     
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
@@ -398,6 +398,8 @@ def denovo_Stacks(in_dir, denovo_path, stacks_executables, out_dir, m, n, b, D):
             ustacks_args = [ustacks_path, ' -t fastq ' + ' -f ' + new_path + ' -o ', out_dir, ' -m ', str(m), ' -r -R']
             ustacks_call = ''.join(ustacks_args)
             subprocess.call(ustacks_call, shell=True)
+
+def denovo_Cstacks(in_dir, denovo_path, stacks_executables, out_dir, m, n, b, D):    
     
     cstacksMessageTemplate = Template('*****Preparing sample $name for CSTACKS.*****')
     segfaultWarningTemplate = Template('### WARNING ### empty .alleles.tsv file for %sample')
