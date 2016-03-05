@@ -118,8 +118,18 @@ Trim(in_dir = trimInDir,
      first_base = first_base, 
      last_base = last_base)
 
-# RUN STACKS SIMULTANEOUSLY ON ALL LIBRARIES
-denovo_Stacks(in_dir = stacksInDir, 
+# RUN USTACKS SIMULTANEOUSLY ON ALL LIBRARIES
+denovo_Ustacks(in_dir = stacksInDir, 
+              denovo_path = denovo_path, 
+              stacks_executables = stacks_executables, 
+              out_dir = stacksOutDir, 
+              m = 10, 
+              n = 2, 
+              b = 1, 
+              D = '_initial_assembly')
+
+# RUN CSTACKS SIMULTANEOUSLY ON ALL LIBRARIES (same args as above)
+denovo_Cstacks(in_dir = stacksInDir, 
               denovo_path = denovo_path, 
               stacks_executables = stacks_executables, 
               out_dir = stacksOutDir, 
