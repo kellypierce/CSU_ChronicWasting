@@ -109,24 +109,24 @@ extra_params = '-m 309 -n 209'
 #                      out_prefix = out_prefix)
 
 # TRIM TO UNIFORM LENGTH
-suffix = '_trimmed.fq'
-first_base = 11
-last_base = 196
-Trim(in_dir = trimInDir, 
-     out_dir = trimOutDir, 
-     suffix = suffix, 
-     first_base = first_base, 
-     last_base = last_base)
+#suffix = '_trimmed.fq'
+#first_base = 11
+#last_base = 196
+#Trim(in_dir = trimInDir, 
+#     out_dir = trimOutDir, 
+#     suffix = suffix, 
+#     first_base = first_base, 
+#     last_base = last_base)
 
 # RUN USTACKS SIMULTANEOUSLY ON ALL LIBRARIES
-denovo_Ustacks(in_dir = stacksInDir, 
-              denovo_path = denovo_path, 
-              stacks_executables = stacks_executables, 
-              out_dir = stacksOutDir, 
-              m = 10, 
-              n = 2, 
-              b = 1, 
-              D = '_initial_assembly')
+#denovo_Ustacks(in_dir = stacksInDir, 
+#              denovo_path = denovo_path, 
+#              stacks_executables = stacks_executables, 
+#              out_dir = stacksOutDir, 
+#              m = 10, 
+#              n = 2, 
+#              b = 1, 
+#              D = '_initial_assembly')
 
 # RUN CSTACKS SIMULTANEOUSLY ON ALL LIBRARIES (same args as above)
 denovo_Cstacks(in_dir = stacksInDir, 
