@@ -129,19 +129,19 @@ extra_params = '-m 309 -n 209'
 #              D = '_initial_assembly')
 
 # RUN CSTACKS SIMULTANEOUSLY ON ALL LIBRARIES (same args as above)
-denovo_Cstacks(in_dir = stacksInDir, 
-              denovo_path = denovo_path, 
-              stacks_executables = stacks_executables, 
-              out_dir = stacksOutDir, 
-              m = 10, 
-              n = 2, 
-              b = 1, 
-              D = '_initial_assembly')
+#denovo_Cstacks(in_dir = stacksInDir, 
+#              denovo_path = denovo_path, 
+#              stacks_executables = stacks_executables, 
+#              out_dir = stacksOutDir, 
+#              m = 10, 
+#              n = 2, 
+#              b = 1, 
+#              D = '_initial_assembly')
 
 # GENERATE THE PSEUDOREFERENCE GENOME
-GeneratePseudoref(in_dir = pseudorefInDir, 
-                  out_file = pseudorefOutDir,  
-                  BWA_path = BWA) # imported from integrated_denovo_pipeline.py
+#GeneratePseudoref(in_dir = pseudorefInDir, 
+#                  out_file = pseudorefOutDir,  
+#                  BWA_path = BWA) # imported from integrated_denovo_pipeline.py
 
 # REFERENCE MAP QUALITY FILTERED/DEMULTIPLEXED MERGED READS TO THE PSEUDOREFERENCE
 refmap_BWA(in_dir = trimOutDir, # input demultiplexed, trimmed reads
@@ -175,8 +175,18 @@ Trim(in_dir = re_trimInDir,
      suffix = suffix, 
      first_base = new_first_base)
 
-# RUN STACKS SIMULTANEOUSLY ON ALL LIBRARIES
-denovo_Stacks(in_dir = re_stacksInDir, 
+# RUN USTACKS SIMULTANEOUSLY ON ALL LIBRARIES
+denovo_Ustacks(in_dir = re_stacksInDir, 
+              denovo_path = denovo_path, 
+              stacks_executables = stacks_executables, 
+              out_dir = re_stacksOutDir, 
+              m = 10, 
+              n = 2, 
+              b = 1, 
+              D = '_final_assembly')
+
+# RUN CSTACKS SIMULTANEOUSLY ON ALL LIBRARIES (same args as above)
+denovo_Cstacks(in_dir = re_stacksInDir, 
               denovo_path = denovo_path, 
               stacks_executables = stacks_executables, 
               out_dir = re_stacksOutDir, 
