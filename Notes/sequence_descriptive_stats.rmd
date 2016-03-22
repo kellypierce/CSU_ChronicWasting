@@ -1,0 +1,79 @@
+---
+title: "CWD ddRADseq Descriptors"
+output: pdf_document
+---
+
+# Barcode Recovery
+
+```{r}
+coverage <- read.csv('~/Dropbox/ColoState/CWD_ddRADseq/Outputs/MASTER_DATA_FILES//AllLibrariesBarcodesCoverage.csv')
+
+total <- sum(coverage$Total.Sequence.Count, na.rm=T)
+total/1000000 # 465.2548 million reads
+
+
+```
+
+# Replicates
+
+```{r}
+replicates <- coverage[which(coverage$Is.replicated. == 'Y'),]
+
+# from same library prep?
+# cheating way: just remove samples 18, 84, 91, 96 and 113 
+diff.libs <- c(18,76,84,91,96,113,206,177)
+same.libs <- replicates[which((replicates$Sample.ID %in% diff.libs) == F),]
+
+# odd indexes = rep1
+# even indexes = rep2
+
+rep1 <- same.libs[seq(1,length(same.libs[,1])-1,2),]
+rep2 <- same.libs[seq(2,length(same.libs[,2]),2),]
+coverage.diffs <- abs(rep1$Total.Sequence.Count - rep2$Total.Sequence.Count)
+boxplot(coverage.diffs, axes=F)
+ticks<-c(0, expression(paste("1x10"^"6")),
+         expression(paste("2x10"^"6")),
+         expression(paste("3x10"^"6")))
+ticks2<-c(0, expression(paste("1x10"^"6")),
+         expression(paste("2x10"^"6")),
+         expression(paste("3x10"^"6")),
+         expression(paste("4x10"^"6")),
+         expression(paste("5x10"^"6")),
+         expression(paste("6x10"^"6")))
+axis(2, at=c(0,1000000,2000000,3000000), labels=ticks, las=1)
+
+diff<-abs(rep1$Total.Sequence.Count - rep2$Total.Sequence.Count)
+total.reads<-(rep1$Total.Sequence.Count + rep2$Total.Sequence.Count)
+model<-lm(diff~total.reads)
+summary(model)
+coefs<-coef(model)
+png(file='~/Dropbox/ColoState/CWD_ddRADseq/Outputs/TechnicalReplicateReadCounts.png', height=10, width=15, res=300, unit='cm')
+par(mar=c(5,6,2,2))
+plot(x=total.reads, y=diff, axes=F,
+     xlab='Total Reads, Both Replicates', ylab='', pch=16,
+     col='darkgray')
+mtext(2, line=4, text='Absolute Difference in Read Counts')
+axis(2, at=c(0,1000000,2000000,3000000), labels=ticks, las=1)
+axis(1, at=c(0,1000000,2000000,3000000,4000000,
+             5000000,6000000), labels=ticks2, las=1)
+xvals=seq(0,6000000,1000000)
+lines(x=xvals, y=coefs[1]+xvals*coefs[2], col='red')
+dev.off()
+
+
+was.sequenced<-coverage[which(coverage$Total.Sequence.Count > 0),]
+was.sequenced$Library.Number<-factor(was.sequenced$Library.Number) # drops unused factors
+png(file='~/Dropbox/ColoState/CWD_ddRADseq/Outputs/ReadCountDistrAllLibraries.png', height=10, width=15, res=300, unit='cm')
+par(mar=c(4,6,2,2))
+boxplot(was.sequenced$Total.Sequence.Count~was.sequenced$Library.Number, axes=F,
+        ylim=c(0,5000000))
+mtext(1, line=1, text='Sequencing Library')
+mtext(2, line=4, text='Number of Reads')
+ticks3<-c(0, expression(paste("1x10"^"6")),
+         expression(paste("2x10"^"6")),
+         expression(paste("3x10"^"6")),
+         expression(paste("4x10"^"6")),
+         expression(paste("5x10"^"6")))
+axis(2, at=c(0,1000000,2000000,3000000,4000000,5000000), labels=ticks3, las=1)
+dev.off()
+```

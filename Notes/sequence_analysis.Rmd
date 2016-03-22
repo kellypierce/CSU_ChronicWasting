@@ -1,0 +1,62 @@
+---
+title: "SequenceRun1_Analysis"
+output: pdf_document
+---
+
+# The data are saved locally and on the correns cluster:
+
+```
+'/home/antolinlab/Downloads/CWD_RADseq/'
+'pierce@correns.colostate.edu:~/CWD_RADseq/'
+```
+
+# Quality Control
+
+## Check barcodes, cut sites and degeneracy counts using the python script QC.py
+
+The raw data can be parsed to check for expected sequences with a bash one-liner. Since we have data from multiple libraries, I wrote a python script to efficiently iterate through the libraries to perform these checks.
+
+The script is on GitHub: https://github.com/kellyp2738/CSU_ChronicWasting/blob/master/Scripts/QC.py
+
+The QC outputs are stored locally: 
+
+```
+'/home/antolinlab/Downloads/CWD_RADseq/barcodes'
+'/home/antolinlab/Downloads/CWD_RADseq/cutsites'
+'/home/antolinlab/Downloads/CWD_RADseq/cutsites_read2'
+'/home/antolinlab/Downloads/CWD_RADseq/degeneracy'
+
+```
+The calls to the custom functions are provided below.
+
+```
+barcode_r1('/home/antolinlab/Downloads/CWD_RADseq/', 'barcode_check')
+cutsite_r1('/home/antolinlab/Downloads/CWD_RADseq/', 'cutsite_check')
+cutsite_r2('/home/antolinlab/Downloads/CWD_RADseq/', 'cutsite_r2_check')
+degeneracy_r2('/home/antolinlab/Downloads/CWD_RADseq/', 'degeneracy_check')
+```
+
+## FastQC
+
+Will be done another time; module is installed on @correns.colostate.edu
+
+## DBR Distributions
+
+Before looking at the DBR distributions, we need to quality filter the data.
+
+```{r}
+setwd('~/Downloads/CWD_RADseq/degeneracy/')
+count.files<-list.files(getwd())
+
+for(file in count.files){
+  dbr.counts=read.table(file)
+  counts.fraction=dbr.counts[,1]/sum(dbr.counts[,1])
+  no.singletons=dbr.counts[dbr.counts[,1]>1,]
+  no.single.counts.frac=no.singletons[,1]/sum(no.singletons[,1])
+  counts.logit=log((counts.fraction)/(1-counts.fraction))
+  hist(counts.fraction, main=paste('Minimum Median Quality = ', substr(file, 1, 2)), xlab='Fraction of Reads with DBR', freq=FALSE)
+  hist(no.single.counts.frac, main=paste('Minimum Median Quality = ', substr(file, 1, 2)), xlab='Fraction of Reads with DBR (no singletons)', freq=FALSE)
+  hist(counts.logit-min(counts.logit), main=paste('Minimum Median Quality = ', substr(file, 1, 2)), xlab='translated logit(Fraction of Reads with DBR)')
+}
+
+```
