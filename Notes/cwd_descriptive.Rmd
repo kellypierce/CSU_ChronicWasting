@@ -1,0 +1,92 @@
+---
+title: "CWD Descriptive Data"
+output: pdf_document
+---
+
+General plots and figures for the descriptive CWD data from Nathan.
+
+```{r}
+
+source('~/Desktop/CSU_ChronicWasting/PlotPrevCI.r')
+library(gplots)
+library(binom)
+
+cwd.data<-read.csv('~/Dropbox/ColoState/CWD_ddRADseq/CWD_Data_from_Nathan/LFP Data 201510.csv')
+counts=c(length(cwd.data[,1])-sum(cwd.data$cwd), sum(cwd.data$cwd))
+png('~/Dropbox/ColoState/CWD_counts.png', height=10, width=10, units='cm', res=300)
+cwd.bar<-barplot(counts, ylim=c(0, 300),
+        names=c('CWD -', 'CWD +'), ylab='Number of Deer')#,
+        #xlab='Observance of CWD During Study', )
+text(x=cwd.bar, y=counts+20, label=counts)
+dev.off()
+
+overallci<-binom.confint(counts[2], counts[1]+counts[2], method='logit')
+
+#prevalence by winter range
+
+camp<-cwd.data[which(cwd.data$campbell==1),]
+red<-cwd.data[which(cwd.data$redmtn==1),]
+cher<-cwd.data[which(cwd.data$cherokee==1),]
+big<-cwd.data[which(cwd.data$bighole==1),]
+
+p.camp<-sum(camp$cwd)/length(camp[,1])
+p.red<-sum(red$cwd)/length(red[,1])
+p.cher<-sum(cher$cwd)/length(cher[,1])
+p.big<-sum(big$cwd)/length(big[,1])
+
+shortKLCI<-function(num.pos, sample.size){
+  proportion<-num.pos/sample.size
+  z.sq<-1.96**2
+  delta<-((z.sq/3)+(1/6))*((1-(2*proportion))/sample.size)
+  nu.proportion<-(proportion*(1-proportion))/(sample.size-1)
+  delta.sq<-delta**2
+  ci.u<-proportion+delta+sqrt((z.sq*nu.proportion)+delta.sq)
+  ci.l<-proportion+delta-sqrt((z.sq*nu.proportion)+delta.sq)
+  output<-cbind(ci.u,ci.l)
+  return(data.frame(output))}
+
+cis<-shortKLCI(c(sum(cwd.data$cwd), sum(red$cwd), sum(big$cwd), sum(camp$cwd), sum(cher$cwd)),
+               c(length(cwd.data[,1]), length(red[,1]), length(big[,1]), 
+                        length(camp[,1]), length(cher[,1])))
+
+overall.p<-sum(cwd.data$cwd)/length(cwd.data[,1])
+               
+png('~/Dropbox/ColoState/CWD_Prev_by_WinterRange.png', height=10, width=15, units='cm', res=300)
+prev.bar<-barplot2(c(overall.p, p.red, p.big, p.camp, p.cher), ylim=c(0,0.25), plot.ci=T,
+         ci.l=cis$ci.l, ci.u=cis$ci.u, col=c('gray', 'blue', 'red', 'green', 'orange'), 
+         border=c('gray', 'blue', 'red', 'green', 'orange'), ylab='CWD Prevalence', las=1)
+mtext(side=1, at=c(prev.bar[2], prev.bar[4]), 
+      text=c('Red\nMountain', 'Campbell\nValley'), line=1.5)
+mtext(side=1, at=c(prev.bar[1], prev.bar[3], prev.bar[5]),
+      text=c('Overall', 'Bighole', 'Cherokee'), line=0.5)
+#text(x=prev.bar, y=cis$ci.u+0.01, label=c(length(cwd.data[,1]), length(red[,1]), length(big[,1]), length(camp[,1]), length(cher[,1])))
+mtext(side=1, at=prev.bar, text=c(paste('n =',length(cwd.data[,1])), paste('n =', length(red[,1])), paste('n =',length(big[,1])), paste('n =',length(camp[,1])), paste('n =',length(cher[,1]))), line=3)
+dev.off()
+
+pos<-cwd.data[which(cwd.data$cwd==1), 1]
+
+prnp<-read.csv('~/Dropbox/ColoState/CWD_ddRADseq/CWD_Data_from_Nathan/LFP Prnp 201510.csv')
+
+cwd.prnp<-merge(cwd.data, prnp, by.x = 'deerid', by.y = 'ID')
+
+d20g.geno<-cwd.prnp[which(cwd.prnp$D20G_Seq=='DD' | cwd.prnp$D20G_Seq == 'DG' | cwd.prnp$D20G_Seq == 'GG'),]
+geno.disease.counts<-table(as.character(d20g.geno$D20G_Seq), as.factor(d20g.geno$cwd))
+barplot(t(geno.disease.counts), beside=T)
+
+d20g.prev<-geno.disease.counts[,2]/(geno.disease.counts[,1]+geno.disease.counts[,2])
+barplot2(d20g.prev, plot.ci=T, ci.u=d20g.ci2$upper, ci.l=d20g.ci2$lower)
+
+d20g.ci2<-binom.confint(geno.disease.counts[,2], (geno.disease.counts[,1]+geno.disease.counts[,2]), method='logit')
+
+s225f.geno<-cwd.prnp[which(cwd.prnp$S225F_Seq=='SS' | cwd.prnp$S225F_Seq == 'SF' | cwd.prnp$S225F_Seq == 'FF'),]
+s225f.geno.disease.counts<-table(as.character(s225f.geno$S225F_Seq), as.factor(s225f.geno$cwd))
+barplot(t(s225f.geno.disease.counts), beside=T, ylab='Number of Deer')
+
+
+s225f.prev<-s225f.geno.disease.counts[,2]/(s225f.geno.disease.counts[,1]+s225f.geno.disease.counts[,2])
+s225f.ci<-binom.confint(s225f.geno.disease.counts[,2], (s225f.geno.disease.counts[,1]+s225f.geno.disease.counts[,2]), method='logit')
+png(file='~/Dropbox/ColoState/CWD_by_S225F.png', height=10, width=15, res=300, units='cm')
+barplot2(s225f.prev, plot.ci=T, ci.u=s225f.ci$upper, ci.l=s225f.ci$lower, ylim=c(0,1), ylab='CWD Prevalence')
+dev.off()
+
+```
