@@ -86,7 +86,7 @@ Please see original documentation for installation instructions for external sof
 	Glossary
 	
 	| Name | Definition |
-	|-|-|
+	|---|---|
 	| Sequence ID | Illumina HiSeq ID, listed under "QNAME" in SAM file. |
 	| RNAME | The reference sequence ID to which the individual sequences map. (RNAME is a SAM file header)|
 	| DBR | The DBR sequence retrieved by matching QNAME from the SAM file to the Sequence ID from the DBR_dict. |
@@ -97,7 +97,7 @@ Please see original documentation for installation instructions for external sof
 	**Function operation**
 	
 	|Argument| Help |
-	|-|-|
+	|---|---|
 	| assembled_dir | Full path to directory containing SAM files to filter. |
 	| out_dir | Full path to output .fasta file for saving filtered sequences and the run logfile. |
 	| n_expected | Integer. maximum number of replicate DBRs tolerated. |
@@ -119,7 +119,7 @@ Users do not manipulate these functions directly. They are instead called by **D
 	Calculates the median quality score of a sequence. It is called by **DBR_Filter** during the filtering process.
 	
 	|Argument| Help |
-	|-|-|
+	|---|---|
 	| QUAL | ASCII quality string extracted from SAM file. |
 	| phred_dict | Globally defined variable; dictionary type. Converts ASCII-33 quality scores to integers which can be used in a median calculation. ASCII-64 is not supported.|
 
@@ -134,7 +134,7 @@ Users do not manipulate these functions directly. They are instead called by **D
 	Future versions of the software will allow for this regular expresson to be user-specified.	
 
 	|Argument| Help |
-	|-|-|
+	|---|---|
 	| filename | SAM file name.|
 
 3. **find_LibraryID**
@@ -148,20 +148,20 @@ Users do not manipulate these functions directly. They are instead called by **D
 	Future versions of the software will allow for this regular expresson to be user-specified.	
 
 	|Argument| Help |
-	|-|-|
+	|---|---|
 	| filename | SAM file name. |
 
 4. **find_BarcodeFile**
 
 	|Argument| Help |
-	|-|-|
+	|---|---|
 	| library | The value returned by **find_LibraryID**. |
 	| directory | The full file path to the directory containing the unique sample barcodes by which samples are demultiplexed. |
 	
 5. **find_DBRdictionary**
 
 	|Argument| Help |
-	|-|-|
+	|---|---|
 	| library | The value returned by **find_LibraryID**. |
 	| directory | The full file path to the directory containing the DBR dictionaries created by **DBR_dict**. |
 
@@ -178,7 +178,7 @@ Users do not manipulate these functions directly. They are instead called by **D
 	Recommended to run on quality filtered data.
 
 	|Argument| Help |
-	|-|-|
+	|---|---|
 	| in_dir | Full path to directory containing a set of .fastq files. |
 	| seqType | 'read2' or 'pear'. If 'read2', expect only read 2 files in "in_dir". If 'pear', expect only read 1 and read 2 merged with PEAR in "in_dir". |
 	| dbr_start | Integer. Index of first base in DBR. NOTE: Python indexing starts at 0.|
@@ -194,7 +194,7 @@ Users do not manipulate these functions directly. They are instead called by **D
 	Recommended to run on quality filtered data.
 
 	|Argument| Help |
-	|-|-|
+	|---|---|
 	| in_file | Full path to a single .fastq file |
 	| seqType | 'read2' or 'pear'. If 'read2', expect only read 2 files in "in_dir". If 'pear', expect only read 1 and read 2 merged with PEAR in "in_dir". |
 	| dbr_start | Integer. Index of first base in DBR. NOTE: Python indexing starts at 0.|
@@ -232,7 +232,7 @@ Please refer to the developer documentation for further detail about functionali
 	Passes arguments to PEAR_assemble to merge read pairs for all pairs in a directory.
 
 	|Argument| Help |
-	|-|-|
+	|---|---|
 	| regexR1 | Regular expression for finding Read 1 in in_dir. |
 	| regexR2 | Regular expression for finding Read 2 in in_dir. |
 	| regexLibrary | Regular expression for finding the library name within the files. The library name will be extracted and used in the output file name. |
@@ -248,7 +248,7 @@ Please refer to the developer documentation for further detail about functionali
 	Assemble overlapping reads using PEAR.
 
 	|Argument| Help |
-	|-|-|
+	|---|---|
 	| R1 | Full path to Read 1. |
 	| R2 | Full path to Read 2. |
 	| out_dir | Full path to output directory for merged reads. |
@@ -262,7 +262,7 @@ Please refer to the developer documentation for further detail about functionali
 	Passes arguments to FASTQ_quality_filter to filter .fastq files using FASTQ Quality Filter from the FASTX Toolkit.
 
 	|Argument| Help |
-	|-|-|
+	|---|---|
 	| in_dir | Full path to directory of .fastq files for quality filtering.|
 	| out_dir | Full path to output directory for filtered .fastq.gz files.|
 	| out_name | Suffix to append to output file name. |
@@ -277,7 +277,7 @@ Please refer to the developer documentation for further detail about functionali
 	Quality filters .fastq files using FASTQ Quality Filter from the FASTX Toolkit.
 
 	|Argument| Help |
-	|-|-|
+	|---|---|
 	| in_file | Full path to input .fastq file for quality filtering ([-i] in FASTQ Quality Filter Documentation).|
 	| out_file | Full path to output file for filtered .fastq.gz files ([-o] in FASTQ Quality Filter Documentation).|
 	| q | Minimum quality score to keep ([-q] in FASTQ Quality Filter documentation).|
@@ -289,7 +289,7 @@ Please refer to the developer documentation for further detail about functionali
 	Passes arguments to Trim for trimming a directory of .fastq files using FASTQ Trimmer from the FASTX Toolkit.
 
 	|Argument| Help |
-	|-|-|
+	|---|---|
 	| in_dir | Full path to directory of .fastq files for trimming with FASTQ Trimmer. |
 	| out_dir | Full path to output directory for trimmed .fastq files. |
 	| first_base | First base to keep ([-f] in FASTQ Trimmer, but note that this Python wrapper does not inherit FASTQ Trimmer defaults). |
@@ -302,7 +302,7 @@ Please refer to the developer documentation for further detail about functionali
 	Trims a .fastq file using FASTQ Trimmer from the FASTX Toolkit.
 
 	|Argument| Help |
-	|-|-|
+	|---|---|
 	| in_file | Full path to .fastq file for trimming with FASTQ Trimmer. |
 	| out_file | Full path to output directory for trimmed .fastq files. |
 	| first_base | First base to keep ([-f] in FASTQ Trimmer, but note that this Python wrapper does not inherit FASTQ Trimmer defaults). |
@@ -313,7 +313,7 @@ Please refer to the developer documentation for further detail about functionali
 7. **iterative_Demultiplex**
 
 	|Argument| Help |
-	|-|-|
+	|---|---|
 	| in_dir | Full path to directory of .fastq files to be demultiplexed. The .fastq files in this directory must have names that correspond to barcode file names such that a regular expression can be used to pair them. *Example: Library1_quality_filtered.fastq*. |
 	| barcode_dir | Full path to directory of barcode files corresponding to .fastq files for demultiplexing. Individual barcode files in this directory should follow the format specified in the FASTX Barcode Splitter documentation. The barcode files in this directory must have names that correspond to the .fastq file names such that a regular expression can be used to pair them. *Example: Library1_barcodes.txt*. |
 	| out_dir | Full path to directory for outputting demultiplexed files. |
@@ -325,7 +325,7 @@ Please refer to the developer documentation for further detail about functionali
 7. **Demultiplex**
 
 	|Argument| Help |
-	|-|-|
+	|---|---|
 	| in_file | Full path to a .fastq file to be demultiplexed. |
 	| barcode_file | Full path to a barcode file to use for demultiplexing. The barcode file should follow the format specified in the FASTX Barcode Splitter documentation.|
 	| out_dir | Full path to directory for outputting demultiplexed files. |
@@ -334,7 +334,7 @@ Please refer to the developer documentation for further detail about functionali
 8. **denovo_Ustacks**
 
 	|Argument| Help |
-	|-|-|
+	|---|---|
 	| in_dir ||
 	| denovo_path ||
 	| stacks_executables ||
@@ -348,7 +348,7 @@ Please refer to the developer documentation for further detail about functionali
 9. **denovo_Cstacks**
 
 	|Argument| Help |
-	|-|-|
+	|---|---|
 	| in_dir ||
 	| denovo_path ||
 	| stacks_executables ||
@@ -361,7 +361,7 @@ Please refer to the developer documentation for further detail about functionali
 10. **GeneratePseudoref**
 
 	|Argument| Help |
-	|-|-|
+	|---|---|
 	| in_dir ||
 	| out_file ||
 	| BWA_path ||
@@ -369,7 +369,7 @@ Please refer to the developer documentation for further detail about functionali
 11. **refmap_BWA**
 
 	|Argument| Help |
-	|-|-|
+	|---|---|
 	| in_dir ||
 	| out_dir ||
 	| BWA_path ||
@@ -378,24 +378,11 @@ Please refer to the developer documentation for further detail about functionali
 12. **callGeno**
 
 	|Argument| Help |
-	|-|-|
+	|---|---|
 	| sam_in ||
 	| pseudoref ||
 	| BCFout ||
 	| VCFout ||
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 #### Silently called functions
