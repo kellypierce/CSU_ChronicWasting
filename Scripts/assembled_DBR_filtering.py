@@ -43,6 +43,7 @@ out_seqs = '/home/antolinlab/Desktop/CSU_ChronicWasting/PilotAnalysis/DBR_filter
 barcode_file = '/home/antolinlab/Desktop/CSU_ChronicWasting/PilotAnalysis/pilot_barcode_file'
 '''
 
+#TODO: this should be qual_median!! 
 def qual_mode(QUAL, phred_dict):
     
     listQUAL = list(QUAL)
@@ -333,7 +334,7 @@ def DBR_Filter(assembled_dir, # the SAM files for the data mapped to pseudorefer
                                         print keyY, valueY
         
 
-
+#TODO: why does DBR_filter need to write out a single fastq file -- why redo all that demultiplexing??
 '''
 # OTHER METRICS FOR DESCRIBING OVERALL SEQUENCE QUALITY (QUAL = ASCII character string)
 
