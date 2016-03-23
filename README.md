@@ -98,15 +98,15 @@ Please see original documentation for installation instructions for external sof
 	
 	|Argument| Help |
 	|---|---|
-	| assembled_dir | Full path to directory containing SAM files to filter. |
-	| out_dir | Full path to output .fasta file for saving filtered sequences and the run logfile. |
-	| n_expected | Integer. maximum number of replicate DBRs tolerated. |
-	| barcode_dir | The full file path to the directory containing the unique sample barcodes by which samples are demultiplexed. |
-	| dict_dir | The full file path to the directory containing the DBR dictionaries created by **DBR_dict**. |
-	| barcode_file = None | Deprecated. Used for analyzing only 1 library. |
-	| test_dict = True | Logical. If True, print samples of dictionary entries to check for proper formatting. |
-	| phred_dict = phred_dict | Globally defined variable; dictionary type. Converts ASCII-33 quality scores to integers which can be used in a median calculation. ASCII-64 is not supported. |
-	| samMapLen = None | Integer or None. Expected length of map matches in the SAM file. |
+	| `assembled_dir` | Full path to directory containing SAM files to filter. |
+	| `out_dir` | Full path to output .fasta file for saving filtered sequences and the run logfile. |
+	| `n_expected` | Integer. maximum number of replicate DBRs tolerated. |
+	| `barcode_dir` | The full file path to the directory containing the unique sample barcodes by which samples are demultiplexed. |
+	| `dict_dir` | The full file path to the directory containing the DBR dictionaries created by **DBR_dict**. |
+	| `barcode_file = None` | Deprecated. Used for analyzing only 1 library. |
+	| `test_dict = True` | Logical. If True, print samples of dictionary entries to check for proper formatting. |
+	| `phred_dict = phred_dict` | Globally defined variable; dictionary type. Converts ASCII-33 quality scores to integers which can be used in a median calculation. ASCII-64 is not supported. |
+	| `samMapLen = None` | Integer or None. Expected length of map matches in the SAM file. |
 
 
 
@@ -120,8 +120,8 @@ Users do not manipulate these functions directly. They are instead called by **D
 	
 	|Argument| Help |
 	|---|---|
-	| QUAL | ASCII quality string extracted from SAM file. |
-	| phred_dict | Globally defined variable; dictionary type. Converts ASCII-33 quality scores to integers which can be used in a median calculation. ASCII-64 is not supported.|
+	| `QUAL` | ASCII quality string extracted from SAM file. |
+	| `phred_dict` | Globally defined variable; dictionary type. Converts ASCII-33 quality scores to integers which can be used in a median calculation. ASCII-64 is not supported.|
 
 2. **find_SampleID**
 
@@ -135,7 +135,7 @@ Users do not manipulate these functions directly. They are instead called by **D
 
 	|Argument| Help |
 	|---|---|
-	| filename | SAM file name.|
+	| `filename` | SAM file name.|
 
 3. **find_LibraryID**
 
@@ -149,21 +149,21 @@ Users do not manipulate these functions directly. They are instead called by **D
 
 	|Argument| Help |
 	|---|---|
-	| filename | SAM file name. |
+	| `filename` | SAM file name. |
 
 4. **find_BarcodeFile**
 
 	|Argument| Help |
 	|---|---|
-	| library | The value returned by **find_LibraryID**. |
-	| directory | The full file path to the directory containing the unique sample barcodes by which samples are demultiplexed. |
+	| `library` | The value returned by **find_LibraryID**. |
+	| `directory` | The full file path to the directory containing the unique sample barcodes by which samples are demultiplexed. |
 	
 5. **find_DBRdictionary**
 
 	|Argument| Help |
 	|---|---|
-	| library | The value returned by **find_LibraryID**. |
-	| directory | The full file path to the directory containing the DBR dictionaries created by **DBR_dict**. |
+	| `library` | The value returned by **find_LibraryID**. |
+	| `directory` | The full file path to the directory containing the DBR dictionaries created by **DBR_dict**. |
 
 # integrated_denovo_pipeline.py
 
@@ -179,12 +179,12 @@ Users do not manipulate these functions directly. They are instead called by **D
 
 	|Argument| Help |
 	|---|---|
-	| in_dir | Full path to directory containing a set of .fastq files. |
-	| seqType | 'read2' or 'pear'. If 'read2', expect only read 2 files in "in_dir". If 'pear', expect only read 1 and read 2 merged with PEAR in "in_dir". |
-	| dbr_start | Integer. Index of first base in DBR. NOTE: Python indexing starts at 0.|
-	| dbr_stop | Integer. Index of first base after end of DBR. EXAMPLE: If DBR ends at base position 9, dbr_stop = 10.|
-	| test_dict = False | Logical. If True, print samples of dictionary entries to check for proper formatting. |
-	| save = None | Optional text string suffix to append to output file name. DBR dictionaries inherit the name of the file used to create them, plus an additional (optional) user-specified text string, and an automatically added .json extension. If save = None, the DBR dictionary file name will be the original file name with a .json extension.|
+	| `in_dir` | Full path to directory containing a set of .fastq files. |
+	| `seqType` | 'read2' or 'pear'. If 'read2', expect only read 2 files in "in_dir". If 'pear', expect only read 1 and read 2 merged with PEAR in "in_dir". |
+	| `dbr_start` | Integer. Index of first base in DBR. NOTE: Python indexing starts at 0.|
+	| `dbr_stop` | Integer. Index of first base after end of DBR. EXAMPLE: If DBR ends at base position 9, dbr_stop = 10.|
+	| `test_dict = False` | Logical. If True, print samples of dictionary entries to check for proper formatting. |
+	| `save = None` | Optional text string suffix to append to output file name. DBR dictionaries inherit the name of the file used to create them, plus an additional (optional) user-specified text string, and an automatically added .json extension. If save = None, the DBR dictionary file name will be the original file name with a .json extension.|
 
 
 2. **DBR_dict**
@@ -195,12 +195,12 @@ Users do not manipulate these functions directly. They are instead called by **D
 
 	|Argument| Help |
 	|---|---|
-	| in_file | Full path to a single .fastq file |
-	| seqType | 'read2' or 'pear'. If 'read2', expect only read 2 files in "in_dir". If 'pear', expect only read 1 and read 2 merged with PEAR in "in_dir". |
-	| dbr_start | Integer. Index of first base in DBR. NOTE: Python indexing starts at 0.|
-	| dbr_stop | Integer. Index of first base after end of DBR. EXAMPLE: If DBR ends at base position 9, dbr_stop = 10.|
-	| test_dict = False | Logical. If True, print samples of dictionary entries to check for proper formatting. |
-	| save = None | Optional text string suffix to append to output file name. DBR dictionaries inherit the name of the file used to create them, plus an additional (optional) user-specified text string, and an automatically added .json extension. If save = None, the DBR dictionary file name will be the original file name with a .json extension.|
+	| `in_file` | Full path to a single .fastq file |
+	| `seqType` | 'read2' or 'pear'. If 'read2', expect only read 2 files in "in_dir". If 'pear', expect only read 1 and read 2 merged with PEAR in "in_dir". |
+	| `dbr_start` | Integer. Index of first base in DBR. NOTE: Python indexing starts at 0.|
+	| `dbr_stop` | Integer. Index of first base after end of DBR. EXAMPLE: If DBR ends at base position 9, dbr_stop = 10.|
+	| `test_dict = False` | Logical. If True, print samples of dictionary entries to check for proper formatting. |
+	| `save = None` | Optional text string suffix to append to output file name. DBR dictionaries inherit the name of the file used to create them, plus an additional (optional) user-specified text string, and an automatically added .json extension. If save = None, the DBR dictionary file name will be the original file name with a .json extension.|
 
 
 ### Optional Python wrappers to external software**
@@ -233,14 +233,14 @@ Please refer to the developer documentation for further detail about functionali
 
 	|Argument| Help |
 	|---|---|
-	| regexR1 | Regular expression for finding Read 1 in in_dir. |
-	| regexR2 | Regular expression for finding Read 2 in in_dir. |
-	| regexLibrary | Regular expression for finding the library name within the files. The library name will be extracted and used in the output file name. |
-	| in_dir | Full path to directory of read 1 and read 2 .fastq files. |
-	| out_dir | Full path to output directory for merged reads. |
-	| out_name = 'pear_merged\_' | Prefix to prepend to library name to create output file name. Default is 'pear_merged\_' but any text string is acceptable. |
-	| extra_params = 'None' | Extra parameters to pass to PEAR, e.g. minimum and maximum merged read lengths. Default is no extra parameters. |
-	| pearPath | Path to PEAR executable. |
+	| `regexR1` | Regular expression for finding Read 1 in in_dir. |
+	| `regexR2` | Regular expression for finding Read 2 in in_dir. |
+	| `regexLibrary` | Regular expression for finding the library name within the files. The library name will be extracted and used in the output file name. |
+	| `in_dir` | Full path to directory of read 1 and read 2 .fastq files. |
+	| `out_dir` | Full path to output directory for merged reads. |
+	| `out_name = 'pear_merged\_'` | Prefix to prepend to library name to create output file name. Default is 'pear_merged\_' but any text string is acceptable. |
+	| `extra_params = 'None'` | Extra parameters to pass to PEAR, e.g. minimum and maximum merged read lengths. Default is no extra parameters. |
+	| `pearPath` | Path to PEAR executable. |
 	
 
 2. **Pear_assemble**
@@ -249,12 +249,12 @@ Please refer to the developer documentation for further detail about functionali
 
 	|Argument| Help |
 	|---|---|
-	| R1 | Full path to Read 1. |
-	| R2 | Full path to Read 2. |
-	| out_dir | Full path to output directory for merged reads. |
-	| out_file | Name for output file. |
-	| extra_params | Extra parameters to pass to PEAR, e.g. minimum and maximum merged read lengths. Default is no extra parameters. |
-	| pearPath | Path to PEAR executable. |
+	| `R1` | Full path to Read 1. |
+	| `R2` | Full path to Read 2. |
+	| `out_dir` | Full path to output directory for merged reads. |
+	| `out_file` | Name for output file. |
+	| `extra_params` | Extra parameters to pass to PEAR, e.g. minimum and maximum merged read lengths. Default is no extra parameters. |
+	| `pearPath` | Path to PEAR executable. |
 
 
 3. **parallel_FASTQ_quality_filter**
@@ -263,13 +263,13 @@ Please refer to the developer documentation for further detail about functionali
 
 	|Argument| Help |
 	|---|---|
-	| in_dir | Full path to directory of .fastq files for quality filtering.|
-	| out_dir | Full path to output directory for filtered .fastq.gz files.|
-	| out_name | Suffix to append to output file name. |
-	| q | Minimum quality score to keep ([-q] in FASTQ Quality Filter documentation).|
-	| p | Minimum percent of bases that must have [-q] quality ([-p] in FASTQ Quality Filter documentation). |
-	| qualityFilter | Path to FASTQ Quality Filter executable. |
-	| read = '*' | Regex for locating reads to quality filter. Default is all reads in [in_dir]|
+	| `in_dir` | Full path to directory of .fastq files for quality filtering.|
+	| `out_dir` | Full path to output directory for filtered .fastq.gz files.|
+	| `out_name` | Suffix to append to output file name. |
+	| `q` | Minimum quality score to keep (`-q` in FASTQ Quality Filter documentation).|
+	| `p` | Minimum percent of bases that must have `-q` quality (`-p` in FASTQ Quality Filter documentation). |
+	| `qualityFilter` | Path to FASTQ Quality Filter executable. |
+	| `read = '*'` | Regex for locating reads to quality filter. Default is all reads in `in_dir`|
 
 
 4. **FASTQ_quality_filter**
@@ -278,10 +278,10 @@ Please refer to the developer documentation for further detail about functionali
 
 	|Argument| Help |
 	|---|---|
-	| in_file | Full path to input .fastq file for quality filtering ([-i] in FASTQ Quality Filter Documentation).|
-	| out_file | Full path to output file for filtered .fastq.gz files ([-o] in FASTQ Quality Filter Documentation).|
-	| q | Minimum quality score to keep ([-q] in FASTQ Quality Filter documentation).|
-	| p | Minimum percent of bases that must have [-q] quality ([-p] in FASTQ Quality Filter documentation). |
+	| `in_file` | Full path to input .fastq file for quality filtering (`-i` in FASTQ Quality Filter Documentation).|
+	| `out_file` | Full path to output file for filtered .fastq.gz files (`-o` in FASTQ Quality Filter Documentation).|
+	| `q` | Minimum quality score to keep (`-q` in FASTQ Quality Filter documentation).|
+	| `p` | Minimum percent of bases that must have `-q` quality (`-p` in FASTQ Quality Filter documentation). |
 	| qualityFilter | Path to FASTQ Quality Filter executable. |
 
 5. **parallel_Trim**
@@ -290,12 +290,12 @@ Please refer to the developer documentation for further detail about functionali
 
 	|Argument| Help |
 	|---|---|
-	| in_dir | Full path to directory of .fastq files for trimming with FASTQ Trimmer. |
-	| out_dir | Full path to output directory for trimmed .fastq files. |
-	| first_base | First base to keep ([-f] in FASTQ Trimmer, but note that this Python wrapper does not inherit FASTQ Trimmer defaults). |
-	| last_base = None | Last base to keep. Default is None, meaning all bases after the first base to keep [first_base] will be retained. ([-l] in FASTQ Trimmer, but note that this Python wrapper does not inherit FASTQ Trimmer defaults).|
-	| suffix = '_trimmed.fq' | Text string to be appended to output file name. Default is '_trimmed.fq' but any text string is acceptable. |
-	| trimPath | Path to FASTQ Trimmer executable. |
+	| `in_dir` | Full path to directory of .fastq files for trimming with FASTQ Trimmer. |
+	| `out_dir` | Full path to output directory for trimmed .fastq files. |
+	| `first_base` | First base to keep (`-f` in FASTQ Trimmer, but note that this Python wrapper does not inherit FASTQ Trimmer defaults). |
+	| `last_base = None` | Last base to keep. Default is None, meaning all bases after the first base to keep `first_base` will be retained. (`-l` in FASTQ Trimmer, but note that this Python wrapper does not inherit FASTQ Trimmer defaults).|
+	| `suffix = '_trimmed.fq'` | Text string to be appended to output file name. Default is '_trimmed.fq' but any text string is acceptable. |
+	| `trimPath` | Path to FASTQ Trimmer executable. |
 
 6. **Trim**
 
@@ -303,22 +303,22 @@ Please refer to the developer documentation for further detail about functionali
 
 	|Argument| Help |
 	|---|---|
-	| in_file | Full path to .fastq file for trimming with FASTQ Trimmer. |
-	| out_file | Full path to output directory for trimmed .fastq files. |
-	| first_base | First base to keep ([-f] in FASTQ Trimmer, but note that this Python wrapper does not inherit FASTQ Trimmer defaults). |
-	| last_base = None | Last base to keep. Default is None, meaning all bases after the first base to keep [first_base] will be retained. ([-l] in FASTQ Trimmer, but note that this Python wrapper does not inherit FASTQ Trimmer defaults).|
-	| trimPath | Path to FASTQ Trimmer executable. |
+	| `in_file` | Full path to .fastq file for trimming with FASTQ Trimmer. |
+	| `out_file` | Full path to output directory for trimmed .fastq files. |
+	| `first_base` | First base to keep (`-f` in FASTQ Trimmer, but note that this Python wrapper does not inherit FASTQ Trimmer defaults). |
+	| `last_base = None` | Last base to keep. Default is None, meaning all bases after the first base to keep `first_base` will be retained. (`-l` in FASTQ Trimmer, but note that this Python wrapper does not inherit FASTQ Trimmer defaults).|
+	| `trimPath` | Path to FASTQ Trimmer executable. |
 
 
 7. **iterative_Demultiplex**
 
 	|Argument| Help |
 	|---|---|
-	| in_dir | Full path to directory of .fastq files to be demultiplexed. The .fastq files in this directory must have names that correspond to barcode file names such that a regular expression can be used to pair them. *Example: Library1_quality_filtered.fastq*. |
-	| barcode_dir | Full path to directory of barcode files corresponding to .fastq files for demultiplexing. Individual barcode files in this directory should follow the format specified in the FASTX Barcode Splitter documentation. The barcode files in this directory must have names that correspond to the .fastq file names such that a regular expression can be used to pair them. *Example: Library1_barcodes.txt*. |
-	| out_dir | Full path to directory for outputting demultiplexed files. |
-	| regexLibrary | Regular expression for finding the library name within the .fastq files. The library name will be extracted and used to look up the corresponding barcode file for that library. *Example: regexLibrary = "Library\d{1}*" will identify "Library1".|
-	| out_prefix = 'demultiplexed\_'| Prefix to prepend to demultiplexed file names. Default is "demultiplexed\_" but any text string is acceptable. |
+	| `in_dir` | Full path to directory of .fastq files to be demultiplexed. The .fastq files in this directory must have names that correspond to barcode file names such that a regular expression can be used to pair them. *Example: Library1_quality_filtered.fastq*. |
+	| `barcode_dir` | Full path to directory of barcode files corresponding to .fastq files for demultiplexing. Individual barcode files in this directory should follow the format specified in the FASTX Barcode Splitter documentation. The barcode files in this directory must have names that correspond to the .fastq file names such that a regular expression can be used to pair them. *Example: Library1_barcodes.txt*. |
+	| `out_dir` | Full path to directory for outputting demultiplexed files. |
+	| `regexLibrary` | Regular expression for finding the library name within the .fastq files. The library name will be extracted and used to look up the corresponding barcode file for that library. *Example: regexLibrary = "Library\d{1}*" will identify "Library1".|
+	| `out_prefix = 'demultiplexed\_'`| Prefix to prepend to demultiplexed file names. Default is "demultiplexed\_" but any text string is acceptable. |
 
 
 
@@ -326,63 +326,63 @@ Please refer to the developer documentation for further detail about functionali
 
 	|Argument| Help |
 	|---|---|
-	| in_file | Full path to a .fastq file to be demultiplexed. |
-	| barcode_file | Full path to a barcode file to use for demultiplexing. The barcode file should follow the format specified in the FASTX Barcode Splitter documentation.|
-	| out_dir | Full path to directory for outputting demultiplexed files. |
-	| out_prefix = 'demultiplexed\_' | Prefix to prepend to demultiplexed file names. Default is "demultiplexed\_" but any text string is acceptable. |
+	| `in_file` | Full path to a .fastq file to be demultiplexed. |
+	| `barcode_file` | Full path to a barcode file to use for demultiplexing. The barcode file should follow the format specified in the FASTX Barcode Splitter documentation.|
+	| `out_dir` | Full path to directory for outputting demultiplexed files. |
+	| `out_prefix = 'demultiplexed\_'` | Prefix to prepend to demultiplexed file names. Default is "demultiplexed\_" but any text string is acceptable. |
 	
 8. **denovo_Ustacks**
 
 	|Argument| Help |
 	|---|---|
-	| in_dir ||
-	| denovo_path ||
-	| stacks_executables ||
-	| out_dir ||
-	| m ||
-	| n ||
-	| b ||
-	| D ||
+	| `in_dir` ||
+	| `denovo_path` ||
+	| `stacks_executables` ||
+	| `out_dir` ||
+	| `m` ||
+	| `n` ||
+	| `b` ||
+	| `D` ||
 
 
 9. **denovo_Cstacks**
 
 	|Argument| Help |
 	|---|---|
-	| in_dir ||
-	| denovo_path ||
-	| stacks_executables ||
-	| out_dir ||
-	| m ||
-	| n ||
-	| b ||
-	| D ||
+	| `in_dir` ||
+	| `denovo_path` ||
+	| `stacks_executables` ||
+	| `out_dir` ||
+	| `m` ||
+	| `n` ||
+	| `b` ||
+	| `D` ||
 
 10. **GeneratePseudoref**
 
 	|Argument| Help |
 	|---|---|
-	| in_dir ||
-	| out_file ||
-	| BWA_path ||
+	| `in_dir` ||
+	| `out_file` ||
+	| `BWA_path` ||
 
 11. **refmap_BWA**
 
 	|Argument| Help |
 	|---|---|
-	| in_dir ||
-	| out_dir ||
-	| BWA_path ||
-	| pseudoref_full_path ||
+	| `in_dir` ||
+	| `out_dir` ||
+	| `BWA_path` ||
+	| `pseudoref_full_path` ||
 
 12. **callGeno**
 
 	|Argument| Help |
 	|---|---|
-	| sam_in ||
-	| pseudoref ||
-	| BCFout ||
-	| VCFout ||
+	| `sam_in` ||
+	| `pseudoref` ||
+	| `BCFout` ||
+	| `VCFout` ||
 
 
 #### Silently called functions
