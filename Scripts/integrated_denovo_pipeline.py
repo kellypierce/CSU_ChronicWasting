@@ -66,6 +66,26 @@ phred_dict = {'"':1.0,"#":2.0,"$":3.0,"%":4.0,"&":5.0,"'":6.0,"(":7.0,")":8.0,"*
 #               out_seqs = '/path/to/filtered_library1.fastq',
 #               n_expected = 2)
 
+def checkFile(filename):
+    '''
+    return true if this is a file and is readable on the current filesystem
+    '''
+    try:
+        if os.path.exists(os.path.abspath(filename)) and os.path.isfile(os.path.abspath(filename)) and os.access(os.path.abspath(filename), R_OK):
+            return True
+        fullPath = string.join(os.getcwd(), filename[1:])
+        return os.path.exists(fullPath) and os.path.isfile(fullPath) and os.access(fullPath, R_OK)
+    except IOError:
+        return False
+
+def checkExe(filename):
+    '''
+    return true if this is an executable file on the current filesystem
+    '''
+    if not isinstance(filename, str):
+        raise TypeError("need a string, got a %s" % type(filename))
+    return (os.path.exists(filename) and os.path.isfile(filename) and os.access(filename, X_OK))
+
 def qual_median(QUAL, phred_dict):
     
     listQUAL = list(QUAL)
@@ -379,7 +399,7 @@ def parallel_DBR_dict(in_dir, seqType, dbr_start, dbr_stop, test_dict = False, s
         dP.join()
     
 
-def DBR_dict(in_file, seqType, dbr_start, dbr_stop, test_dict = False, save = None):
+def DBR_dict(in_file, dbr_start, dbr_stop, test_dict = False, save = None):
     # DBR is in read 2
     # if merged, it will be the last -2 to -9 (inclusive) bases, starting with base 0 and counting from the end
     # if not merged, it will be bases 2 to 9
@@ -775,28 +795,39 @@ def GeneratePseudoref(in_dir, out_file, BWA_path):
     subprocess.call(index_call, shell = True)
     return
 
-def refmap_BWA(in_dir, out_dir, BWA_path, pseudoref_full_path):    
+def parallel_refmap_BWA(in_dir, out_dir, BWA_path, pseudoref_full_path):
+
+    print 'Mapping sequence data to pseudoreference genome using BWA.\n'
+    if not os.path.exists(out_dir):
+        os.makedirs(out_dir)    
+    
+    refmapProcess = []
+        
+    for i in os.listdir(in_dir):
+        rex = re.compile(r'\d+')
+        if rex.search(i):
+            fname, fext = os.path.splitext(i)
+            in_file = in_dir + i
+            refmapProcess.append(mp.Process(target=refmap_BWA, args=(in_file, fname, out_dir, BWA_path, pseudoref_full_path)))
+        
+    for rP in refmapProcess:
+        rP.start()
+    for rP in refmapProcess:
+        rP.join()  
+
+def refmap_BWA(in_file, fname, out_dir, BWA_path, pseudoref_full_path):    
     
     #### NEED TO CHECK IF LIBRARIES SPLIT ACROSS LANES (AND IN DIFFERENT FASTQ FILES) HAVE SAMPLES OVERWRITTEN HERE
     #### I SUSPECT THIS IS THE CASE; IF SO FASTQ FILES SHOULD BE CONSOLIDATED BY LIBRARY (JUST CAT THE FILES)
     
     BWAMemTemplate = Template('%s mem -M -R $rgh $p $input > $out' % BWA_path)
     
-    print 'Mapping sequence data to pseudoreference genome using BWA.\n'
-    if not os.path.exists(out_dir):
-        os.makedirs(out_dir)
-
-    for i in os.listdir(in_dir): # for every demultiplexed & trimmed fastq...
-        rex = re.compile(r'\d+') # the regex should be a cmd line argument probably, since the sample name is likely to vary....
-        if rex.search(i):
-            fname, fext = os.path.splitext(i)
-            print 'Reference mapping ' + fname + '\n'
-            read_group_header = '"@RG\\tID:' + fname + '\\tPL:Illumina\\tLB:' + fname + '"' 
-            in_file = in_dir + i
-            bwa_mem_call = BWAMemTemplate.substitute(rgh = read_group_header, p = pseudoref_full_path, input = in_file)
-            #bwa_mem_call = BWA_path + ' mem -M -R ' + read_group_header + " " + pseudoref_full_path + ' ' + in_dir + i + ' > ' + out_dir + fname + '.sam'
-            print bwa_mem_call
-            subprocess.call(bwa_mem_call, shell=True)
+    print 'Reference mapping ' + fname + '\n'
+    read_group_header = '"@RG\\tID:' + fname + '\\tPL:Illumina\\tLB:' + fname + '"' 
+    bwa_mem_call = BWAMemTemplate.substitute(rgh = read_group_header, p = pseudoref_full_path, input = in_file)
+    #bwa_mem_call = BWA_path + ' mem -M -R ' + read_group_header + " " + pseudoref_full_path + ' ' + in_dir + i + ' > ' + out_dir + fname + '.sam'
+    print bwa_mem_call
+    
     return
 
 def callGeno(sam_in, pseudoref, BCFout, VCFout, samtoolsPath, bcftoolsPath):
