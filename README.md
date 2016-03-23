@@ -1,4 +1,4 @@
-# DBR Processing Pipeline
+# DRAFT DBR Processing Pipeline
 
 # Overview
 
@@ -180,7 +180,7 @@ Users do not manipulate these functions directly. They are instead called by **D
 	|Argument| Help |
 	|---|---|
 	| `in_dir` | Full path to directory containing a set of .fastq files. |
-	| `seqType` | 'read2' or 'pear'. If 'read2', expect only read 2 files in "in_dir". If 'pear', expect only read 1 and read 2 merged with PEAR in "in_dir". |
+	| `seqType` | 'read2' or 'pear'. If 'read2', expect only read 2 files in `in_dir`. If 'pear', expect only read 1 and read 2 merged with PEAR in "in_dir". |
 	| `dbr_start` | Integer. Index of first base in DBR. NOTE: Python indexing starts at 0.|
 	| `dbr_stop` | Integer. Index of first base after end of DBR. EXAMPLE: If DBR ends at base position 9, dbr_stop = 10.|
 	| `test_dict = False` | Logical. If True, print samples of dictionary entries to check for proper formatting. |
@@ -196,14 +196,13 @@ Users do not manipulate these functions directly. They are instead called by **D
 	|Argument| Help |
 	|---|---|
 	| `in_file` | Full path to a single .fastq file |
-	| `seqType` | 'read2' or 'pear'. If 'read2', expect only read 2 files in "in_dir". If 'pear', expect only read 1 and read 2 merged with PEAR in "in_dir". |
 	| `dbr_start` | Integer. Index of first base in DBR. NOTE: Python indexing starts at 0.|
-	| `dbr_stop` | Integer. Index of first base after end of DBR. EXAMPLE: If DBR ends at base position 9, dbr_stop = 10.|
+	| `dbr_stop` | Integer. Index of first base after end of DBR. EXAMPLE: If DBR ends at base position 9, `dbr_stop` = 10.|
 	| `test_dict = False` | Logical. If True, print samples of dictionary entries to check for proper formatting. |
 	| `save = None` | Optional text string suffix to append to output file name. DBR dictionaries inherit the name of the file used to create them, plus an additional (optional) user-specified text string, and an automatically added .json extension. If save = None, the DBR dictionary file name will be the original file name with a .json extension.|
 
 
-### Optional Python wrappers to external software**
+### Optional Python wrappers to external software
 
 The functions below are wrappers to several external software packages. These wrappers have two purposes: (1) to facilitate **batch processing of multiple input files** in parallel when appropriate, and (2) to allow **sequential execution of multiple steps from a single Python script** to call all of the functions. Calls to these wrapper functions can be done in any order the user chooses, provided that the input and output directories are all properly specified.
 
@@ -233,8 +232,8 @@ Please refer to the developer documentation for further detail about functionali
 
 	|Argument| Help |
 	|---|---|
-	| `regexR1` | Regular expression for finding Read 1 in in_dir. |
-	| `regexR2` | Regular expression for finding Read 2 in in_dir. |
+	| `regexR1` | Regular expression for finding Read 1 in `in_dir`. |
+	| `regexR2` | Regular expression for finding Read 2 in `in_dir`. |
 	| `regexLibrary` | Regular expression for finding the library name within the files. The library name will be extracted and used in the output file name. |
 	| `in_dir` | Full path to directory of read 1 and read 2 .fastq files. |
 	| `out_dir` | Full path to output directory for merged reads. |
@@ -317,7 +316,7 @@ Please refer to the developer documentation for further detail about functionali
 	| `in_dir` | Full path to directory of .fastq files to be demultiplexed. The .fastq files in this directory must have names that correspond to barcode file names such that a regular expression can be used to pair them. *Example: Library1_quality_filtered.fastq*. |
 	| `barcode_dir` | Full path to directory of barcode files corresponding to .fastq files for demultiplexing. Individual barcode files in this directory should follow the format specified in the FASTX Barcode Splitter documentation. The barcode files in this directory must have names that correspond to the .fastq file names such that a regular expression can be used to pair them. *Example: Library1_barcodes.txt*. |
 	| `out_dir` | Full path to directory for outputting demultiplexed files. |
-	| `regexLibrary` | Regular expression for finding the library name within the .fastq files. The library name will be extracted and used to look up the corresponding barcode file for that library. *Example: regexLibrary = "Library\d{1}*" will identify "Library1".|
+	| `regexLibrary` | Regular expression for finding the library name within the .fastq files. The library name will be extracted and used to look up the corresponding barcode file for that library. *Example: `regexLibrary = "Library\d{1}*"` will identify "Library1".|
 	| `out_prefix = 'demultiplexed\_'`| Prefix to prepend to demultiplexed file names. Default is "demultiplexed\_" but any text string is acceptable. |
 
 
