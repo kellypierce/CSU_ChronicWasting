@@ -1,0 +1,3 @@
+# Library 13 Revised
+206-T	AATTA
+303	GCCGT

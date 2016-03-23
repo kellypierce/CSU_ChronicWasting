@@ -59,7 +59,6 @@ iterative_PEAR_assemble(in_dir = pearInDir,
                         extra_params = extra_params,
                         regexR1='R1', regexR2='R2')
 
-'''
 # QUALITY FILTER PEAR ASSEMBLED DATA
 out_name = '.qual_filtered' # gets appended to input file name
 q = 30
@@ -83,7 +82,7 @@ iterative_DBR_dict(in_dir = dbrInDir,
 # DEMULTIPLEX
 out_prefix = '/demultiplexed_'
 iterative_Demultiplex(in_dir = demultiplexInDir, 
-                      barcode_dir = '/home/antolinlab/Desktop/CSU_ChronicWasting/BarcodesRound1/', 
+                      barcode_dir = '/home/pierce/CSU_ChronicWasting/BarcodesRound1/', 
                       out_dir = demultiplexOutDir, 
                       out_prefix = out_prefix)
 
@@ -106,7 +105,6 @@ denovo_Stacks(in_dir = stacksInDir,
               n = 2, 
               b = 1, 
               D = '_initial_assembly')
-'''
 '''
 # GENERATE THE PSEUDOREFERENCE GENOME
 GeneratePseudoref(in_dir, out_dir, out_name, BWA_path)

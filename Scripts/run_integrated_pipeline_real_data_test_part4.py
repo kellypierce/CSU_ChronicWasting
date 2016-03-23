@@ -6,7 +6,7 @@
 
 from integrated_denovo_pipeline import *
 from DBR_Parsing import *
-from setuptools.extension import Library
+#from setuptools.extension import Library
 
 ### Test functions
 # ASSEMBLE SINGLE SET OF PAIRED READS WITH PEAR 
@@ -50,6 +50,7 @@ pseudorefOutDir = parentDir
 BWAinDir = parentDir
 BWAoutDir = parentDir + '/BWA/'
 
+'''
 # ASSEMBLE ITERATIVELY WITH PEAR 
 out_name = 'pear_merged_'
 extra_params = '-m 309 -n 209'
@@ -59,7 +60,6 @@ iterative_PEAR_assemble(in_dir = pearInDir,
                         extra_params = extra_params,
                         regexR1='R1', regexR2='R2')
 
-'''
 # QUALITY FILTER PEAR ASSEMBLED DATA
 out_name = '.qual_filtered' # gets appended to input file name
 q = 30
@@ -71,6 +71,7 @@ iterative_FASTQ_quality_filter(directory = filterInDir,
                                q = q, 
                                p = p, 
                                read = read)
+'''
 
 # MAKE DBR DICTIONARIES FOR QUAL FILTERED PEAR DATA
 seq_type = 'pear'
@@ -83,7 +84,7 @@ iterative_DBR_dict(in_dir = dbrInDir,
 # DEMULTIPLEX
 out_prefix = '/demultiplexed_'
 iterative_Demultiplex(in_dir = demultiplexInDir, 
-                      barcode_dir = '/home/antolinlab/Desktop/CSU_ChronicWasting/BarcodesRound1/', 
+                      barcode_dir = '/home/pierce/CSU_ChronicWasting/BarcodesRound1/', 
                       out_dir = demultiplexOutDir, 
                       out_prefix = out_prefix)
 
@@ -106,7 +107,6 @@ denovo_Stacks(in_dir = stacksInDir,
               n = 2, 
               b = 1, 
               D = '_initial_assembly')
-'''
 '''
 # GENERATE THE PSEUDOREFERENCE GENOME
 GeneratePseudoref(in_dir, out_dir, out_name, BWA_path)

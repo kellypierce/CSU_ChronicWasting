@@ -6,7 +6,7 @@
 
 from integrated_denovo_pipeline import *
 from DBR_Parsing import *
-from setuptools.extension import Library
+#from setuptools.extension import Library
 
 ### Test functions
 # ASSEMBLE SINGLE SET OF PAIRED READS WITH PEAR 
@@ -46,76 +46,87 @@ trimOutDir = parentDir + '/trimmed/'
 stacksInDir = trimOutDir
 stacksOutDir = parentDir + '/StacksOutput/' # stacks doesn't allow an output to be specified
 pseudorefInDir = stacksOutDir
-pseudorefOutDir = parentDir
+pseudorefOutDir = parentDir + '/pseudoreference.fastq'
 BWAinDir = parentDir
 BWAoutDir = parentDir + '/BWA/'
+DBRfilteredseqs = BWAoutDir + '/DBR_filtered_sequences.fastq'
 
 # ASSEMBLE ITERATIVELY WITH PEAR 
 out_name = 'pear_merged_'
 extra_params = '-m 309 -n 209'
-iterative_PEAR_assemble(in_dir = pearInDir, 
-                        out_dir = pearOutDir, 
-                        out_name = out_name, 
-                        extra_params = extra_params,
-                        regexR1='R1', regexR2='R2')
+#iterative_PEAR_assemble(in_dir = pearInDir, 
+#                        out_dir = pearOutDir, 
+#                        out_name = out_name, 
+#                        extra_params = extra_params,
+#                        regexR1='R1', regexR2='R2')
 
-'''
 # QUALITY FILTER PEAR ASSEMBLED DATA
 out_name = '.qual_filtered' # gets appended to input file name
 q = 30
 p = 50
 read = '.assembled.fastq' # extension for pear-assembled reads
-iterative_FASTQ_quality_filter(directory = filterInDir, 
-                               out_dir = filterOutDir, 
-                               out_name = out_name, 
-                               q = q, 
-                               p = p, 
-                               read = read)
+#iterative_FASTQ_quality_filter(directory = filterInDir, 
+#                               out_dir = filterOutDir, 
+#                               out_name = out_name, 
+#                               q = q, 
+#                               p = p, 
+#                               read = read)
 
 # MAKE DBR DICTIONARIES FOR QUAL FILTERED PEAR DATA
 seq_type = 'pear'
-iterative_DBR_dict(in_dir = dbrInDir, 
-                   seqType = seq_type,
-                   save = dbrOutDir,
-                   dbr_start = -10,
-                   dbr_stop = -2)
+#iterative_DBR_dict(in_dir = dbrInDir, 
+#                   seqType = seq_type,
+#                   save = dbrOutDir,
+#                   dbr_start = -10,
+#                   dbr_stop = -2)
 
 # DEMULTIPLEX
 out_prefix = '/demultiplexed_'
-iterative_Demultiplex(in_dir = demultiplexInDir, 
-                      barcode_dir = '/home/antolinlab/Desktop/CSU_ChronicWasting/BarcodesRound1/', 
-                      out_dir = demultiplexOutDir, 
-                      out_prefix = out_prefix)
+#iterative_Demultiplex(in_dir = demultiplexInDir, 
+#                      barcode_dir = '/home/pierce/CSU_ChronicWasting/BarcodesRound1/', 
+#                      out_dir = demultiplexOutDir, 
+#                      out_prefix = out_prefix)
 
 # TRIM TO UNIFORM LENGTH
 suffix = '_trimmed.fq'
 first_base = 11
 last_base = 196
-Trim(in_dir = trimInDir, 
-     out_dir = trimOutDir, 
-     suffix = suffix, 
-     first_base = first_base, 
-     last_base = last_base)
+#Trim(in_dir = trimInDir, 
+#     out_dir = trimOutDir, 
+#     suffix = suffix, 
+#     first_base = first_base, 
+#     last_base = last_base)
 
 # RUN STACKS SIMULTANEOUSLY ON ALL LIBRARIES
-denovo_Stacks(in_dir = stacksInDir, 
-              denovo_path = denovo_path, 
-              stacks_executables = stacks_executables, 
-              out_dir = stacksOutDir, 
-              m = 10, 
-              n = 2, 
-              b = 1, 
-              D = '_initial_assembly')
-'''
-'''
+#denovo_Stacks(in_dir = stacksInDir, 
+#              denovo_path = denovo_path, 
+#              stacks_executables = stacks_executables, 
+#              out_dir = stacksOutDir, 
+#              m = 10, 
+#              n = 2, 
+#              b = 1, 
+#              D = '_initial_assembly')
+
 # GENERATE THE PSEUDOREFERENCE GENOME
-GeneratePseudoref(in_dir, out_dir, out_name, BWA_path)
+GeneratePseudoref(in_dir = pseudorefInDir, 
+                  out_file = pseudorefOutDir,  
+                  BWA_path = BWA) # imported from integrated_denovo_pipeline.py
 
 # REFERENCE MAP QUALITY FILTERED/DEMULTIPLEXED MERGED READS TO THE PSEUDOREFERENCE
-refmap_BWA(in_dir, out_dir, BWA_path, pseudoref_full_path)
+refmap_BWA(in_dir = trimOutDir, # input demultiplexed, trimmed reads
+           out_dir = BWAoutDir, 
+           BWA_path = BWA, # imported from integrated_denovo_pipeline.py 
+           pseudoref_full_path = pseudorefOutDir)
 
+'''
 # FILTER THE DBRS -- THIS REQUIRES A REVISION TO CREATE A FUNCTION IN assembled_DBR_filtering
 filterDBR(sample_list, dbrDict)
+
+iterative_DBR_Filter(assembled_dir=assembled_dir,  #assembled_dir = directory of sam files... BWAoutdir?
+           dict_in=dbrOutDir,
+           out_seqs=DBRfilteredseqs, 
+           n_expected = 2, 
+           barcode_file=barcode_file)
 
 sample_list = the samples from a given Library
 dbrDict = the DBR dictionary generated from that Library
