@@ -802,14 +802,17 @@ def parallel_refmap_BWA(in_dir, out_dir, BWA_path, pseudoref_full_path):
         os.makedirs(out_dir)    
     
     refmapProcess = []
-        
+    
+    # the regex below also finds unmatched samples    
+    rex = re.compile(r'\d+')
+    
     for i in os.listdir(in_dir):
-        rex = re.compile(r'\d+')
-        if rex.search(i):
-            fname, fext = os.path.splitext(i)
-            in_file = in_dir + i
-            refmapProcess.append(mp.Process(target=refmap_BWA, args=(in_file, fname, out_dir, BWA_path, pseudoref_full_path)))
-        
+        if 'unmatched' not in i: # independently check to remove unmatched files from the files to be refmapped
+            if rex.search(i):
+                fname, fext = os.path.splitext(i)
+                in_file = in_dir + i
+                refmapProcess.append(mp.Process(target=refmap_BWA, args=(in_file, fname, out_dir, BWA_path, pseudoref_full_path)))
+            
     for rP in refmapProcess:
         rP.start()
     for rP in refmapProcess:
@@ -823,10 +826,12 @@ def refmap_BWA(in_file, fname, out_dir, BWA_path, pseudoref_full_path):
     BWAMemTemplate = Template('%s mem -M -R $rgh $p $input > $out' % BWA_path)
     
     print 'Reference mapping ' + fname + '\n'
+    
     read_group_header = '"@RG\\tID:' + fname + '\\tPL:Illumina\\tLB:' + fname + '"' 
     bwa_mem_call = BWAMemTemplate.substitute(rgh = read_group_header, p = pseudoref_full_path, input = in_file)
     #bwa_mem_call = BWA_path + ' mem -M -R ' + read_group_header + " " + pseudoref_full_path + ' ' + in_dir + i + ' > ' + out_dir + fname + '.sam'
     print bwa_mem_call
+    subprocess.call(bwa_mem_call, shell=True)
     
     return
 
