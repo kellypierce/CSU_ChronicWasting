@@ -144,7 +144,7 @@ extra_params = '-m 309 -n 209'
 #                  BWA_path = BWA) # imported from integrated_denovo_pipeline.py
 
 # REFERENCE MAP QUALITY FILTERED/DEMULTIPLEXED MERGED READS TO THE PSEUDOREFERENCE
-refmap_BWA(in_dir = trimOutDir, # input demultiplexed, trimmed reads
+parallel_refmap_BWA(in_dir = trimOutDir, # input demultiplexed, trimmed reads
            out_dir = BWAoutDir, 
            BWA_path = BWA, # imported from integrated_denovo_pipeline.py 
            pseudoref_full_path = pseudorefOutDir)
