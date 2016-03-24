@@ -801,6 +801,7 @@ def parallel_refmap_BWA(in_dir, out_dir, BWA_path, pseudoref_full_path):
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)    
     
+    
     refmapProcess = []
     
     # the regex below also finds unmatched samples    
@@ -811,14 +812,15 @@ def parallel_refmap_BWA(in_dir, out_dir, BWA_path, pseudoref_full_path):
             if rex.search(i):
                 fname, fext = os.path.splitext(i)
                 in_file = in_dir + i
-                refmapProcess.append(mp.Process(target=refmap_BWA, args=(in_file, fname, out_dir, BWA_path, pseudoref_full_path)))
+                out_file = out_dir + fname + '.sam'
+                refmapProcess.append(mp.Process(target=refmap_BWA, args=(in_file, fname, out_file, BWA_path, pseudoref_full_path)))
             
     for rP in refmapProcess:
         rP.start()
     for rP in refmapProcess:
         rP.join()  
 
-def refmap_BWA(in_file, fname, out_dir, BWA_path, pseudoref_full_path):    
+def refmap_BWA(in_file, fname, out_file, BWA_path, pseudoref_full_path):    
     
     #### NEED TO CHECK IF LIBRARIES SPLIT ACROSS LANES (AND IN DIFFERENT FASTQ FILES) HAVE SAMPLES OVERWRITTEN HERE
     #### I SUSPECT THIS IS THE CASE; IF SO FASTQ FILES SHOULD BE CONSOLIDATED BY LIBRARY (JUST CAT THE FILES)
@@ -828,7 +830,7 @@ def refmap_BWA(in_file, fname, out_dir, BWA_path, pseudoref_full_path):
     print 'Reference mapping ' + fname + '\n'
     
     read_group_header = '"@RG\\tID:' + fname + '\\tPL:Illumina\\tLB:' + fname + '"' 
-    bwa_mem_call = BWAMemTemplate.substitute(rgh = read_group_header, p = pseudoref_full_path, input = in_file)
+    bwa_mem_call = BWAMemTemplate.substitute(rgh = read_group_header, input = in_file, p = pseudoref_full_path, out = out_file)
     #bwa_mem_call = BWA_path + ' mem -M -R ' + read_group_header + " " + pseudoref_full_path + ' ' + in_dir + i + ' > ' + out_dir + fname + '.sam'
     print bwa_mem_call
     subprocess.call(bwa_mem_call, shell=True)
