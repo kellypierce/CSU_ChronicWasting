@@ -60,11 +60,12 @@ def qual_mode(QUAL, phred_dict):
         median_qual = list_intQUAL[qlen/2]
     return median_qual
     
-def find_SampleID(filename):
+def find_SampleID(filename, r):
     #sampleID_match = re.match(".*(\d{3}[a-z]?).*", filename)
     # this revision is VERY specific to my technical replicates
     # TODO: find a way to pass the regex capture group as an argument so that this (and related functions) are more flexible
-    sampleID_match = re.match(".*(\d{1,3}T?).*", filename)
+    #sampleID_match = re.match(".*(\d{1,3}T?).*", filename)
+    sampleID_match = re.match(".*("+r+").*", filename)
     if sampleID_match:
         sampleID = sampleID_match.groups()[0]
         return sampleID
@@ -117,6 +118,7 @@ def DBR_Filter(assembled_dir, # the SAM files for the data mapped to pseudorefer
                n_expected, # the number of differences to be tolerated
                barcode_dir, # the barcodes for individuals in the library referenced in dict_in
                dict_dir, # a single dictionary of DBRs (for one library only)
+               sample_regex, # regular expression to find the sample ID
                barcode_file=None, # if just a single library is being used, can directly pass the barcode file
                test_dict=True, # optionally print testing info to stdout for checking the dictionary construction
                phred_dict=phred_dict, # dictionary containing ASCII quality filter scores to help with tie breaks
@@ -138,7 +140,8 @@ def DBR_Filter(assembled_dir, # the SAM files for the data mapped to pseudorefer
         if 'unmatched' not in i: # skip the SAM files with sequences that didn't match
             
             # extract the sample ID with a regex
-            sampleID = find_SampleID(i)
+            sampleID_prelim = find_SampleID(i, sample_regex) # find the sample ID, potentially with some extra characters to distinguish from library ID
+            sampleID = find_SampleID(sampleID_prelim, '\d{1,3}T?') # get rid of the extra characters now that the sample number has been separated from the library ID
             
             # extract the library ID with a regex
             libraryID = find_LibraryID(i)
