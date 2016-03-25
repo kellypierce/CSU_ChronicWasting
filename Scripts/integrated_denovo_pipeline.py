@@ -26,8 +26,15 @@ from collections import defaultdict
 from collections import Counter
 import time
 import pdb
+import multiprocessing
+from Queue import Queue
+from threading import Thread
+
 
 ################################## GLOBALS ####################################
+
+# Process queue
+processQueue = Queue()
 
 # paths to executables on cluster (all paths are in ~./bashrc)
 pearPath = 'pear-0.9.6-bin-64'
@@ -65,6 +72,31 @@ phred_dict = {'"':1.0,"#":2.0,"$":3.0,"%":4.0,"&":5.0,"'":6.0,"(":7.0,")":8.0,"*
 #               dict_in = '/path/to/dbr_dict_library1',
 #               out_seqs = '/path/to/filtered_library1.fastq',
 #               n_expected = 2)
+
+## Parallelization things from Joe
+class Work():
+    def __init__(self, commandline, shell, cwd = os.getcwd(), libraryPath = None, analysisFile = None):
+        self.commandline = commandline
+        # probably do not need this libraryPath code... for Joe's dynamically loaded libraries with duplicate names
+        if libraryPath is not None:
+            self.env = os.environ.copy()
+            self.env["LD_LIBRARY_PATH"] = "%s:%s" % (libraryPath, self.env["LD_LIBRARY_PATH"])
+        else:
+            self.env = os.environ.copy()
+            self.shell = shell
+            self.cwd = cwd
+
+def worker():
+    'run subprocesses in an orderly fashion'
+    while True:
+        workItem = processQueue.get()
+        if workItem.commandline != None:
+            p = Popen(workItem.commandline,
+                      env = workItem.env,
+                      shell = workItem.shell,
+                      cwd = workItem.cwd)
+            p.wait()
+            processQueue.task_done()
 
 def checkFile(filename):
     '''
@@ -801,8 +833,7 @@ def parallel_refmap_BWA(in_dir, out_dir, BWA_path, pseudoref_full_path):
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)    
     
-    
-    refmapProcess = []
+    #refmapProcess = []
     
     # the regex below also finds unmatched samples    
     rex = re.compile(r'\d+')
@@ -813,14 +844,19 @@ def parallel_refmap_BWA(in_dir, out_dir, BWA_path, pseudoref_full_path):
                 fname, fext = os.path.splitext(i)
                 in_file = in_dir + i
                 out_file = out_dir + fname + '.sam'
-                refmapProcess.append(mp.Process(target=refmap_BWA, args=(in_file, fname, out_file, BWA_path, pseudoref_full_path)))
+                commandline = refmap_BWA(in_file, fname, out_file, BWA_path, pseudoref_full_path, execute=False)
+                #refmapProcess.append(mp.Process(target=refmap_BWA, args=(in_file, fname, out_file, BWA_path, pseudoref_full_path)))
+        
+                processQueue.put(Work(commandline = commandline, shell = True), True, 360)
+    
+    processQueue.join()
             
-    for rP in refmapProcess:
-        rP.start()
-    for rP in refmapProcess:
-        rP.join()  
+    #for rP in refmapProcess:
+    #    rP.start()
+    #for rP in refmapProcess:
+    #    rP.join()  
 
-def refmap_BWA(in_file, fname, out_file, BWA_path, pseudoref_full_path):    
+def refmap_BWA(in_file, fname, out_file, BWA_path, pseudoref_full_path, execute=True):    
     
     #### NEED TO CHECK IF LIBRARIES SPLIT ACROSS LANES (AND IN DIFFERENT FASTQ FILES) HAVE SAMPLES OVERWRITTEN HERE
     #### I SUSPECT THIS IS THE CASE; IF SO FASTQ FILES SHOULD BE CONSOLIDATED BY LIBRARY (JUST CAT THE FILES)
@@ -832,10 +868,17 @@ def refmap_BWA(in_file, fname, out_file, BWA_path, pseudoref_full_path):
     read_group_header = '"@RG\\tID:' + fname + '\\tPL:Illumina\\tLB:' + fname + '"' 
     bwa_mem_call = BWAMemTemplate.substitute(rgh = read_group_header, input = in_file, p = pseudoref_full_path, out = out_file)
     #bwa_mem_call = BWA_path + ' mem -M -R ' + read_group_header + " " + pseudoref_full_path + ' ' + in_dir + i + ' > ' + out_dir + fname + '.sam'
-    print bwa_mem_call
-    subprocess.call(bwa_mem_call, shell=True)
     
-    return
+    print bwa_mem_call
+    
+    #if this is a single run (default), then call BWA from here
+    if execute:
+        subprocess.call(bwa_mem_call, shell=True)
+        return
+    
+    #if this is a parallel run (multiple individuals to map), pass the cmd line back to parallel_refmap_BWA
+    else:
+        return bwa_mem_call
 
 def callGeno(sam_in, pseudoref, BCFout, VCFout, samtoolsPath, bcftoolsPath):
     #print sam_in, pseudoref, BCFout, VCFout
