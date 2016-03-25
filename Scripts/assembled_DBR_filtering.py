@@ -65,7 +65,7 @@ def find_SampleID(filename, r):
     # this revision is VERY specific to my technical replicates
     # TODO: find a way to pass the regex capture group as an argument so that this (and related functions) are more flexible
     #sampleID_match = re.match(".*(\d{1,3}T?).*", filename)
-    sampleID_match = re.match(".*("+r+").*", filename)
+    sampleID_match = re.match(r, filename)
     if sampleID_match:
         sampleID = sampleID_match.groups()[0]
         return sampleID
@@ -142,8 +142,7 @@ def DBR_Filter(assembled_dir, # the SAM files for the data mapped to pseudorefer
             print i
             
             # extract the sample ID with a regex
-            sampleID_prelim = find_SampleID(i, sample_regex) # find the sample ID, potentially with some extra characters to distinguish from library ID
-            sampleID = find_SampleID(sampleID_prelim, '\d{1,3}T?') # get rid of the extra characters now that the sample number has been separated from the library ID
+            sampleID = find_SampleID(i, sample_regex) # find the sample ID, potentially with some extra characters to distinguish from library ID
             
             # extract the library ID with a regex
             libraryID = find_LibraryID(i)
