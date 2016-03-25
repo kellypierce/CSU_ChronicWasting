@@ -163,10 +163,10 @@ if __name__ == '__main__':
     #                  BWA_path = BWA) # imported from integrated_denovo_pipeline.py
     
     # REFERENCE MAP QUALITY FILTERED/DEMULTIPLEXED MERGED READS TO THE PSEUDOREFERENCE
-    parallel_refmap_BWA(in_dir = trimOutDir, # input demultiplexed, trimmed reads
-               out_dir = BWAoutDir, 
-               BWA_path = BWA, # imported from integrated_denovo_pipeline.py 
-               pseudoref_full_path = pseudorefOutDir)
+    #parallel_refmap_BWA(in_dir = trimOutDir, # input demultiplexed, trimmed reads
+    #           out_dir = BWAoutDir, 
+    #           BWA_path = BWA, # imported from integrated_denovo_pipeline.py 
+    #           pseudoref_full_path = pseudorefOutDir)
     
     
     DBR_Filter(assembled_dir = BWAoutDir, # the SAM files for the data mapped to pseudoreference
@@ -174,6 +174,7 @@ if __name__ == '__main__':
                n_expected = 2, # the number of differences to be tolerated
                barcode_dir = '/home/pierce/CSU_ChronicWasting/RevisedBarcodes', # the barcodes for individuals in the library referenced in dict_in
                dict_dir = dbrOutDir, # a single dictionary of DBRs (for one library only)
+               sample_regex = '_\d{1,3}T?_',
                barcode_file=None, # if just a single library is being used, can directly pass the barcode file
                test_dict=True, # optionally print testing info to stdout for checking the dictionary construction
                phred_dict=phred_dict, # dictionary containing ASCII quality filter scores to help with tie breaks
