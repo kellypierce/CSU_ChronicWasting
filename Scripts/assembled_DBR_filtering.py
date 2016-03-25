@@ -139,6 +139,8 @@ def DBR_Filter(assembled_dir, # the SAM files for the data mapped to pseudorefer
             
         if 'unmatched' not in i: # skip the SAM files with sequences that didn't match
             
+            print i
+            
             # extract the sample ID with a regex
             sampleID_prelim = find_SampleID(i, sample_regex) # find the sample ID, potentially with some extra characters to distinguish from library ID
             sampleID = find_SampleID(sampleID_prelim, '\d{1,3}T?') # get rid of the extra characters now that the sample number has been separated from the library ID
