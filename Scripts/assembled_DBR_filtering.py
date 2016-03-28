@@ -316,7 +316,7 @@ def DBR_Filter(assembled_dir, # the SAM files for the data mapped to pseudorefer
                                                 #to_keep = max(ID_quals, key=lambda x:ID_quals[x]) 
                                                 for k in to_keep:
                                                     keep = ID_quals[k] # get the full data for the highest median sequences
-                                                    out_file.write('@'+to_keep+'\n'+ keep[1]+'\n+\n'+ keep[2]+'\n')
+                                                    out_file.write('@'+k+'\n'+ keep[1]+'\n+\n'+ keep[2]+'\n')
                                                     
                                                 print 'to keep', to_keep
                                                 #write out the data to keep, appending the original barcode to the beginning of the sequence
