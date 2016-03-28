@@ -73,9 +73,8 @@ def worker():
     'run subprocesses in an orderly fashion'
     while True:
         workItem = processQueue.get()
-        #if type(workItem) is filterGroup:
         if isinstance(workItem, filterGroup):
-            raise Exception("correct type")
+            #raise Exception("correct type")
             workItem.DBR_Filter()
         elif isinstance(workItem, Work):
             p = Popen(workItem.commandline,
