@@ -183,9 +183,11 @@ def find_DBRdictionary(library, directory):
 #     
 #     return bc_dict
 
-def assemblyDict(DBR_dict, sampleID, assembled_file, samMapLen):#, barcode_dict):
+def assemblyDict(DBRdict, sampleID, assembled_file, samMapLen):#, barcode_dict):
     
-    dbr = json.load(DBR_dict)
+    print DBRdict
+    
+    dbr = json.load(DBRdict)
     #original_barcode = barcode_dict[sampleID]
     
     # initialize an empty dictionary with each iteration of the for-loop
