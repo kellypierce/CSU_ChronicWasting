@@ -401,7 +401,7 @@ def parallel_DBR_Filter(assembled_dir, # the SAM files for the data mapped to ps
             sampleID = find_SampleID(i, regexSample)
             
             # extract the library ID with a regex
-            libraryID = find_LibraryID(i, regexSample)
+            libraryID = find_LibraryID(i, regexLibrary)
             
             # use the library ID to find the right DBR dictionary
             dict_in = find_DBRdictionary(libraryID, dict_dir)
