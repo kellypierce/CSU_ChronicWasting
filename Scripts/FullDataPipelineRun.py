@@ -71,7 +71,7 @@ if __name__ == '__main__':
     pseudorefOutDir = parentDir + '/pseudoreference.fastq'
     BWAinDir = parentDir
     BWAoutDir = parentDir + '/BWA/'
-    DBRfilteredseqs = parentDir + '/dbrFiltered/'
+    DBRfilteredseqs = parentDir + '/dbrFiltered-debugging/'
     
     #### PART 2: REASSEMBLING THE FILTERED SEQUENCES
     re_demultiplexInDir = DBRfilteredseqs
@@ -176,7 +176,7 @@ if __name__ == '__main__':
                dict_dir = dbrOutDir, # a single dictionary of DBRs (for one library only)
                sample_regex = '.*_(\d{1,3}T?)_.*',
                barcode_file=None, # if just a single library is being used, can directly pass the barcode file
-               test_dict=True, # optionally print testing info to stdout for checking the dictionary construction
+               test_dict=False, # optionally print testing info to stdout for checking the dictionary construction
                phred_dict=phred_dict, # dictionary containing ASCII quality filter scores to help with tie breaks
                samMapLen=None)
     
