@@ -292,7 +292,7 @@ def DBR_Filter(assembled_dir, # the SAM files for the data mapped to pseudorefer
                                     if RNAME != '*':
                                         # get all the DBRs and counts that went into that locus in that sample
                                         for subvalue in value.iteritems():
-                                            #print 'Subvalue', subvalue
+                                            print 'Subvalue', subvalue
                                             dbr_value = subvalue[0] 
                                             count = subvalue[1]
                                             if count > n_expected:
