@@ -305,7 +305,7 @@ class filterGroup():
 #                    phred_dict=phred_dict, # dictionary containing ASCII quality filter scores to help with tie breaks
 #                    samMapLen=None): # expected sequence length will help when primary reads are still not perfectly aligned with reference
      
-    def DBR_filter(self):
+    def DBR_Filter(self):
             
         print 'Opening DBR dictionary ' + self.dict_file  
         
