@@ -32,10 +32,6 @@ import logging as logging
 import gzip
 from collections import defaultdict
 from collections import Counter
-from IPython.utils.wildcard import dict_dir
-from Scripts.integrated_denovo_pipeline import phred_dict
-
-
 
 # To do
 # 1. Check that SAM files contain a map for all the sequences so that FASTQ filtering doesn't leave some bad quality data behind
