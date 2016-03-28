@@ -73,10 +73,10 @@ def worker():
     'run subprocesses in an orderly fashion'
     while True:
         workItem = processQueue.get()
-        if type(workItem) == filterGroup:
+        if type(workItem) is filterGroup:
             raise Exception("correct type")
             workItem.DBR_Filter()
-        elif type(workItem) == Work:
+        elif type(workItem) is Work:
             p = Popen(workItem.commandline,
                       env = workItem.env,
                       shell = workItem.shell,
@@ -390,6 +390,9 @@ def parallel_DBR_Filter(assembled_dir, # the SAM files for the data mapped to ps
     
     logfile = out_dir + '/DBR_filtered_sequences_logfile.csv' 
     
+    if not os.path.exists(out_dir):
+        os.makedirs(out_dir)
+    
     for i in os.listdir(assembled_dir):
             
         if 'unmatched' not in i: # skip the SAM files with sequences that didn't match
@@ -408,9 +411,6 @@ def parallel_DBR_Filter(assembled_dir, # the SAM files for the data mapped to ps
                 print 'sample', sampleID 
                 print 'library', libraryID
                 print 'dictionary file', dict_in
-            
-                if not os.path.exists(out_dir):
-                    os.makedirs(out_dir)
                 
                 inFile = os.path.join(assembled_dir, i)
                 # one output fastq file per sample    
