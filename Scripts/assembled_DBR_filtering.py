@@ -75,6 +75,7 @@ def worker():
         workItem = processQueue.get()
         if isinstance(workItem, filterGroup):
             #raise Exception("correct type")
+            print 'Ostensibly we are working on the parallel DBR processing.'
             workItem.DBR_Filter()
         elif isinstance(workItem, Work):
             p = Popen(workItem.commandline,
@@ -276,6 +277,7 @@ def assemblyDict(DBRdict, sampleID, assembled_file, samMapLen):#, barcode_dict):
     return assembly_dict_2, assembly_dict_3, n_primary
 
 class filterGroup():
+    
     def __init__(self,
                  assembled_file, # the SAM files for the data mapped to pseudoreference
                  out_file, # the output file, full path, ending with .fasta
@@ -296,17 +298,7 @@ class filterGroup():
         self.test_dict = test_dict
         self.phred_dict = phred_dict
         self.samMapLen = samMapLen
-
-#     def DBR_Filter(assembled_file, # the SAM files for the data mapped to pseudoreference
-#                    out_file, # the output file, full path, ending with .fasta
-#                    n_expected, # the number of differences to be tolerated
-#                    dict_file, # a single dictionary of DBRs (for one library only)
-#                    sampleID,
-#                    logfile,
-#                    test_dict=True, # optionally print testing info to stdout for checking the dictionary construction
-#                    phred_dict=phred_dict, # dictionary containing ASCII quality filter scores to help with tie breaks
-#                    samMapLen=None): # expected sequence length will help when primary reads are still not perfectly aligned with reference
-     
+    
     def DBR_Filter(self):
             
         print 'Opening DBR dictionary ' + self.dict_file  
