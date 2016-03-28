@@ -74,6 +74,7 @@ def worker():
     while True:
         workItem = processQueue.get()
         if type(workItem) == filterGroup:
+            raise Exception("correct type")
             workItem.DBR_Filter()
         elif type(workItem) == Work:
             p = Popen(workItem.commandline,
@@ -81,7 +82,7 @@ def worker():
                       shell = workItem.shell,
                       cwd = workItem.cwd)
             p.wait()
-            processQueue.task_done()
+        processQueue.task_done()
 
 def checkFile(filename):
     '''
