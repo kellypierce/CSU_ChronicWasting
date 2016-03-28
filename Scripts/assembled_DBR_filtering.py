@@ -18,6 +18,7 @@ import itertools
 #import numpy as np
 import time
 import pdb
+import heapq
 
 # To do
 # 1. Check that SAM files contain a map for all the sequences so that FASTQ filtering doesn't leave some bad quality data behind
@@ -43,8 +44,7 @@ out_seqs = '/home/antolinlab/Desktop/CSU_ChronicWasting/PilotAnalysis/DBR_filter
 barcode_file = '/home/antolinlab/Desktop/CSU_ChronicWasting/PilotAnalysis/pilot_barcode_file'
 '''
 
-#TODO: this should be qual_median!! 
-def qual_mode(QUAL, phred_dict):
+def qual_median(QUAL, phred_dict):
     
     listQUAL = list(QUAL)
     list_intQUAL =[]
@@ -309,20 +309,21 @@ def DBR_Filter(assembled_dir, # the SAM files for the data mapped to pseudorefer
                                                     id_val=i[0] # this is the QNAME (Illumina ID)
                                                     id_seq=i[2] # the full sequence
                                                     id_qual=i[1] # the full quality
-                                                    ID_quals[id_val] = (qual_mode(i[1], phred_dict), id_seq, id_qual)
+                                                    ID_quals[id_val] = (qual_median(i[1], phred_dict), id_seq, id_qual)
                                                 n_remove = count - n_expected
                                                 total_removed += n_remove
-                                                t = 0
-                                                k = 1
-                                                while k <= n_expected:
-                                                    to_keep = max(ID_quals, key=lambda x:ID_quals[x]) 
-                                                    print(to_keep)
-                                                    keep = ID_quals[to_keep]
-                                                    keep_list.append(to_keep)
-                                                    #write out the data to keep, appending the original barcode to the beginning of the sequence
-                                                    out_file.write('@'+to_keep+'\n'+ keep[1]+'\n+\n'+ keep[2]+'\n')
-                                                    #out_file.write([keep.split('\n', 1)[0] for i in keep])
-                                                    k += 1
+                                                to_keep = heapq.nlargest(n_expected, ID_quals, key=lambda x:ID_quals[x])
+                                                #to_keep = max(ID_quals, key=lambda x:ID_quals[x]) 
+                                                
+                                                keep = ID_quals[to_keep]
+                                                keep_list.append(to_keep)
+                                                
+                                                print 'to keep', to_keep, 'keep', keep, 'keep_list', keep_list
+                                                #write out the data to keep, appending the original barcode to the beginning of the sequence
+                                                #for k in to_keep:
+                                                #    out_file.write('@'+to_keep+'\n'+ keep[1]+'\n+\n'+ keep[2]+'\n')
+                                                #out_file.write([keep.split('\n', 1)[0] for i in keep])
+                                                
                                 with open(logfile,'a') as log:
                                     log.write(sampleID+','+str(total_removed)+','+str(n_primary)+','+time.strftime("%d/%m/%Y")+','+(time.strftime("%H:%M:%S"))+'\n')
                                     print 'Removed ' + str(total_removed) + ' PCR duplicates out of ' + str(n_primary) + ' primary mapped reads.'                                                    
