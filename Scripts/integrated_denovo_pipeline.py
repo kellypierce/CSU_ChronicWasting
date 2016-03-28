@@ -377,6 +377,7 @@ def iterative_Demultiplex(in_dir, # directory of un-demultiplexed libraries
                           barcode_dir, #directory containing the barcodes for each library
                           out_dir, # full path for outputs 
                           regexLibrary,
+                          demultiplexPath,
                           out_prefix = 'demultiplexed_'): # text string to add to file names
 
     #if not checkDir(in_dir):
@@ -410,7 +411,7 @@ def iterative_Demultiplex(in_dir, # directory of un-demultiplexed libraries
                     in_f = in_dir + '/' + f
                     #Demultiplex(in_f, barcode_file, out_dir, out_name)
                     
-                    demultiplexProcess.append(mp.Process(target=Trim, args=(in_f, barcode_file, out_dir, out_name)))
+                    demultiplexProcess.append(mp.Process(target=Demultiplex, args=(in_f, barcode_file, out_dir, demultiplexPath, out_prefix)))
                     
     for dP in demultiplexProcess:
         dP.start()
