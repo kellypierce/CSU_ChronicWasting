@@ -75,7 +75,6 @@ def worker():
         workItem = processQueue.get()
         if isinstance(workItem, filterGroup):
             #raise Exception("correct type")
-            print 'Ostensibly we are working on the parallel DBR processing.'
             workItem.DBR_Filter()
         elif isinstance(workItem, Work):
             p = Popen(workItem.commandline,
@@ -188,7 +187,8 @@ def assemblyDict(DBRdict, sampleID, assembled_file, samMapLen):#, barcode_dict):
     
     print DBRdict
     
-    dbr = json.load(DBRdict)
+    with open(DBRdict, 'r') as d:
+        dbr = json.load(d)
     #original_barcode = barcode_dict[sampleID]
     
     # initialize an empty dictionary with each iteration of the for-loop
