@@ -292,16 +292,16 @@ def DBR_Filter(assembled_dir, # the SAM files for the data mapped to pseudorefer
                                     if RNAME != '*':
                                         # get all the DBRs and counts that went into that locus in that sample
                                         for subvalue in value.iteritems():
-                                            print 'Subvalue', subvalue
+                                            #print 'Subvalue', subvalue
                                             dbr_value = subvalue[0] 
                                             count = subvalue[1]
+                                            qname_qual = assembly_dict_3[RNAME][dbr_value] #this is a list of lists: [[QNAME, QUAL, SEQ], [QNAME, QUAL, SEQ], ...]
                                             if count > n_expected:
                                                 ##################################################
                                                 ## THIS IS WHERE THE FILTERING HAPPENS           #
                                                 ##################################################
                                                 #print 'count', count, 'n exp', n_expected
                                                 # the other dictionary contains the full quality information for each RNAME:DBR pair (this will be multiple entries of sequence IDs and qualities
-                                                qname_qual = assembly_dict_3[RNAME][dbr_value] #this is a list of lists: [[QNAME, QUAL, SEQ], [QNAME, QUAL, SEQ], ...]
                                                 #print RNAME, dbr_value, len(qname_qual)
                                                 #print qname_qual
                                                 ID_quals = {} # we'll make yet another dictionary to store the QNAME and the median QUAL
@@ -316,13 +316,11 @@ def DBR_Filter(assembled_dir, # the SAM files for the data mapped to pseudorefer
                                                 #to_keep = max(ID_quals, key=lambda x:ID_quals[x]) 
                                                 for k in to_keep:
                                                     keep = ID_quals[k] # get the full data for the highest median sequences
+                                                    #write out the data to keep, appending the original barcode to the beginning of the sequence
                                                     out_file.write('@'+k+'\n'+ keep[1]+'\n+\n'+ keep[2]+'\n')
-                                                    
-                                                print 'to keep', to_keep
-                                                #write out the data to keep, appending the original barcode to the beginning of the sequence
-                                                #for k in to_keep:
-                                                #    
-                                                #out_file.write([keep.split('\n', 1)[0] for i in keep])
+                                            else: # if count <= n_expected, we can just keep every entry associated with that RNAME
+                                                for i in qname_qual:
+                                                    out_file.write('@'+i[0]+'\n'+i[2]+'\n+\n'+i[1]+'\n') # see above for i[index] definitions
                                                 
                                 with open(logfile,'a') as log:
                                     log.write(sampleID+','+str(total_removed)+','+str(n_primary)+','+time.strftime("%d/%m/%Y")+','+(time.strftime("%H:%M:%S"))+'\n')
