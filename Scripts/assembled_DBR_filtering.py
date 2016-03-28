@@ -186,6 +186,7 @@ def find_DBRdictionary(library, directory):
 def assemblyDict(DBRdict, sampleID, assembled_file, samMapLen):#, barcode_dict):
     
     print DBRdict
+    sys.stdout.flush()
     
     with open(DBRdict, 'r') as d:
         dbr = json.load(d)
@@ -302,6 +303,7 @@ class filterGroup():
     def DBR_Filter(self):
             
         print 'Opening DBR dictionary ' + self.dict_file  
+        sys.stdout.flush()
         
         # open a connection to an output file
         with open(self.out_file, 'a') as of:
