@@ -316,7 +316,7 @@ def DBR_Filter(assembled_dir, # the SAM files for the data mapped to pseudorefer
                                                 k = 1
                                                 while k <= n_expected:
                                                     to_keep = max(ID_quals, key=lambda x:ID_quals[x]) 
-                                                    #print(to_keep)
+                                                    print(to_keep)
                                                     keep = ID_quals[to_keep]
                                                     keep_list.append(to_keep)
                                                     #write out the data to keep, appending the original barcode to the beginning of the sequence
