@@ -14,7 +14,7 @@ if __name__ == '__main__':
     import argparse
     
     parser = argparse.ArgumentParser(description = '')
-    parser.add_argument('-t', '--threads', help = 'Number of threads to use for parallel operations.')
+    parser.add_argument('-t', '--threads', help = 'Number of threads to use for parallel operations.', default = 1)
     opts = parser.parse_args()
     
     threads=int(opts.threads)
@@ -42,10 +42,10 @@ if __name__ == '__main__':
     ### SET UP THREADS TO USE FOR PARALLEL PROCESSES                      ###
     #########################################################################
     
-    for i in xrange(threads):
-        t = Thread(target=worker)
-        t.daemon = True
-        t.start()
+    #for i in xrange(threads):
+    #    t = Thread(target=worker)
+    #    t.daemon = True
+    #    t.start()
     
     #########################################################################
     ### INPUTS AND OUTPUTS                                                ###
