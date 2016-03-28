@@ -169,29 +169,31 @@ if __name__ == '__main__':
     #           pseudoref_full_path = pseudorefOutDir)
     
     
-    DBR_Filter(assembled_dir = BWAoutDir, # the SAM files for the data mapped to pseudoreference
-               out_dir = DBRfilteredseqs, # the output file, full path, ending with .fasta
-               n_expected = 2, # the number of differences to be tolerated
-               barcode_dir = '/home/pierce/CSU_ChronicWasting/RevisedBarcodes', # the barcodes for individuals in the library referenced in dict_in
-               dict_dir = dbrOutDir, # a single dictionary of DBRs (for one library only)
-               sample_regex = '.*_(\d{1,3}T?)_.*',
-               barcode_file=None, # if just a single library is being used, can directly pass the barcode file
-               test_dict=True, # optionally print testing info to stdout for checking the dictionary construction
-               phred_dict=phred_dict, # dictionary containing ASCII quality filter scores to help with tie breaks
-               samMapLen=None)
+    #DBR_Filter(assembled_dir = BWAoutDir, # the SAM files for the data mapped to pseudoreference
+    #           out_dir = DBRfilteredseqs, # the output file, full path, ending with .fasta
+    #           n_expected = 2, # the number of differences to be tolerated
+    #           barcode_dir = '/home/pierce/CSU_ChronicWasting/RevisedBarcodes', # the barcodes for individuals in the library referenced in dict_in
+    #           dict_dir = dbrOutDir, # a single dictionary of DBRs (for one library only)
+    #           sample_regex = '.*_(\d{1,3}T?)_.*',
+    #           barcode_file=None, # if just a single library is being used, can directly pass the barcode file
+    #           test_dict=True, # optionally print testing info to stdout for checking the dictionary construction
+    #           phred_dict=phred_dict, # dictionary containing ASCII quality filter scores to help with tie breaks
+    #           samMapLen=None)
     
     # DEMULTIPLEX
     out_prefix = '/re_demultiplexed_'
     iterative_Demultiplex(in_dir = re_demultiplexInDir, 
                           barcode_dir = '/home/pierce/CSU_ChronicWasting/RevisedBarcodes', 
+                          regexLibrary= 'Library\d{1,3}[A|B]?',
                           out_dir = re_demultiplexOutDir, 
                           out_prefix = out_prefix)
     
     # TRIM TO UNIFORM LENGTH
     suffix = '_re_trimmed.fq'
     new_first_base = 6
-    Trim(in_dir = re_trimInDir, 
+    parallel_Trim(in_dir = re_trimInDir, 
          out_dir = re_trimOutDir, 
+         trimPath = trimmer,
          suffix = suffix, 
          first_base = new_first_base)
     
@@ -221,7 +223,7 @@ if __name__ == '__main__':
                       BWA_path = BWA) # imported from integrated_denovo_pipeline.py
     
     # REFERENCE MAP QUALITY FILTERED/DEMULTIPLEXED MERGED READS TO THE PSEUDOREFERENCE
-    refmap_BWA(in_dir = re_trimOutDir, # input demultiplexed, trimmed reads
+    parallel_refmap_BWA(in_dir = re_trimOutDir, # input demultiplexed, trimmed reads
                out_dir = re_BWAoutDir, 
                BWA_path = BWA, # imported from integrated_denovo_pipeline.py 
                pseudoref_full_path = re_pseudorefOutDir)
