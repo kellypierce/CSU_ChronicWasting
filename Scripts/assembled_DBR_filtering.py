@@ -10,14 +10,32 @@ from collections import defaultdict
 from collections import Counter
 from subprocess import call, Popen, PIPE
 import subprocess
-import os, os.path
+import os as os
+from os import linesep, path, R_OK, X_OK
 import sys
+from logging import debug, critical, error, info
+import warnings
 import json
 import re
 import itertools
+import fnmatch
 #import numpy as np
 import time
 import pdb
+import multiprocessing as mp
+from Queue import Queue
+from threading import Thread
+import warnings
+import string as string
+from string import Template, join
+import logging as logging
+import gzip
+from collections import defaultdict
+from collections import Counter
+from IPython.utils.wildcard import dict_dir
+from Scripts.integrated_denovo_pipeline import phred_dict
+
+
 
 # To do
 # 1. Check that SAM files contain a map for all the sequences so that FASTQ filtering doesn't leave some bad quality data behind
@@ -28,6 +46,10 @@ import pdb
 #               out_seqs = '/path/to/filtered_library1.fastq',
 #               n_expected = 2)
 
+################################## GLOBALS ####################################
+
+# Process queue
+processQueue = Queue()
 
 phred_dict = {'"':1.0,"#":2.0,"$":3.0,"%":4.0,"&":5.0,"'":6.0,"(":7.0,")":8.0,"*":9.0,"+":10.0,
               ",":11.0,"-":12.0,".":13.0,"/":14.0,"0":15.0,"1":16,"2":17.0,"3":18.0,"4":19.0,"5":20.0,
@@ -36,15 +58,48 @@ phred_dict = {'"':1.0,"#":2.0,"$":3.0,"%":4.0,"&":5.0,"'":6.0,"(":7.0,")":8.0,"*
               "J":41.0,"K":42.0}
 # conversion reference: http://drive5.com/usearch/manual/quality_score.html
 
-''' stuff from the pilot library
-dict_in = '/home/antolinlab/Desktop/CSU_ChronicWasting/PilotAnalysis/initial_qualFilter_dbr_dict'
-assembled_dir = '/home/antolinlab/Desktop/CSU_ChronicWasting/PilotAnalysis/Assembled'
-out_seqs = '/home/antolinlab/Desktop/CSU_ChronicWasting/PilotAnalysis/DBR_filtered_sequences.fastq'
-barcode_file = '/home/antolinlab/Desktop/CSU_ChronicWasting/PilotAnalysis/pilot_barcode_file'
-'''
+################################# FUNCTIONS ####################################
 
-#TODO: this should be qual_median!! 
-def qual_mode(QUAL, phred_dict):
+## Parallelization things from Joe
+class Work():
+    def __init__(self, commandline, shell, cwd = os.getcwd(), libraryPath = None, analysisFile = None):
+        self.commandline = commandline
+        # probably do not need this libraryPath code... for Joe's dynamically loaded libraries with duplicate names
+        if libraryPath is not None:
+            self.env = os.environ.copy()
+            self.env["LD_LIBRARY_PATH"] = "%s:%s" % (libraryPath, self.env["LD_LIBRARY_PATH"])
+        else:
+            self.env = os.environ.copy()
+            self.shell = shell
+            self.cwd = cwd
+
+def worker():
+    'run subprocesses in an orderly fashion'
+    while True:
+        workItem = processQueue.get()
+        if type(workItem) == filterGroup:
+            workItem.DBR_Filter()
+        elif type(workItem) == Work:
+            p = Popen(workItem.commandline,
+                      env = workItem.env,
+                      shell = workItem.shell,
+                      cwd = workItem.cwd)
+            p.wait()
+            processQueue.task_done()
+
+def checkFile(filename):
+    '''
+    return true if this is a file and is readable on the current filesystem
+    '''
+    try:
+        if os.path.exists(os.path.abspath(filename)) and os.path.isfile(os.path.abspath(filename)) and os.access(os.path.abspath(filename), R_OK):
+            return True
+        fullPath = string.join(os.getcwd(), filename[1:])
+        return os.path.exists(fullPath) and os.path.isfile(fullPath) and os.access(fullPath, R_OK)
+    except IOError:
+        return False
+
+def qual_median(QUAL, phred_dict):
     
     listQUAL = list(QUAL)
     list_intQUAL =[]
@@ -112,7 +167,334 @@ def find_DBRdictionary(library, directory):
                 return None
     else:
         return None
+
+#processQueue.put(Work(commandline = commandline, shell = True), True, 360)
+    
+#processQueue.join()
+
+# def barcodeDict(barcode_file):
+#     
+#     bc_dict = {} # define empty container for barcode dictionary
+#             
+#     with open(barcode_file, 'r') as bc:
+#         for line in bc:
+#             row=line.split()
+#             bc_dict[row[0]]=row[1]
+#     
+#     return bc_dict
+
+def assemblyDict(DBR_dict, sampleID, assembled_file, samMapLen):#, barcode_dict):
+    
+    dbr = json.load(DBR_dict)
+    #original_barcode = barcode_dict[sampleID]
+    
+    # initialize an empty dictionary with each iteration of the for-loop
+    assembly_dict_2 = {}
+    assembly_dict_3 = defaultdict(list)
+    
+    # print some info to track progress
+    #path=os.path.join(assembled_dir, i)
+    print 'Creating filtering dictionaries from ' + assembled_file
+    
+    # get the sample number for use later
+    #number = re.split('(\d)', i)[1] # enclose the regex in parentheses to keep it in the output
+    
+    # start counter for the number of primary reads
+    n_primary = 0
+    
+    # open the sam file and process its contents
+    with open(assembled_file, 'r') as inFile:
+        for line in inFile:
+            if not line.startswith("@"): # ignore the header lines
                 
+                fields = line.split("\t")
+    
+                # extract the info for the dictionary for each line
+                QNAME = re.split('(\d[:|_]\d+[:|_]\d+[:|_]\d+)', fields[0])[1] # FASTQ ID = QNAME column in sam file
+                FLAG = fields[1] # bitwise flag with map info; == 0 if primary read
+                RNAME = fields[2] # ref sequence name -- where did the sequence map?
+                POS = fields[3] # position of map
+                MAPQ = fields[4] # mapping quality
+                CIGAR = fields[5] # additional mapping info
+                SEQ = fields[9] # the actual sequence
+                QUAL = fields[10] # sequence quality score
+                
+                # extract the DBR corresponding to the QNAME for each row
+                dbr_value = dbr.get(QNAME) 
+                
+                # bitwise FLAG == 0 means that the read is the PRIMARY READ. There will only be one of these per sequence, so only mapped primary reads should be considered.
+                if FLAG == '0':
+                    if samMapLen:
+                        if len(SEQ) == samMapLen: #if we specify an expected sequence length in the samfile
+                            # tally the new primary read
+                            #n_primary += 1
+                        
+                            # WE NEED TWO DICTIONARIES TO REPRESENT ALL THE RELATIONSHIP BETWEEN RNAME, QNAME, dbr_value, QUAL, AND count
+                            # build a dictionary with structure {DBR: (locus: count)}                    
+                            if RNAME in assembly_dict_2:
+                                if dbr_value in assembly_dict_2.get(RNAME):
+                                    assembly_dict_2[RNAME][dbr_value]=assembly_dict_2[RNAME][dbr_value]+1
+                                else:
+                                    assembly_dict_2.setdefault(RNAME, {})[dbr_value]=1
+                            else:
+                                assembly_dict_2.setdefault(RNAME, {})[dbr_value]=1 # add the new DBR and its associated locus and count
+                
+                            # build a dictionary with structure {RNAME: {DBR:[[QNAME, QUAL]]}}        
+                            if RNAME in assembly_dict_3:
+                                if dbr_value in assembly_dict_3.get(RNAME):
+                                    assembly_dict_3[RNAME][dbr_value].append([QNAME, QUAL, SEQ])
+                                else:
+                                    assembly_dict_3.setdefault(RNAME, {})[dbr_value]=[[QNAME, QUAL, SEQ]]
+                            else:
+                                assembly_dict_3.setdefault(RNAME, {})[dbr_value]=[[QNAME, QUAL, SEQ]]
+                            # tally the new primary read
+                            n_primary += 1
+                    else: #if we're not using stacks to re-assemble and we don't care about expected lengths...
+                        # WE NEED TWO DICTIONARIES TO REPRESENT ALL THE RELATIONSHIP BETWEEN RNAME, QNAME, dbr_value, QUAL, AND count
+                        # build a dictionary with structure {DBR: (locus: count)}                    
+                        if RNAME in assembly_dict_2:
+                            if dbr_value in assembly_dict_2.get(RNAME):
+                                assembly_dict_2[RNAME][dbr_value]=assembly_dict_2[RNAME][dbr_value]+1
+                            else:
+                                assembly_dict_2.setdefault(RNAME, {})[dbr_value]=1
+                        else:
+                            assembly_dict_2.setdefault(RNAME, {})[dbr_value]=1 # add the new DBR and its associated locus and count
+                
+                        # build a dictionary with structure {RNAME: {DBR:[[QNAME, QUAL]]}}        
+                        if RNAME in assembly_dict_3:
+                            if dbr_value in assembly_dict_3.get(RNAME):
+                                assembly_dict_3[RNAME][dbr_value].append([QNAME, QUAL, SEQ])
+                            else:
+                                assembly_dict_3.setdefault(RNAME, {})[dbr_value]=[[QNAME, QUAL, SEQ]]
+                        else:
+                            assembly_dict_3.setdefault(RNAME, {})[dbr_value]=[[QNAME, QUAL, SEQ]]
+                        # tally the new primary read
+                        n_primary += 1
+                        
+    return assembly_dict_2, assembly_dict_3, n_primary
+
+class filterGroup():
+    def __init__(self,
+                 assembled_file, # the SAM files for the data mapped to pseudoreference
+                 out_file, # the output file, full path, ending with .fasta
+                 n_expected, # the number of differences to be tolerated
+                 dict_file, # a single dictionary of DBRs (for one library only) 
+                 sampleID,
+                 libraryID,
+                 test_dict=True, # optionally print testing info to stdout for checking the dictionary construction
+                 phred_dict=phred_dict, # dictionary containing ASCII quality filter scores to help with tie breaks
+                 samMapLen=None):
+        
+        self.assembled_file = assembled_file
+        self.out_file = out_file
+        self.n_expected = n_expected
+        self.dict_file = dict_file
+        self.sampleID = sampleID
+        self.libraryID = libraryID
+        self.test_dict = test_dict
+        self.phred_dict = phred_dict
+        self.samMapLen = samMapLen
+
+#     def DBR_Filter(assembled_file, # the SAM files for the data mapped to pseudoreference
+#                    out_file, # the output file, full path, ending with .fasta
+#                    n_expected, # the number of differences to be tolerated
+#                    dict_file, # a single dictionary of DBRs (for one library only)
+#                    sampleID,
+#                    logfile,
+#                    test_dict=True, # optionally print testing info to stdout for checking the dictionary construction
+#                    phred_dict=phred_dict, # dictionary containing ASCII quality filter scores to help with tie breaks
+#                    samMapLen=None): # expected sequence length will help when primary reads are still not perfectly aligned with reference
+     
+    def DBR_filter(self):
+            
+        print 'Opening DBR dictionary ' + self.dict_file  
+        
+        # open a connection to an output file
+        with open(self.out_file, 'a') as of:
+            
+            # probably unnecessary ...
+            #bc_dict = barcodeDict(barcode_file)
+            
+            # return two dictionaries for use in filtering
+            assembly_dictionaries = assemblyDict(self.dict_file, self.sampleID, self.assembled_file, self.samMapLen)
+            
+            # separate the two dictionaries
+            assembly_dict_2 = assembly_dictionaries[0]
+            assembly_dict_3 = assembly_dictionaries[1]
+            n_primary = assembly_dictionaries[2]
+            
+            print 'Checking DBR counts against expectations.'
+            
+            total_removed = 0
+            delete_list = []
+            keep_list = []
+            
+            for RNAME, value in assembly_dict_2.iteritems():
+                #print 'RNAME', RNAME
+                # ignore the data where the reference is "unmapped" -- RNAME = '*'
+                if RNAME != '*':
+                    # get all the DBRs and counts that went into that locus in that sample
+                    for subvalue in value.iteritems():
+                        #print 'Subvalue', subvalue
+                        dbr_value = subvalue[0] 
+                        count = subvalue[1]
+                        if count > self.n_expected:
+                            ##################################################
+                            ## THIS IS WHERE THE FILTERING HAPPENS           #
+                            ##################################################
+                            #print 'count', count, 'n exp', n_expected
+                            # the other dictionary contains the full quality information for each RNAME:DBR pair (this will be multiple entries of sequence IDs and qualities
+                            qname_qual = assembly_dict_3[RNAME][dbr_value] #this is a list of lists: [[QNAME, QUAL, SEQ], [QNAME, QUAL, SEQ], ...]
+                            #print RNAME, dbr_value, len(qname_qual)
+                            #print qname_qual
+                            ID_quals = {} # we'll make yet another dictionary to store the QNAME and the median QUAL
+                            for i in qname_qual:
+                                id_val=i[0] # this is the QNAME (Illumina ID)
+                                id_seq=i[2] # the full sequence
+                                id_qual=i[1] # the full quality
+                                ID_quals[id_val] = (qual_median(i[1], phred_dict), id_seq, id_qual)
+                            n_remove = count - self.n_expected
+                            total_removed += n_remove
+                            t = 0
+                            k = 1
+                            while k <= self.n_expected:
+                                to_keep = max(ID_quals, key=lambda x:ID_quals[x]) 
+                                #print(to_keep)
+                                keep = ID_quals[to_keep]
+                                keep_list.append(to_keep)
+                                #write out the data to keep, NOT appending the original barcode to the beginning of the sequence
+                                of.write('@'+to_keep+'\n'+ keep[1]+'\n+\n'+ keep[2]+'\n')
+                                #out_file.write([keep.split('\n', 1)[0] for i in keep])
+                                k += 1
+            with open(self.logfile,'a') as log:
+                log.write(self.sampleID+','+str(total_removed)+','+str(n_primary)+','+time.strftime("%d/%m/%Y")+','+(time.strftime("%H:%M:%S"))+'\n')
+                print 'Removed ' + str(total_removed) + ' PCR duplicates out of ' + str(n_primary) + ' primary mapped reads.'                                                    
+                    
+            if self.test_dict: # check construction by printing first entries to screen
+                print 'Checking dictionary format (version 3).'
+                x = itertools.islice(assembly_dict_3.iteritems(), 0, 4)
+                for keyX, valueX in x:
+                    print keyX, valueX
+                print 'Checking dictionary format (version 2).'
+                y = itertools.islice(assembly_dict_2.iteritems(), 0, 4)
+                for keyY, valueY in y:
+                    print keyY, valueY
+               
+def parallel_DBR_Filter(assembled_dir, # the SAM files for the data mapped to pseudoreference
+               out_dir, # the output file, full path, ending with .fasta
+               n_expected, # the number of differences to be tolerated
+               dict_dir, # a single dictionary of DBRs (for one library only)
+               regexSample,
+               regexLibrary,
+               test_dict=True, # optionally print testing info to stdout for checking the dictionary construction
+               phred_dict=phred_dict, # dictionary containing ASCII quality filter scores to help with tie breaks
+               samMapLen=None): # expected sequence length will help when primary reads are still not perfectly aligned with reference
+    
+    logfile = out_dir + '/DBR_filtered_sequences_logfile.csv' 
+    
+    for i in os.listdir(assembled_dir):
+            
+        if 'unmatched' not in i: # skip the SAM files with sequences that didn't match
+            
+            # extract the sample ID with a regex
+            sampleID = find_SampleID(i, regexSample)
+            
+            # extract the library ID with a regex
+            libraryID = find_LibraryID(i, regexSample)
+            
+            # use the library ID to find the right DBR dictionary
+            dict_in = find_DBRdictionary(libraryID, dict_dir)
+            
+            if sampleID and libraryID and dict_in: # and bcf ... (deprecated) # if all of these != None
+            
+                print 'sample', sampleID 
+                print 'library', libraryID
+                print 'dictionary file', dict_in
+            
+                if not os.path.exists(out_dir):
+                    os.makedirs(out_dir)
+                
+                inFile = os.path.join(assembled_dir, i)
+                # one output fastq file per sample    
+                out_seqs_final = out_dir + '/DBR_filtered_sequences_' + libraryID + '_' + sampleID + '.fastq'
+                
+                processQueue.put(filterGroup(assembled_file = inFile,
+                                         out_file = out_seqs_final,
+                                         n_expected = n_expected,
+                                         dict_file = dict_in,
+                                         sampleID = sampleID,
+                                         libraryID = libraryID,
+                                         logfile = logfile))
+    processQueue.join()
+
+    return
+
+def parallel_DBR_dict(in_dir, seqType, dbr_start, dbr_stop, test_dict = False, save = None):
+    #if not checkDir(in_dir):
+    #    raise IOError("Input is not a directory: %s" % in_dir)
+    if seqType == 'read2':
+        warnings.warn('Expect directory containing only Read 2 files; any other files present in %s will be incorporated into DBR dictionary.' % in_dir)
+    elif seqType == 'pear':
+        warnings.warn('Expect directory containing only merged Read 1 and Read 2 files; any other files present in %s will be incorporated into DBR directory' % in_dir)
+    else:
+        raise IOError("Input sequence type specified as %s. Options are 'pear' or 'read2'." % seqType)
+    
+    dbrProcess = [mp.Process(target=DBR_dict, args=(in_dir+in_file, 
+                                                    seqType,
+                                                    dbr_start,
+                                                    dbr_stop,
+                                                    test_dict,
+                                                    save)) for in_file in in_dir]
+     
+    for dP in dbrProcess:
+        dP.start()
+    for dP in dbrProcess:
+        dP.join()
+    
+
+def DBR_dict(in_file, dbr_start, dbr_stop, test_dict = False, save = None):
+    # DBR is in read 2
+    # if merged, it will be the last -2 to -9 (inclusive) bases, starting with base 0 and counting from the end
+    # if not merged, it will be bases 2 to 9
+    if not checkFile(in_file):
+        raise IOError("where is the input file: %s" % in_file)
+    info('Creating {ID: dbr} dictionary from %s.' % in_file)
+    dbr = {}
+    fq_line = 1
+    if in_file.endswith('gz'):
+        openFxn = gzip.open
+    else:
+        openFxn = open
+    with openFxn(in_file, 'r') as db:
+        for line in db:
+            if fq_line == 1:
+                ID = re.split('(\d[:|_]\d+[:|_]\d+[:|_]\d+)', line)[1]
+                fq_line = 2
+            elif fq_line == 2:
+                seq = list(line) # split the sequence line into a list
+                tag = ''.join(seq[dbr_start:dbr_stop])
+                dbr[ID] = tag
+                fq_line = 3
+            elif fq_line == 3:
+                fq_line = 4
+            elif fq_line == 4:
+                fq_line = 1
+    if test_dict:
+        print 'Checking DBR dictionary format.'
+        x = itertools.islice(dbr.iteritems(), 0, 4)
+        for key, value in x:
+            print key, value
+        #print dbr['8:1101:15808:1492'] # this is the first entry in /home/antolinlab/Downloads/CWD_RADseq/pear_merged_Library12_L8.assembled.fastq
+    if save:
+        if not os.path.exists(save):
+            os.makedirs(save)
+        fq_name = os.path.splitext(in_file)[0]
+        fq_dbr_out = fq_name + save + '.json'
+        print 'Writing dictionary to ' + fq_dbr_out
+        with open(fq_dbr_out, 'w') as fp:          
+            json.dump(dbr, fp)
+            
+'''
 def DBR_Filter(assembled_dir, # the SAM files for the data mapped to pseudoreference
                out_dir, # the output file, full path, ending with .fasta
                n_expected, # the number of differences to be tolerated
@@ -309,7 +691,7 @@ def DBR_Filter(assembled_dir, # the SAM files for the data mapped to pseudorefer
                                                     id_val=i[0] # this is the QNAME (Illumina ID)
                                                     id_seq=i[2] # the full sequence
                                                     id_qual=i[1] # the full quality
-                                                    ID_quals[id_val] = (qual_mode(i[1], phred_dict), id_seq, id_qual)
+                                                    ID_quals[id_val] = (qual_median(i[1], phred_dict), id_seq, id_qual)
                                                 n_remove = count - n_expected
                                                 total_removed += n_remove
                                                 t = 0
@@ -337,7 +719,7 @@ def DBR_Filter(assembled_dir, # the SAM files for the data mapped to pseudorefer
                                     for keyY, valueY in y:
                                         print keyY, valueY
         
-
+'''
 #TODO: why does DBR_filter need to write out a single fastq file -- why redo all that demultiplexing??
 '''
 # OTHER METRICS FOR DESCRIBING OVERALL SEQUENCE QUALITY (QUAL = ASCII character string)
