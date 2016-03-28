@@ -314,14 +314,14 @@ def DBR_Filter(assembled_dir, # the SAM files for the data mapped to pseudorefer
                                                 total_removed += n_remove
                                                 to_keep = heapq.nlargest(n_expected, ID_quals, key=lambda x:ID_quals[x])
                                                 #to_keep = max(ID_quals, key=lambda x:ID_quals[x]) 
-                                                
-                                                keep = ID_quals[to_keep]
-                                                keep_list.append(to_keep)
-                                                
-                                                print 'to keep', to_keep, 'keep', keep, 'keep_list', keep_list
+                                                for k in to_keep:
+                                                    keep = ID_quals[k] # get the full data for the highest median sequences
+                                                    out_file.write('@'+to_keep+'\n'+ keep[1]+'\n+\n'+ keep[2]+'\n')
+                                                    
+                                                print 'to keep', to_keep
                                                 #write out the data to keep, appending the original barcode to the beginning of the sequence
                                                 #for k in to_keep:
-                                                #    out_file.write('@'+to_keep+'\n'+ keep[1]+'\n+\n'+ keep[2]+'\n')
+                                                #    
                                                 #out_file.write([keep.split('\n', 1)[0] for i in keep])
                                                 
                                 with open(logfile,'a') as log:
