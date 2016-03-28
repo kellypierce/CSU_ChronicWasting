@@ -291,10 +291,11 @@ Please refer to the developer documentation for further detail about functionali
 	|---|---|
 	| `in_dir` | Full path to directory of .fastq files for trimming with FASTQ Trimmer. |
 	| `out_dir` | Full path to output directory for trimmed .fastq files. |
+	| `trimPath` | Path to FASTQ Trimmer executable. |
 	| `first_base` | First base to keep (`-f` in FASTQ Trimmer, but note that this Python wrapper does not inherit FASTQ Trimmer defaults). |
 	| `last_base = None` | Last base to keep. Default is None, meaning all bases after the first base to keep `first_base` will be retained. (`-l` in FASTQ Trimmer, but note that this Python wrapper does not inherit FASTQ Trimmer defaults).|
 	| `suffix = '_trimmed.fq'` | Text string to be appended to output file name. Default is '_trimmed.fq' but any text string is acceptable. |
-	| `trimPath` | Path to FASTQ Trimmer executable. |
+	
 
 6. **Trim**
 
@@ -307,7 +308,7 @@ Please refer to the developer documentation for further detail about functionali
 	| `first_base` | First base to keep (`-f` in FASTQ Trimmer, but note that this Python wrapper does not inherit FASTQ Trimmer defaults). |
 	| `last_base = None` | Last base to keep. Default is None, meaning all bases after the first base to keep `first_base` will be retained. (`-l` in FASTQ Trimmer, but note that this Python wrapper does not inherit FASTQ Trimmer defaults).|
 	| `trimPath` | Path to FASTQ Trimmer executable. |
-
+	| `execute = True` | Should the call to FASTQ Trimmer be added to the `Trim` function's internal processing queue (`execute = True`), or added to a thread-limited external processing queue (`execute = False`). Select `execute = True` when there are more available processors than there are files to trim, and all can be processed simultaneously. Select `execute = False` when there are more files to trim than there are processors available for more efficient handling of parallel processing by external libraries. |
 
 7. **iterative_Demultiplex**
 
