@@ -127,9 +127,10 @@ def find_SampleID(filename, r):
     else:
         return None
     
-def find_LibraryID(filename):
+def find_LibraryID(filename, r):
     #libraryID_match = re.match(".*(Library\d{2,3}).*", filename)
-    libraryID_match = re.match(".*(Library\d{1,3}[A|B]?).*", filename)
+    #libraryID_match = re.match(".*(Library\d{1,3}[A|B]?).*", filename)
+    libraryID_match = re.match(r, filename)
     if libraryID_match: # if we get a match (this allows the script to proceed if a file has a mismatched name)
         libraryID = libraryID_match.groups()[0] # extract the library ID match
         return libraryID 
