@@ -82,6 +82,8 @@ def worker():
                       shell = workItem.shell,
                       cwd = workItem.cwd)
             p.wait()
+        else:
+            raise Exception(type(workItem))
         processQueue.task_done()
 
 def checkFile(filename):
