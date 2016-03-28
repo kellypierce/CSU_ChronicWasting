@@ -191,47 +191,68 @@ def assemblyDict(DBRdict, sampleID, assembled_file, samMapLen):#, barcode_dict):
         dbr = json.load(d)
     #original_barcode = barcode_dict[sampleID]
     
-    # initialize an empty dictionary with each iteration of the for-loop
-    assembly_dict_2 = {}
-    assembly_dict_3 = defaultdict(list)
-    
-    # print some info to track progress
-    #path=os.path.join(assembled_dir, i)
-    print 'Creating filtering dictionaries from ' + assembled_file
-    
-    # get the sample number for use later
-    #number = re.split('(\d)', i)[1] # enclose the regex in parentheses to keep it in the output
-    
-    # start counter for the number of primary reads
-    n_primary = 0
-    
-    # open the sam file and process its contents
-    with open(assembled_file, 'r') as inFile:
-        for line in inFile:
-            if not line.startswith("@"): # ignore the header lines
-                
-                fields = line.split("\t")
-    
-                # extract the info for the dictionary for each line
-                QNAME = re.split('(\d[:|_]\d+[:|_]\d+[:|_]\d+)', fields[0])[1] # FASTQ ID = QNAME column in sam file
-                FLAG = fields[1] # bitwise flag with map info; == 0 if primary read
-                RNAME = fields[2] # ref sequence name -- where did the sequence map?
-                POS = fields[3] # position of map
-                MAPQ = fields[4] # mapping quality
-                CIGAR = fields[5] # additional mapping info
-                SEQ = fields[9] # the actual sequence
-                QUAL = fields[10] # sequence quality score
-                
-                # extract the DBR corresponding to the QNAME for each row
-                dbr_value = dbr.get(QNAME) 
-                
-                # bitwise FLAG == 0 means that the read is the PRIMARY READ. There will only be one of these per sequence, so only mapped primary reads should be considered.
-                if FLAG == '0':
-                    if samMapLen:
-                        if len(SEQ) == samMapLen: #if we specify an expected sequence length in the samfile
-                            # tally the new primary read
-                            #n_primary += 1
-                        
+        # initialize an empty dictionary with each iteration of the for-loop
+        assembly_dict_2 = {}
+        assembly_dict_3 = defaultdict(list)
+        
+        # print some info to track progress
+        #path=os.path.join(assembled_dir, i)
+        print 'Creating filtering dictionaries from ' + assembled_file
+        
+        # get the sample number for use later
+        #number = re.split('(\d)', i)[1] # enclose the regex in parentheses to keep it in the output
+        
+        # start counter for the number of primary reads
+        n_primary = 0
+        
+        # open the sam file and process its contents
+        with open(assembled_file, 'r') as inFile:
+            for line in inFile:
+                if not line.startswith("@"): # ignore the header lines
+                    
+                    fields = line.split("\t")
+        
+                    # extract the info for the dictionary for each line
+                    QNAME = re.split('(\d[:|_]\d+[:|_]\d+[:|_]\d+)', fields[0])[1] # FASTQ ID = QNAME column in sam file
+                    FLAG = fields[1] # bitwise flag with map info; == 0 if primary read
+                    RNAME = fields[2] # ref sequence name -- where did the sequence map?
+                    POS = fields[3] # position of map
+                    MAPQ = fields[4] # mapping quality
+                    CIGAR = fields[5] # additional mapping info
+                    SEQ = fields[9] # the actual sequence
+                    QUAL = fields[10] # sequence quality score
+                    
+                    # extract the DBR corresponding to the QNAME for each row
+                    dbr_value = dbr.get(QNAME) 
+                    
+                    # bitwise FLAG == 0 means that the read is the PRIMARY READ. There will only be one of these per sequence, so only mapped primary reads should be considered.
+                    if FLAG == '0':
+                        if samMapLen:
+                            if len(SEQ) == samMapLen: #if we specify an expected sequence length in the samfile
+                                # tally the new primary read
+                                #n_primary += 1
+                            
+                                # WE NEED TWO DICTIONARIES TO REPRESENT ALL THE RELATIONSHIP BETWEEN RNAME, QNAME, dbr_value, QUAL, AND count
+                                # build a dictionary with structure {DBR: (locus: count)}                    
+                                if RNAME in assembly_dict_2:
+                                    if dbr_value in assembly_dict_2.get(RNAME):
+                                        assembly_dict_2[RNAME][dbr_value]=assembly_dict_2[RNAME][dbr_value]+1
+                                    else:
+                                        assembly_dict_2.setdefault(RNAME, {})[dbr_value]=1
+                                else:
+                                    assembly_dict_2.setdefault(RNAME, {})[dbr_value]=1 # add the new DBR and its associated locus and count
+                    
+                                # build a dictionary with structure {RNAME: {DBR:[[QNAME, QUAL]]}}        
+                                if RNAME in assembly_dict_3:
+                                    if dbr_value in assembly_dict_3.get(RNAME):
+                                        assembly_dict_3[RNAME][dbr_value].append([QNAME, QUAL, SEQ])
+                                    else:
+                                        assembly_dict_3.setdefault(RNAME, {})[dbr_value]=[[QNAME, QUAL, SEQ]]
+                                else:
+                                    assembly_dict_3.setdefault(RNAME, {})[dbr_value]=[[QNAME, QUAL, SEQ]]
+                                # tally the new primary read
+                                n_primary += 1
+                        else: #if we're not using stacks to re-assemble and we don't care about expected lengths...
                             # WE NEED TWO DICTIONARIES TO REPRESENT ALL THE RELATIONSHIP BETWEEN RNAME, QNAME, dbr_value, QUAL, AND count
                             # build a dictionary with structure {DBR: (locus: count)}                    
                             if RNAME in assembly_dict_2:
@@ -241,7 +262,7 @@ def assemblyDict(DBRdict, sampleID, assembled_file, samMapLen):#, barcode_dict):
                                     assembly_dict_2.setdefault(RNAME, {})[dbr_value]=1
                             else:
                                 assembly_dict_2.setdefault(RNAME, {})[dbr_value]=1 # add the new DBR and its associated locus and count
-                
+                    
                             # build a dictionary with structure {RNAME: {DBR:[[QNAME, QUAL]]}}        
                             if RNAME in assembly_dict_3:
                                 if dbr_value in assembly_dict_3.get(RNAME):
@@ -252,28 +273,7 @@ def assemblyDict(DBRdict, sampleID, assembled_file, samMapLen):#, barcode_dict):
                                 assembly_dict_3.setdefault(RNAME, {})[dbr_value]=[[QNAME, QUAL, SEQ]]
                             # tally the new primary read
                             n_primary += 1
-                    else: #if we're not using stacks to re-assemble and we don't care about expected lengths...
-                        # WE NEED TWO DICTIONARIES TO REPRESENT ALL THE RELATIONSHIP BETWEEN RNAME, QNAME, dbr_value, QUAL, AND count
-                        # build a dictionary with structure {DBR: (locus: count)}                    
-                        if RNAME in assembly_dict_2:
-                            if dbr_value in assembly_dict_2.get(RNAME):
-                                assembly_dict_2[RNAME][dbr_value]=assembly_dict_2[RNAME][dbr_value]+1
-                            else:
-                                assembly_dict_2.setdefault(RNAME, {})[dbr_value]=1
-                        else:
-                            assembly_dict_2.setdefault(RNAME, {})[dbr_value]=1 # add the new DBR and its associated locus and count
-                
-                        # build a dictionary with structure {RNAME: {DBR:[[QNAME, QUAL]]}}        
-                        if RNAME in assembly_dict_3:
-                            if dbr_value in assembly_dict_3.get(RNAME):
-                                assembly_dict_3[RNAME][dbr_value].append([QNAME, QUAL, SEQ])
-                            else:
-                                assembly_dict_3.setdefault(RNAME, {})[dbr_value]=[[QNAME, QUAL, SEQ]]
-                        else:
-                            assembly_dict_3.setdefault(RNAME, {})[dbr_value]=[[QNAME, QUAL, SEQ]]
-                        # tally the new primary read
-                        n_primary += 1
-                        
+                            
     return assembly_dict_2, assembly_dict_3, n_primary
 
 class filterGroup():
