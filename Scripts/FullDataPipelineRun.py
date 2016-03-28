@@ -71,7 +71,7 @@ if __name__ == '__main__':
     pseudorefOutDir = parentDir + '/pseudoreference.fastq'
     BWAinDir = parentDir
     BWAoutDir = parentDir + '/BWA/'
-    DBRfilteredseqs = parentDir + '/dbrFiltered-debugging/'
+    DBRfilteredseqs = parentDir + '/dbrFiltered/'
     
     #### PART 2: REASSEMBLING THE FILTERED SEQUENCES
     re_demultiplexInDir = DBRfilteredseqs
