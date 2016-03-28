@@ -184,8 +184,9 @@ if __name__ == '__main__':
     out_prefix = '/re_demultiplexed_'
     iterative_Demultiplex(in_dir = re_demultiplexInDir, 
                           barcode_dir = '/home/pierce/CSU_ChronicWasting/RevisedBarcodes', 
+                          out_dir = re_demultiplexOutDir,
                           regexLibrary = 'Library\d{1,3}[A|B]?', 
-                          out_dir = re_demultiplexOutDir, 
+                          demultiplexPath = demultiplexPath,
                           out_prefix = out_prefix)
     
     # TRIM TO UNIFORM LENGTH
