@@ -180,22 +180,35 @@ if __name__ == '__main__':
     #           phred_dict=phred_dict, # dictionary containing ASCII quality filter scores to help with tie breaks
     #           samMapLen=None)
     
+    parallel_DBR_Filter(assembled_dir = BWAoutDir, # the SAM files for the data mapped to pseudoreference
+               out_dir = DBRfilteredseqs, # the output file, full path, ending with .fasta
+               n_expected = 2, # the number of differences to be tolerated
+               dict_dir = dbrOutDir, # a single dictionary of DBRs (for one library only)
+               regexSample = '.*_(\d{1,3}T?)_.*',
+               regexLibrary = ".*(Library\d{1,3}[A|B]?).*",
+               test_dict=True, # optionally print testing info to stdout for checking the dictionary construction
+               phred_dict=phred_dict, # dictionary containing ASCII quality filter scores to help with tie breaks
+               samMapLen=None)
+    
+    # Output of DBR filtering is a set of individual sample files, not a set of library files.
+    # Therefore, no need to demultiplex and trim again.
+    
     # DEMULTIPLEX
-    out_prefix = '/re_demultiplexed_'
-    iterative_Demultiplex(in_dir = re_demultiplexInDir, 
-                          barcode_dir = '/home/pierce/CSU_ChronicWasting/RevisedBarcodes', 
-                          regexLibrary= 'Library\d{1,3}[A|B]?',
-                          out_dir = re_demultiplexOutDir, 
-                          out_prefix = out_prefix)
+    #out_prefix = '/re_demultiplexed_'
+    #iterative_Demultiplex(in_dir = re_demultiplexInDir, 
+    #                      barcode_dir = '/home/pierce/CSU_ChronicWasting/RevisedBarcodes', 
+    #                      regexLibrary= 'Library\d{1,3}[A|B]?',
+    #                      out_dir = re_demultiplexOutDir, 
+    #                      out_prefix = out_prefix)
     
     # TRIM TO UNIFORM LENGTH
-    suffix = '_re_trimmed.fq'
-    new_first_base = 6
-    parallel_Trim(in_dir = re_trimInDir, 
-         out_dir = re_trimOutDir, 
-         trimPath = trimmer,
-         suffix = suffix, 
-         first_base = new_first_base)
+    #suffix = '_re_trimmed.fq'
+    #new_first_base = 6
+    #parallel_Trim(in_dir = DBRfilteredseqs, 
+    #     out_dir = re_trimOutDir, 
+    #     trimPath = trimmer,
+    #     suffix = suffix, 
+    #     first_base = new_first_base)
     
     # RUN USTACKS SIMULTANEOUSLY ON ALL LIBRARIES
     denovo_Ustacks(in_dir = re_stacksInDir, 
@@ -208,7 +221,7 @@ if __name__ == '__main__':
                   D = '_final_assembly')
     
     # RUN CSTACKS SIMULTANEOUSLY ON ALL LIBRARIES (same args as above)
-    denovo_Cstacks(in_dir = re_stacksInDir, 
+    denovo_Cstacks(in_dir = DBRfilteredseqs, 
                   denovo_path = denovo_path, 
                   stacks_executables = stacks_executables, 
                   out_dir = re_stacksOutDir, 
