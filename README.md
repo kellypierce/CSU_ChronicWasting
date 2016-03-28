@@ -37,6 +37,8 @@ TODO: Move **DBR_dict** function from *integrated_denovo_pipeline.py* to *assemb
 
 These are stand-alone scripts; no separate installation is necessary. The scripts import Python modules that will be part of any basic Python installation. 
 
+Be sure that `assembled_DBR_filtering.py` and `integrated_denovo_pipeline.py` are in the same directory as the Python work scripts you create to run these modules. See below for details on creating your work script.
+
 # Optional software
 
 Please see original documentation for installation instructions for external software.
@@ -58,12 +60,46 @@ Please see original documentation for installation instructions for external sof
 
 # assembled_DBR_filtering.py
 
-## User-controlled functions
+## User-controlled functions to make filtering dictionaries from raw data
+
+1. **parallel_DBR_dict** 
+
+	Passes arguments to **DBR_dict** to create DBR dictionaries for all .fastq files in a directory.
+	
+	Recommended to run on quality filtered data.
+
+	|Argument| Help |
+	|---|---|
+	| `in_dir` | Full path to directory containing a set of .fastq files. |
+	| `seqType` | 'read2' or 'pear'. If 'read2', expect only read 2 files in `in_dir`. If 'pear', expect only read 1 and read 2 merged with PEAR in "in_dir". |
+	| `dbr_start` | Integer. Index of first base in DBR. NOTE: Python indexing starts at 0.|
+	| `dbr_stop` | Integer. Index of first base after end of DBR. EXAMPLE: If DBR ends at base position 9, dbr_stop = 10.|
+	| `test_dict = False` | Logical. If True, print samples of dictionary entries to check for proper formatting. |
+	| `save = None` | Optional text string suffix to append to output file name. DBR dictionaries inherit the name of the file used to create them, plus an additional (optional) user-specified text string, and an automatically added .json extension. If save = None, the DBR dictionary file name will be the original file name with a .json extension.|
+
+
+2. **DBR_dict**
+
+	Create a DBR dictionary for a .fastq file.
+	
+	Recommended to run on quality filtered data.
+
+	|Argument| Help |
+	|---|---|
+	| `in_file` | Full path to a single .fastq file |
+	| `dbr_start` | Integer. Index of first base in DBR. NOTE: Python indexing starts at 0.|
+	| `dbr_stop` | Integer. Index of first base after end of DBR. EXAMPLE: If DBR ends at base position 9, `dbr_stop` = 10.|
+	| `test_dict = False` | Logical. If True, print samples of dictionary entries to check for proper formatting. |
+	| `save = None` | Optional text string suffix to append to output file name. DBR dictionaries inherit the name of the file used to create them, plus an additional (optional) user-specified text string, and an automatically added .json extension. If save = None, the DBR dictionary file name will be the original file name with a .json extension.|
+
+## User-controlled functions to filter data using previously created dictionaries
+
+Large projects with many samples can take an excruciatingly long time to process. We use processing queues to parallelize the DBR filtering. The current version of the software requires you to include in your Python job script the following code:
+
 
 1. **DBR_Filter**
 
 	**Function overview**
-	
 
 	This function performs the main filtering to remove PCR duplicates based on the DBR tags.
 	
@@ -165,44 +201,9 @@ Users do not manipulate these functions directly. They are instead called by **D
 	| `library` | The value returned by **find_LibraryID**. |
 	| `directory` | The full file path to the directory containing the DBR dictionaries created by **DBR_dict**. |
 
-# integrated_denovo_pipeline.py
+# integrated_denovo_pipeline.py: Optional Python wrappers to external software
 
 ## User-controlled functions
-
-### Integral parts of DBR filtering
-
-1. **parallel_DBR_dict** 
-
-	Passes arguments to **DBR_dict** to create DBR dictionaries for all .fastq files in a directory.
-	
-	Recommended to run on quality filtered data.
-
-	|Argument| Help |
-	|---|---|
-	| `in_dir` | Full path to directory containing a set of .fastq files. |
-	| `seqType` | 'read2' or 'pear'. If 'read2', expect only read 2 files in `in_dir`. If 'pear', expect only read 1 and read 2 merged with PEAR in "in_dir". |
-	| `dbr_start` | Integer. Index of first base in DBR. NOTE: Python indexing starts at 0.|
-	| `dbr_stop` | Integer. Index of first base after end of DBR. EXAMPLE: If DBR ends at base position 9, dbr_stop = 10.|
-	| `test_dict = False` | Logical. If True, print samples of dictionary entries to check for proper formatting. |
-	| `save = None` | Optional text string suffix to append to output file name. DBR dictionaries inherit the name of the file used to create them, plus an additional (optional) user-specified text string, and an automatically added .json extension. If save = None, the DBR dictionary file name will be the original file name with a .json extension.|
-
-
-2. **DBR_dict**
-
-	Create a DBR dictionary for a .fastq file.
-	
-	Recommended to run on quality filtered data.
-
-	|Argument| Help |
-	|---|---|
-	| `in_file` | Full path to a single .fastq file |
-	| `dbr_start` | Integer. Index of first base in DBR. NOTE: Python indexing starts at 0.|
-	| `dbr_stop` | Integer. Index of first base after end of DBR. EXAMPLE: If DBR ends at base position 9, `dbr_stop` = 10.|
-	| `test_dict = False` | Logical. If True, print samples of dictionary entries to check for proper formatting. |
-	| `save = None` | Optional text string suffix to append to output file name. DBR dictionaries inherit the name of the file used to create them, plus an additional (optional) user-specified text string, and an automatically added .json extension. If save = None, the DBR dictionary file name will be the original file name with a .json extension.|
-
-
-### Optional Python wrappers to external software
 
 The functions below are wrappers to several external software packages. These wrappers have two purposes: (1) to facilitate **batch processing of multiple input files** in parallel when appropriate, and (2) to allow **sequential execution of multiple steps from a single Python script** to call all of the functions. Calls to these wrapper functions can be done in any order the user chooses, provided that the input and output directories are all properly specified.
 
@@ -291,10 +292,11 @@ Please refer to the developer documentation for further detail about functionali
 	|---|---|
 	| `in_dir` | Full path to directory of .fastq files for trimming with FASTQ Trimmer. |
 	| `out_dir` | Full path to output directory for trimmed .fastq files. |
+	| `trimPath` | Path to FASTQ Trimmer executable. |
 	| `first_base` | First base to keep (`-f` in FASTQ Trimmer, but note that this Python wrapper does not inherit FASTQ Trimmer defaults). |
 	| `last_base = None` | Last base to keep. Default is None, meaning all bases after the first base to keep `first_base` will be retained. (`-l` in FASTQ Trimmer, but note that this Python wrapper does not inherit FASTQ Trimmer defaults).|
 	| `suffix = '_trimmed.fq'` | Text string to be appended to output file name. Default is '_trimmed.fq' but any text string is acceptable. |
-	| `trimPath` | Path to FASTQ Trimmer executable. |
+	
 
 6. **Trim**
 
@@ -307,7 +309,7 @@ Please refer to the developer documentation for further detail about functionali
 	| `first_base` | First base to keep (`-f` in FASTQ Trimmer, but note that this Python wrapper does not inherit FASTQ Trimmer defaults). |
 	| `last_base = None` | Last base to keep. Default is None, meaning all bases after the first base to keep `first_base` will be retained. (`-l` in FASTQ Trimmer, but note that this Python wrapper does not inherit FASTQ Trimmer defaults).|
 	| `trimPath` | Path to FASTQ Trimmer executable. |
-
+	| `execute = True` | Should the call to FASTQ Trimmer be added to the `Trim` function's internal processing queue (`execute = True`), or added to a thread-limited external processing queue (`execute = False`). Select `execute = True` when there are more available processors than there are files to trim, and all can be processed simultaneously. Select `execute = False` when there are more files to trim than there are processors available for more efficient handling of parallel processing by external libraries. |
 
 7. **iterative_Demultiplex**
 
