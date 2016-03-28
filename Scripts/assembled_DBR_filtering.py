@@ -163,24 +163,24 @@ def DBR_Filter(assembled_dir, # the SAM files for the data mapped to pseudorefer
                 if not os.path.exists(out_dir):
                     os.makedirs(out_dir)
             
-                out_seqs_final = out_dir + '/DBR_filtered_sequences_' + libraryID + '.fastq'
+                out_seqs_final = out_dir + '/DBR_filtered_sequences_' + libraryID + '_' + sampleID + '.fastq'
             
                 #os.path.isfile(fname)
     
                 with open(out_seqs_final, 'a') as out_file:
                     
-                    bc_dict = {} # define empty container for barcode dictionary
+                    #bc_dict = {} # define empty container for barcode dictionary
             
-                    with open(bcf, 'r') as bc:
-                        for line in bc:
-                            row=line.split()
-                            bc_dict[row[0]]=row[1]
+                    #with open(bcf, 'r') as bc:
+                    #    for line in bc:
+                    #        row=line.split()
+                    #        bc_dict[row[0]]=row[1]
             
                         print 'Opening DBR dictionary ' + dict_in  
                         with open(dict_in, 'r') as f:
                             dbr = json.load(f)
                             
-                            original_barcode = bc_dict[sampleID]
+                            #original_barcode = bc_dict[sampleID]
                             #print original_barcode
                             # suggestion on error checking: 
                             # normally i capture the .match() value and say 'if object:"
@@ -320,7 +320,7 @@ def DBR_Filter(assembled_dir, # the SAM files for the data mapped to pseudorefer
                                                     keep = ID_quals[to_keep]
                                                     keep_list.append(to_keep)
                                                     #write out the data to keep, appending the original barcode to the beginning of the sequence
-                                                    out_file.write('@'+to_keep+'\n'+ original_barcode+keep[1]+'\n+\n'+ "KKKKK"+keep[2]+'\n')
+                                                    out_file.write('@'+to_keep+'\n'+ keep[1]+'\n+\n'+ keep[2]+'\n')
                                                     #out_file.write([keep.split('\n', 1)[0] for i in keep])
                                                     k += 1
                                 with open(logfile,'a') as log:
