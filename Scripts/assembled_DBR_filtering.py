@@ -77,15 +77,17 @@ def worker():
         if isinstance(workItem, filterGroup):
             #raise Exception("correct type")
             workItem.DBR_Filter()
+            processQueue.task_done()
         elif isinstance(workItem, Work):
             p = Popen(workItem.commandline,
                       env = workItem.env,
                       shell = workItem.shell,
                       cwd = workItem.cwd)
             p.wait()
+            processQueue.task_done()
         else:
             raise Exception(type(workItem))
-        processQueue.task_done()
+        
 
 def checkFile(filename):
     '''
@@ -384,7 +386,7 @@ def parallel_DBR_Filter(assembled_dir, # the SAM files for the data mapped to ps
                phred_dict=phred_dict, # dictionary containing ASCII quality filter scores to help with tie breaks
                samMapLen=None): # expected sequence length will help when primary reads are still not perfectly aligned with reference
     
-    logfile = out_dir + '/DBR_filtered_sequences_logfile.csv' 
+    logfile = os.path.join(out_dir, '/DBR_filtered_sequences_logfile.csv')
     
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
@@ -418,7 +420,7 @@ def parallel_DBR_Filter(assembled_dir, # the SAM files for the data mapped to ps
                                          dict_file = dict_in,
                                          sampleID = sampleID,
                                          logfile = logfile))
-    processQueue.join()
+    #processQueue.join()
 
     return
 
