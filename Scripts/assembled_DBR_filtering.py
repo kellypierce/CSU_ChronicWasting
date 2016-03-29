@@ -24,7 +24,8 @@ import time
 import pdb
 import multiprocessing as mp
 from Queue import Queue
-from threading import Thread
+import threading as threading
+from threading import Thread, Lock
 import warnings
 import string as string
 from string import Template, join
