@@ -189,6 +189,8 @@ def assemblyDict(DBRdict, sampleID, assembled_file, samMapLen):#, barcode_dict):
     
     with open(DBRdict, 'r') as d:
         dbr = json.load(d)
+    print 'loaded and closed json'
+    sys.stdout.flush()
         
     # initialize an empty dictionary with each iteration of the for-loop
     assembly_dict_2 = {}
@@ -273,6 +275,8 @@ def assemblyDict(DBRdict, sampleID, assembled_file, samMapLen):#, barcode_dict):
                             assembly_dict_3.setdefault(RNAME, {})[dbr_value]=[[QNAME, QUAL, SEQ]]
                         # tally the new primary read
                         n_primary += 1
+    print 'about to return assemblyDict'
+    sys.stdout.flush()
                             
     return assembly_dict_2, assembly_dict_3, n_primary
 
@@ -304,60 +308,61 @@ class filterGroup():
         print 'Opening DBR dictionary ' + self.dict_file  
         sys.stdout.flush()
         
-        # open a connection to an output file
-        with open(self.out_file, 'a') as of:
-            
-            # probably unnecessary ...
-            #bc_dict = barcodeDict(barcode_file)
-            
-            # return two dictionaries for use in filtering
-            assembly_dictionaries = assemblyDict(self.dict_file, self.sampleID, self.assembled_file, self.samMapLen)
-            
-            # separate the two dictionaries
-            assembly_dict_2 = assembly_dictionaries[0]
-            assembly_dict_3 = assembly_dictionaries[1]
-            n_primary = assembly_dictionaries[2]
-            
-            print 'Checking DBR counts against expectations.'
-            
-            total_removed = 0
-            
-            for RNAME, value in assembly_dict_2.iteritems():
-                #print 'RNAME', RNAME
-                # ignore the data where the reference is "unmapped" -- RNAME = '*'
-                if RNAME != '*':
-                    # get all the DBRs and counts that went into that locus in that sample
-                    for subvalue in value.iteritems():
-                        #print 'Subvalue', subvalue
-                        dbr_value = subvalue[0] 
-                        count = subvalue[1]
-                        qname_qual = assembly_dict_3[RNAME][dbr_value] #this is a list of lists: [[QNAME, QUAL, SEQ], [QNAME, QUAL, SEQ], ...]
-                        if count > self.n_expected:
-                            ##################################################
-                            ## THIS IS WHERE THE FILTERING HAPPENS           #
-                            ##################################################
-                            #print 'count', count, 'n exp', n_expected
-                            # the other dictionary contains the full quality information for each RNAME:DBR pair (this will be multiple entries of sequence IDs and qualities
-                            #print RNAME, dbr_value, len(qname_qual)
-                            #print qname_qual
-                            ID_quals = {} # we'll make yet another dictionary to store the QNAME and the median QUAL
-                            for i in qname_qual:
-                                id_val=i[0] # this is the QNAME (Illumina ID)
-                                id_seq=i[2] # the full sequence
-                                id_qual=i[1] # the full quality
-                                ID_quals[id_val] = (qual_median(i[1], phred_dict), id_seq, id_qual)
-                            n_remove = count - self.n_expected
-                            total_removed += n_remove
-                            to_keep = heapq.nlargest(self.n_expected, ID_quals, key=lambda x:ID_quals[x])
-                            #to_keep = max(ID_quals, key=lambda x:ID_quals[x]) 
-                            for k in to_keep:
-                                keep = ID_quals[k] # get the full data for the highest median sequences
-                                #write out the data to keep, appending the original barcode to the beginning of the sequence
+        # probably unnecessary ...
+        #bc_dict = barcodeDict(barcode_file)
+        
+        # return two dictionaries for use in filtering
+        assembly_dictionaries = assemblyDict(self.dict_file, self.sampleID, self.assembled_file, self.samMapLen)
+        
+        # separate the two dictionaries
+        assembly_dict_2 = assembly_dictionaries[0]
+        assembly_dict_3 = assembly_dictionaries[1]
+        n_primary = assembly_dictionaries[2]
+        
+        print 'Checking DBR counts against expectations.'
+        
+        total_removed = 0
+        
+        for RNAME, value in assembly_dict_2.iteritems():
+            #print 'RNAME', RNAME
+            # ignore the data where the reference is "unmapped" -- RNAME = '*'
+            if RNAME != '*':
+                # get all the DBRs and counts that went into that locus in that sample
+                for subvalue in value.iteritems():
+                    #print 'Subvalue', subvalue
+                    dbr_value = subvalue[0] 
+                    count = subvalue[1]
+                    qname_qual = assembly_dict_3[RNAME][dbr_value] #this is a list of lists: [[QNAME, QUAL, SEQ], [QNAME, QUAL, SEQ], ...]
+                    if count > self.n_expected:
+                        ##################################################
+                        ## THIS IS WHERE THE FILTERING HAPPENS           #
+                        ##################################################
+                        #print 'count', count, 'n exp', n_expected
+                        # the other dictionary contains the full quality information for each RNAME:DBR pair (this will be multiple entries of sequence IDs and qualities
+                        #print RNAME, dbr_value, len(qname_qual)
+                        #print qname_qual
+                        ID_quals = {} # we'll make yet another dictionary to store the QNAME and the median QUAL
+                        for i in qname_qual:
+                            id_val=i[0] # this is the QNAME (Illumina ID)
+                            id_seq=i[2] # the full sequence
+                            id_qual=i[1] # the full quality
+                            ID_quals[id_val] = (qual_median(i[1], phred_dict), id_seq, id_qual)
+                        n_remove = count - self.n_expected
+                        total_removed += n_remove
+                        to_keep = heapq.nlargest(self.n_expected, ID_quals, key=lambda x:ID_quals[x])
+                        #to_keep = max(ID_quals, key=lambda x:ID_quals[x]) 
+                        for k in to_keep:
+                            keep = ID_quals[k] # get the full data for the highest median sequences
+                            #write out the data to keep, appending the original barcode to the beginning of the sequence
+                            # open a connection to an output file
+                            with open(self.out_file, 'a') as of:
                                 of.write('@'+k+'\n'+ keep[1]+'\n+\n'+ keep[2]+'\n')
-                        else: # if count <= n_expected, we can just keep every entry associated with that RNAME
-                            for i in qname_qual:
+                    else: # if count <= n_expected, we can just keep every entry associated with that RNAME
+                        for i in qname_qual:
+                            # open a connection to an output file
+                            with open(self.out_file, 'a') as of:
                                 of.write('@'+i[0]+'\n'+i[2]+'\n+\n'+i[1]+'\n') # see above for i[index] definitions
-                                
+                            
             with open(self.logfile,'a') as log:
                 log.write(self.sampleID+','+str(total_removed)+','+str(n_primary)+','+time.strftime("%d/%m/%Y")+','+(time.strftime("%H:%M:%S"))+'\n')
                 print 'Removed ' + str(total_removed) + ' PCR duplicates out of ' + str(n_primary) + ' primary mapped reads.'                                                    
