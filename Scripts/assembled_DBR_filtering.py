@@ -420,7 +420,7 @@ def parallel_DBR_Filter(assembled_dir, # the SAM files for the data mapped to ps
                                          dict_file = dict_in,
                                          sampleID = sampleID,
                                          logfile = logfile))
-    #processQueue.join()
+    processQueue.join()
 
     return
 
