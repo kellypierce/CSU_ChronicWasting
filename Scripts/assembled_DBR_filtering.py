@@ -47,6 +47,7 @@ import heapq
 
 # Process queue
 processQueue = Queue()
+threadLock = threading.Lock()
 
 phred_dict = {'"':1.0,"#":2.0,"$":3.0,"%":4.0,"&":5.0,"'":6.0,"(":7.0,")":8.0,"*":9.0,"+":10.0,
               ",":11.0,"-":12.0,".":13.0,"/":14.0,"0":15.0,"1":16,"2":17.0,"3":18.0,"4":19.0,"5":20.0,
@@ -187,8 +188,11 @@ def assemblyDict(DBRdict, sampleID, assembled_file, samMapLen):#, barcode_dict):
     print DBRdict
     sys.stdout.flush()
     
+    threadLock.acquire(True)
     with open(DBRdict, 'r') as d:
         dbr = json.load(d)
+    threadLock.release()
+    
     print 'loaded and closed json'
     sys.stdout.flush()
         
@@ -319,6 +323,7 @@ class filterGroup():
         assembly_dict_3 = assembly_dictionaries[1]
         n_primary = assembly_dictionaries[2]
         
+        sys.stdout.flush()
         print 'Checking DBR counts against expectations.'
         
         total_removed = 0
