@@ -14,7 +14,7 @@ if __name__ == '__main__':
     import argparse
     
     parser = argparse.ArgumentParser(description = '')
-    parser.add_argument('-t', '--threads', help = 'Number of threads to use for parallel operations.', default = 1)
+    parser.add_argument('-t', '--threads', help = 'Number of threads to use for parallel operations.')
     opts = parser.parse_args()
     
     threads=int(opts.threads)
@@ -42,10 +42,10 @@ if __name__ == '__main__':
     ### SET UP THREADS TO USE FOR PARALLEL PROCESSES                      ###
     #########################################################################
     
-    #for i in xrange(threads):
-    #    t = Thread(target=worker)
-    #    t.daemon = True
-    #    t.start()
+    for i in xrange(threads):
+        t = Thread(target=worker)
+        t.daemon = True
+        t.start()
     
     #########################################################################
     ### INPUTS AND OUTPUTS                                                ###
@@ -69,20 +69,20 @@ if __name__ == '__main__':
     stacksOutDir = parentDir + '/StacksOutput/' # stacks doesn't allow an output to be specified
     pseudorefInDir = stacksOutDir
     pseudorefOutDir = parentDir + '/pseudoreference.fastq'
-    BWAinDir = parentDir
+    #BWAinDir = parentDir
     BWAoutDir = parentDir + '/BWA/'
-    DBRfilteredseqs = parentDir + '/dbrFiltered/'
+    DBRfilteredseqs = parentDir + '/dbrFiltered-debugging-parallel/'
     
     #### PART 2: REASSEMBLING THE FILTERED SEQUENCES
     re_demultiplexInDir = DBRfilteredseqs
     re_demultiplexOutDir = parentDir + '/dbrFiltered_demultiplexed/'
-    re_trimInDir = re_demultiplexOutDir
-    re_trimOutDir = parentDir + '/dbrFiltered_trimmed/'
-    re_stacksInDir = re_trimOutDir
-    re_stacksOutDir = parentDir + '/dbrFiltered_StacksOutput/' # stacks doesn't allow an output to be specified
-    re_pseudorefInDir = re_stacksOutDir
-    re_pseudorefOutDir = parentDir + '/dbrFiltered_pseudoreference.fastq'
-    re_BWAinDir = parentDir
+    #re_trimInDir = re_demultiplexOutDir
+    #re_trimOutDir = parentDir + '/dbrFiltered_trimmed/'
+    #re_stacksInDir = re_trimOutDir
+    #re_stacksOutDir = parentDir + '/dbrFiltered_StacksOutput/' # stacks doesn't allow an output to be specified
+    #re_pseudorefInDir = re_stacksOutDir
+    #re_pseudorefOutDir = parentDir + '/dbrFiltered_pseudoreference.fastq'
+    re_BWAinDir = DBRfilteredseqs
     re_BWAoutDir = parentDir + '/dbrFiltered_BWA2/'
     finalBCFout = parentDir + '/dbrFiltered_pseudorefMapped_genotypes2.bcf'
     finalVCFout = parentDir + '/dbrFiltered_pseudorefMapped_genotypes2.vcf'
@@ -169,68 +169,80 @@ if __name__ == '__main__':
     #           pseudoref_full_path = pseudorefOutDir)
     
     
-    DBR_Filter(assembled_dir = BWAoutDir, # the SAM files for the data mapped to pseudoreference
+    #DBR_Filter(assembled_dir = BWAoutDir, # the SAM files for the data mapped to pseudoreference
+    #           out_dir = DBRfilteredseqs, # the output file, full path, ending with .fasta
+    #           n_expected = 2, # the number of differences to be tolerated
+    #           barcode_dir = '/home/pierce/CSU_ChronicWasting/RevisedBarcodes', # the barcodes for individuals in the library referenced in dict_in
+    #           dict_dir = dbrOutDir, # a single dictionary of DBRs (for one library only)
+    #           sample_regex = '.*_(\d{1,3}T?)_.*',
+    #           barcode_file=None, # if just a single library is being used, can directly pass the barcode file
+    #           test_dict=True, # optionally print testing info to stdout for checking the dictionary construction
+    #           phred_dict=phred_dict, # dictionary containing ASCII quality filter scores to help with tie breaks
+    #           samMapLen=None)
+    
+    parallel_DBR_Filter(assembled_dir = BWAoutDir, # the SAM files for the data mapped to pseudoreference
                out_dir = DBRfilteredseqs, # the output file, full path, ending with .fasta
                n_expected = 2, # the number of differences to be tolerated
-               barcode_dir = '/home/pierce/CSU_ChronicWasting/RevisedBarcodes', # the barcodes for individuals in the library referenced in dict_in
                dict_dir = dbrOutDir, # a single dictionary of DBRs (for one library only)
-               sample_regex = '.*_(\d{1,3}T?)_.*',
-               barcode_file=None, # if just a single library is being used, can directly pass the barcode file
-               test_dict=False, # optionally print testing info to stdout for checking the dictionary construction
+               regexSample = '.*_(\d{1,3}T?)_.*',
+               regexLibrary = ".*(Library\d{1,3}[A|B]?).*",
+               test_dict=True, # optionally print testing info to stdout for checking the dictionary construction
                phred_dict=phred_dict, # dictionary containing ASCII quality filter scores to help with tie breaks
                samMapLen=None)
+    
+    # Output of DBR filtering is a set of individual sample files, not a set of library files.
+    # Therefore, no need to demultiplex and trim again.
     
     # DEMULTIPLEX
     #out_prefix = '/re_demultiplexed_'
     #iterative_Demultiplex(in_dir = re_demultiplexInDir, 
     #                      barcode_dir = '/home/pierce/CSU_ChronicWasting/RevisedBarcodes', 
-    #                      out_dir = re_demultiplexOutDir,
-    #                      regexLibrary = 'Library\d{1,3}[A|B]?', 
-    #                      demultiplexPath = demultiplexPath,
+    #                      regexLibrary= 'Library\d{1,3}[A|B]?',
+    #                      out_dir = re_demultiplexOutDir, 
     #                      out_prefix = out_prefix)
     
     # TRIM TO UNIFORM LENGTH
     #suffix = '_re_trimmed.fq'
     #new_first_base = 6
-    #parallel_Trim(in_dir = re_trimInDir, 
-    #              out_dir = re_trimOutDir, 
-    #              trimPath = trimmer,
-    #              suffix = suffix, 
-    #              first_base = new_first_base)
+    #parallel_Trim(in_dir = DBRfilteredseqs, 
+    #     out_dir = re_trimOutDir, 
+    #     trimPath = trimmer,
+    #     suffix = suffix, 
+    #     first_base = new_first_base)
     
     # RUN USTACKS SIMULTANEOUSLY ON ALL LIBRARIES
-    denovo_Ustacks(in_dir = DBRfilteredseqs, 
-                  denovo_path = denovo_path, 
-                  stacks_executables = stacks_executables, 
-                  out_dir = re_stacksOutDir, 
-                  m = 10, 
-                  n = 2, 
-                  b = 1, 
-                  D = '_final_assembly')
+    #denovo_Ustacks(in_dir = re_stacksInDir, 
+    #              denovo_path = denovo_path, 
+    #              stacks_executables = stacks_executables, 
+    #              out_dir = re_stacksOutDir, 
+    #              m = 10, 
+    #              n = 2, 
+    #              b = 1, 
+    #              D = '_final_assembly')
     
     # RUN CSTACKS SIMULTANEOUSLY ON ALL LIBRARIES (same args as above)
-    denovo_Cstacks(in_dir = re_stacksInDir, 
-                  denovo_path = denovo_path, 
-                  stacks_executables = stacks_executables, 
-                  out_dir = re_stacksOutDir, 
-                  m = 10, 
-                  n = 2, 
-                  b = 1, 
-                  D = '_final_assembly')
+    #denovo_Cstacks(in_dir = DBRfilteredseqs, 
+    #              denovo_path = denovo_path, 
+    #              stacks_executables = stacks_executables, 
+    #              out_dir = re_stacksOutDir, 
+    #              m = 10, 
+    #              n = 2, 
+    #              b = 1, 
+    #              D = '_final_assembly')
     
     # GENERATE THE PSEUDOREFERENCE GENOME
-    GeneratePseudoref(in_dir = re_pseudorefInDir, 
-                      out_file = re_pseudorefOutDir,  
-                      BWA_path = BWA) # imported from integrated_denovo_pipeline.py
+    #GeneratePseudoref(in_dir = re_pseudorefInDir, 
+    #                  out_file = re_pseudorefOutDir,  
+    #                  BWA_path = BWA) # imported from integrated_denovo_pipeline.py
     
     # REFERENCE MAP QUALITY FILTERED/DEMULTIPLEXED MERGED READS TO THE PSEUDOREFERENCE
-    parallel_refmap_BWA(in_dir = re_trimOutDir, # input demultiplexed, trimmed reads
-                        out_dir = re_BWAoutDir, 
-                        BWA_path = BWA, # imported from integrated_denovo_pipeline.py 
-                        pseudoref_full_path = re_pseudorefOutDir)
+    parallel_refmap_BWA(in_dir = re_BWAinDir, # input demultiplexed, trimmed reads
+               out_dir = re_BWAoutDir, 
+               BWA_path = BWA, # imported from integrated_denovo_pipeline.py 
+               pseudoref_full_path = pseudorefOutDir)
     
     # CALL THE GENOTYPES USING SAMTOOLS MPILEUP; CONVERT OUTPUT TO VCF FILE
     callGeno(sam_in = re_BWAoutDir, 
-             pseudoref = re_pseudorefOutDir, 
+             pseudoref = pseudorefOutDir, 
              BCFout = finalBCFout, 
              VCFout = finalVCFout)
