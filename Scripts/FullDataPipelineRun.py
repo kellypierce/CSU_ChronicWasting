@@ -180,16 +180,6 @@ if __name__ == '__main__':
     #           phred_dict=phred_dict, # dictionary containing ASCII quality filter scores to help with tie breaks
     #           samMapLen=None)
     
-    parallel_DBR_Filter(assembled_dir = BWAoutDir, # the SAM files for the data mapped to pseudoreference
-               out_dir = DBRfilteredseqs, # the output file, full path, ending with .fasta
-               n_expected = 2, # the number of differences to be tolerated
-               dict_dir = dbrOutDir, # a single dictionary of DBRs (for one library only)
-               regexSample = '.*_(\d{1,3}T?)_.*',
-               regexLibrary = ".*(Library\d{1,3}[A|B]?).*",
-               test_dict=True, # optionally print testing info to stdout for checking the dictionary construction
-               phred_dict=phred_dict, # dictionary containing ASCII quality filter scores to help with tie breaks
-               samMapLen=None)
-    
     # Output of DBR filtering is a set of individual sample files, not a set of library files.
     # Therefore, no need to demultiplex and trim again.
     
