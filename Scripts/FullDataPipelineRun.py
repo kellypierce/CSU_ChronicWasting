@@ -69,20 +69,20 @@ if __name__ == '__main__':
     stacksOutDir = parentDir + '/StacksOutput/' # stacks doesn't allow an output to be specified
     pseudorefInDir = stacksOutDir
     pseudorefOutDir = parentDir + '/pseudoreference.fastq'
-    BWAinDir = parentDir
+    #BWAinDir = parentDir
     BWAoutDir = parentDir + '/BWA/'
     DBRfilteredseqs = parentDir + '/dbrFiltered-debugging-parallel/'
     
     #### PART 2: REASSEMBLING THE FILTERED SEQUENCES
     re_demultiplexInDir = DBRfilteredseqs
     re_demultiplexOutDir = parentDir + '/dbrFiltered_demultiplexed/'
-    re_trimInDir = re_demultiplexOutDir
-    re_trimOutDir = parentDir + '/dbrFiltered_trimmed/'
-    re_stacksInDir = re_trimOutDir
-    re_stacksOutDir = parentDir + '/dbrFiltered_StacksOutput/' # stacks doesn't allow an output to be specified
-    re_pseudorefInDir = re_stacksOutDir
-    re_pseudorefOutDir = parentDir + '/dbrFiltered_pseudoreference.fastq'
-    re_BWAinDir = parentDir
+    #re_trimInDir = re_demultiplexOutDir
+    #re_trimOutDir = parentDir + '/dbrFiltered_trimmed/'
+    #re_stacksInDir = re_trimOutDir
+    #re_stacksOutDir = parentDir + '/dbrFiltered_StacksOutput/' # stacks doesn't allow an output to be specified
+    #re_pseudorefInDir = re_stacksOutDir
+    #re_pseudorefOutDir = parentDir + '/dbrFiltered_pseudoreference.fastq'
+    re_BWAinDir = DBRfilteredseqs
     re_BWAoutDir = parentDir + '/dbrFiltered_BWA2/'
     finalBCFout = parentDir + '/dbrFiltered_pseudorefMapped_genotypes2.bcf'
     finalVCFout = parentDir + '/dbrFiltered_pseudorefMapped_genotypes2.vcf'
@@ -211,38 +211,38 @@ if __name__ == '__main__':
     #     first_base = new_first_base)
     
     # RUN USTACKS SIMULTANEOUSLY ON ALL LIBRARIES
-    denovo_Ustacks(in_dir = re_stacksInDir, 
-                  denovo_path = denovo_path, 
-                  stacks_executables = stacks_executables, 
-                  out_dir = re_stacksOutDir, 
-                  m = 10, 
-                  n = 2, 
-                  b = 1, 
-                  D = '_final_assembly')
+    #denovo_Ustacks(in_dir = re_stacksInDir, 
+    #              denovo_path = denovo_path, 
+    #              stacks_executables = stacks_executables, 
+    #              out_dir = re_stacksOutDir, 
+    #              m = 10, 
+    #              n = 2, 
+    #              b = 1, 
+    #              D = '_final_assembly')
     
     # RUN CSTACKS SIMULTANEOUSLY ON ALL LIBRARIES (same args as above)
-    denovo_Cstacks(in_dir = DBRfilteredseqs, 
-                  denovo_path = denovo_path, 
-                  stacks_executables = stacks_executables, 
-                  out_dir = re_stacksOutDir, 
-                  m = 10, 
-                  n = 2, 
-                  b = 1, 
-                  D = '_final_assembly')
+    #denovo_Cstacks(in_dir = DBRfilteredseqs, 
+    #              denovo_path = denovo_path, 
+    #              stacks_executables = stacks_executables, 
+    #              out_dir = re_stacksOutDir, 
+    #              m = 10, 
+    #              n = 2, 
+    #              b = 1, 
+    #              D = '_final_assembly')
     
     # GENERATE THE PSEUDOREFERENCE GENOME
-    GeneratePseudoref(in_dir = re_pseudorefInDir, 
-                      out_file = re_pseudorefOutDir,  
-                      BWA_path = BWA) # imported from integrated_denovo_pipeline.py
+    #GeneratePseudoref(in_dir = re_pseudorefInDir, 
+    #                  out_file = re_pseudorefOutDir,  
+    #                  BWA_path = BWA) # imported from integrated_denovo_pipeline.py
     
     # REFERENCE MAP QUALITY FILTERED/DEMULTIPLEXED MERGED READS TO THE PSEUDOREFERENCE
-    parallel_refmap_BWA(in_dir = re_trimOutDir, # input demultiplexed, trimmed reads
+    parallel_refmap_BWA(in_dir = re_BWAinDir, # input demultiplexed, trimmed reads
                out_dir = re_BWAoutDir, 
                BWA_path = BWA, # imported from integrated_denovo_pipeline.py 
-               pseudoref_full_path = re_pseudorefOutDir)
+               pseudoref_full_path = pseudorefOutDir)
     
     # CALL THE GENOTYPES USING SAMTOOLS MPILEUP; CONVERT OUTPUT TO VCF FILE
     callGeno(sam_in = re_BWAoutDir, 
-             pseudoref = re_pseudorefOutDir, 
+             pseudoref = pseudorefOutDir, 
              BCFout = finalBCFout, 
              VCFout = finalVCFout)
