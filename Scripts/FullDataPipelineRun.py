@@ -226,10 +226,10 @@ if __name__ == '__main__':
     #                  BWA_path = BWA) # imported from integrated_denovo_pipeline.py
     
     # REFERENCE MAP QUALITY FILTERED/DEMULTIPLEXED MERGED READS TO THE PSEUDOREFERENCE
-    parallel_refmap_BWA(in_dir = re_BWAinDir, # input demultiplexed, trimmed reads
-               out_dir = re_BWAoutDir, 
-               BWA_path = BWA, # imported from integrated_denovo_pipeline.py 
-               pseudoref_full_path = pseudorefOutDir)
+    #parallel_refmap_BWA(in_dir = re_BWAinDir, # input demultiplexed, trimmed reads
+    #           out_dir = re_BWAoutDir, 
+    #           BWA_path = BWA, # imported from integrated_denovo_pipeline.py 
+    #           pseudoref_full_path = pseudorefOutDir)
     
     # CALL THE GENOTYPES USING SAMTOOLS MPILEUP; CONVERT OUTPUT TO VCF FILE
     callGeno(sam_in = re_BWAoutDir, 
