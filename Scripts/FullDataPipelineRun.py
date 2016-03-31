@@ -235,4 +235,6 @@ if __name__ == '__main__':
     callGeno(sam_in = re_BWAoutDir, 
              pseudoref = pseudorefOutDir, 
              BCFout = finalBCFout, 
-             VCFout = finalVCFout)
+             VCFout = finalVCFout,
+             samtoolsPath = samtoolsPath,
+             bcftoolsPath = bcftoolsPath)
