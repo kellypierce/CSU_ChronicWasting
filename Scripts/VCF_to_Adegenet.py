@@ -16,6 +16,9 @@ if __name__ == '__main__':
     parser.add_argument('-v', '--vcftoolsPath', help = 'Path to vcftools executable.', default = 'vcftools')
     parser.add_argument('-i', '--inFile', help = 'Quality filtered VCF File.', default = None)
     parser.add_argument('-o', '--outFile', help = 'Name for 012 file output.')
+    parser.add_argument('-p', '--popFile', help = 'File containing populations of individuals in space delimited format on a single line, in an order corresponding to the order in the .indv file.', default = None)
+    parser.add_argument('-d', '--phenotype', help = 'File containing phenotype of individuals in space delimited format on a single line, in an order corresponding to the order in the .indv file.', default = None)
+    parser.add_argument('-n', '--numberSamples', help = 'Number of samples in file.')
     parser.add_argument('-a', '--adegenetFile', help = 'Name for adegenet-compatible output file.')
     opts = parser.parse_args()
     
@@ -46,6 +49,9 @@ if __name__ == '__main__':
         out012_final = opts.outFile
         checkFile(out012_final)
         out012_indv = str.join([out012_final, '.indv'], sep = '')
+    pheno = opts.phenotype
+    popFile = opts.popFile
+    n = int(opts.numberSamples)
     adegenet = opts.adegenetFile
     if os.path.exists(adegenet):
         raise IOError('Parsed VCF 012 file for Adegenet already exists. Choose a different adegenet file name.')
@@ -84,7 +90,20 @@ if __name__ == '__main__':
             newline = '>%s\n%s\n' % (line1.strip(), line2.strip())
             a.write(newline)     
 
-    header = '>>>> begin comments - do not remove this line <<<<\n>>>> end comments - do not remove this line <<<<\n>> ploidy\n2\n'
+    # untested:
+    if popFile:
+        with open(popFile, 'r') as pf:
+            finalPopline = pf.readlines()
+            #print(finalPopline[0])
+    else: 
+        popline = ['pop1' for i in range(n)]
+        finalPopline = ' '.join(popline)
+    if pheno:
+        with open(popFile, 'r') as pf:
+            finalPheno = pf.readlines()
+        header = '>>>> begin comments - do not remove this line <<<<\n>>>> end comments - do not remove this line <<<<\n>> population\n' + ''.join(finalPopline[0]) + '\n>> ploidy\n2\n>> other\n' + ''.join(finalPheno) + '\n'
+    else:      
+        header = '>>>> begin comments - do not remove this line <<<<\n>>>> end comments - do not remove this line <<<<\n>> population\n' + ''.join(finalPopline[0]) + '\n>> ploidy\n2\n'
 
     with open(adegenet_tmp, 'r') as a_original:
         data = a_original.read()
