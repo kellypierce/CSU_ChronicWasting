@@ -168,7 +168,7 @@ def DBR_count(in_file, dbr_start, dbr_stop, save = None, saveType = None):
             fq_dbr_out = save + fq_base + '.txt'
             with open(fq_dbr_out, 'w') as fp:
                 for key, value in dbr.items():
-                    fp.write([key + ',' + str(value) + '\n'])
+                    fp.write(key + ',' + str(value) + '\n')
 
 phred_dict = {'"':1.0,"#":2.0,"$":3.0,"%":4.0,"&":5.0,"'":6.0,"(":7.0,")":8.0,"*":9.0,"+":10.0,
               ",":11.0,"-":12.0,".":13.0,"/":14.0,"0":15.0,"1":16,"2":17.0,"3":18.0,"4":19.0,"5":20.0,
