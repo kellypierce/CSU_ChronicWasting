@@ -24,6 +24,7 @@ import warnings
 import multiprocessing as mp
 from logging import debug, critical, error, info
 import string
+import gzip
 
 # To do
 # 1. Check that SAM files contain a map for all the sequences so that FASTQ filtering doesn't leave some bad quality data behind
