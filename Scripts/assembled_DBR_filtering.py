@@ -115,7 +115,7 @@ def parallel_DBR_count(in_dir, dbr_start, dbr_stop, save = None, saveType = 'jso
     #if not checkDir(in_dir):
     #    raise IOError("Input is not a directory: %s" % in_dir)
     infiles = os.listdir(in_dir)
-    dbrCountProcess = [mp.Process(target=DBR_count, args=(in_dir+in_file, 
+    dbrCountProcess = [mp.Process(target=DBR_count, args=(os.path.join(in_dir+in_file), 
                                                           dbr_start,
                                                           dbr_stop,
                                                           save,
@@ -157,14 +157,15 @@ def DBR_count(in_file, dbr_start, dbr_stop, save = None, saveType = None):
     if saveType:
         if not os.path.exists(save):
             os.makedirs(save)
-        fq_name = os.path.splitext(in_file)[0]
+        fq_base = os.path.splitext(os.path.split(in_file)[1])[0]
+        #fq_name = os.path.splitext(in_file)[0]
         if saveType == 'json':
-            fq_dbr_out = save + fq_name + '.json'
+            fq_dbr_out = save + fq_base + '.json'
             print 'Writing dictionary to ' + fq_dbr_out
             with open(fq_dbr_out, 'w') as fp:          
                 json.dump(dbr, fp)
         elif saveType == 'text':
-            fq_dbr_out = save + fq_name + '.txt'
+            fq_dbr_out = save + fq_base + '.txt'
             with open(fq_dbr_out, 'w') as fp:
                 for key, value in dbr.items():
                     fp.writerow([key, value])
