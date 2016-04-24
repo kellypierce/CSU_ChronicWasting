@@ -111,6 +111,62 @@ def DBR_dict(in_file, dbr_start, dbr_stop, test_dict = False, save = None):
         with open(fq_dbr_out, 'w') as fp:          
             json.dump(dbr, fp)
 
+def parallel_DBR_count(in_dir, dbr_start, dbr_stop, save = None, saveType = 'json'):
+    #if not checkDir(in_dir):
+    #    raise IOError("Input is not a directory: %s" % in_dir)
+    dbrCountProcess = [mp.Process(target=DBR_count, args=(in_dir+in_file, 
+                                                          dbr_start,
+                                                          dbr_stop,
+                                                          save,
+                                                          saveType)) for in_file in in_dir]
+     
+    for dc in dbrCountProcess:
+        dc.start()
+    for dc in dbrCountProcess:
+        dc.join()
+
+def DBR_count(in_file, dbr_start, dbr_stop, save = None, saveType = None):
+    # DBR is in read 2
+    # if merged, it will be the last -2 to -9 (inclusive) bases, starting with base 0 and counting from the end
+    # if not merged, it will be bases 2 to 9
+    if not checkFile(in_file):
+        raise IOError("where is the input file: %s" % in_file)
+    info('Creating {dbr : count} dictionary from %s.' % in_file)
+    dbr = {}
+    fq_line = 1
+    if in_file.endswith('gz'):
+        openFxn = gzip.open
+    else:
+        openFxn = open
+    with openFxn(in_file, 'r') as db:
+        for line in db:
+            if fq_line == 1:
+                fq_line = 2
+            elif fq_line == 2:
+                dbr_value = line[dbr_start:dbr_stop]
+                if dbr_value in dbr:
+                    dbr[dbr_value]+=1
+                else:
+                    dbr[dbr_value]=1
+                fq_line = 3
+            elif fq_line == 3:
+                fq_line = 4
+            elif fq_line == 4:
+                fq_line = 1
+    if saveType:
+        if not os.path.exists(save):
+            os.makedirs(save)
+        fq_name = os.path.splitext(in_file)[0]
+        if saveType == 'json':
+            fq_dbr_out = fq_name + save + '.json'
+            print 'Writing dictionary to ' + fq_dbr_out
+            with open(fq_dbr_out, 'w') as fp:          
+                json.dump(dbr, fp)
+        elif saveType == 'text':
+            fq_dbr_out = fq_name + save + '.txt'
+            with open(fq_dbr_out, 'w') as fp:
+                for key, value in dbr.items():
+                    fp.writerow([key, value])
 
 phred_dict = {'"':1.0,"#":2.0,"$":3.0,"%":4.0,"&":5.0,"'":6.0,"(":7.0,")":8.0,"*":9.0,"+":10.0,
               ",":11.0,"-":12.0,".":13.0,"/":14.0,"0":15.0,"1":16,"2":17.0,"3":18.0,"4":19.0,"5":20.0,
