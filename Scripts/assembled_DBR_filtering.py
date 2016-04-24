@@ -11,6 +11,7 @@ from collections import Counter
 from subprocess import call, Popen, PIPE
 import subprocess
 import os, os.path
+from os import linesep, path, R_OK, X_OK
 import sys
 import json
 import re
@@ -19,6 +20,10 @@ import itertools
 import time
 import pdb
 import heapq
+import warnings
+import multiprocessing as mp
+from logging import debug, critical, error, info
+import string
 
 # To do
 # 1. Check that SAM files contain a map for all the sequences so that FASTQ filtering doesn't leave some bad quality data behind
@@ -28,6 +33,82 @@ import heapq
 #               dict_in = '/path/to/dbr_dict_library1',
 #               out_seqs = '/path/to/filtered_library1.fastq',
 #               n_expected = 2)
+
+def checkFile(filename):
+    '''
+    return true if this is a file and is readable on the current filesystem
+    '''
+    try:
+        if os.path.exists(os.path.abspath(filename)) and os.path.isfile(os.path.abspath(filename)) and os.access(os.path.abspath(filename), R_OK):
+            return True
+        fullPath = string.join(os.getcwd(), filename[1:])
+        return os.path.exists(fullPath) and os.path.isfile(fullPath) and os.access(fullPath, R_OK)
+    except IOError:
+        return False
+
+def parallel_DBR_dict(in_dir, seqType, dbr_start, dbr_stop, test_dict = False, save = None):
+    #if not checkDir(in_dir):
+    #    raise IOError("Input is not a directory: %s" % in_dir)
+    if seqType == 'read2':
+        warnings.warn('Expect directory containing only Read 2 files; any other files present in %s will be incorporated into DBR dictionary.' % in_dir)
+    elif seqType == 'pear':
+        warnings.warn('Expect directory containing only merged Read 1 and Read 2 files; any other files present in %s will be incorporated into DBR directory' % in_dir)
+    else:
+        raise IOError("Input sequence type specified as %s. Options are 'pear' or 'read2'." % seqType)
+    
+    dbrProcess = [mp.Process(target=DBR_dict, args=(in_dir+in_file, 
+                                                    seqType,
+                                                    dbr_start,
+                                                    dbr_stop,
+                                                    test_dict,
+                                                    save)) for in_file in in_dir]
+     
+    for dP in dbrProcess:
+        dP.start()
+    for dP in dbrProcess:
+        dP.join()
+
+def DBR_dict(in_file, dbr_start, dbr_stop, test_dict = False, save = None):
+    # DBR is in read 2
+    # if merged, it will be the last -2 to -9 (inclusive) bases, starting with base 0 and counting from the end
+    # if not merged, it will be bases 2 to 9
+    if not checkFile(in_file):
+        raise IOError("where is the input file: %s" % in_file)
+    info('Creating {ID: dbr} dictionary from %s.' % in_file)
+    dbr = {}
+    fq_line = 1
+    if in_file.endswith('gz'):
+        openFxn = gzip.open
+    else:
+        openFxn = open
+    with openFxn(in_file, 'r') as db:
+        for line in db:
+            if fq_line == 1:
+                ID = re.split('(\d[:|_]\d+[:|_]\d+[:|_]\d+)', line)[1]
+                fq_line = 2
+            elif fq_line == 2:
+                seq = list(line) # split the sequence line into a list
+                tag = ''.join(seq[dbr_start:dbr_stop])
+                dbr[ID] = tag
+                fq_line = 3
+            elif fq_line == 3:
+                fq_line = 4
+            elif fq_line == 4:
+                fq_line = 1
+    if test_dict:
+        print 'Checking DBR dictionary format.'
+        x = itertools.islice(dbr.iteritems(), 0, 4)
+        for key, value in x:
+            print key, value
+        #print dbr['8:1101:15808:1492'] # this is the first entry in /home/antolinlab/Downloads/CWD_RADseq/pear_merged_Library12_L8.assembled.fastq
+    if save:
+        if not os.path.exists(save):
+            os.makedirs(save)
+        fq_name = os.path.splitext(in_file)[0]
+        fq_dbr_out = fq_name + save + '.json'
+        print 'Writing dictionary to ' + fq_dbr_out
+        with open(fq_dbr_out, 'w') as fp:          
+            json.dump(dbr, fp)
 
 
 phred_dict = {'"':1.0,"#":2.0,"$":3.0,"%":4.0,"&":5.0,"'":6.0,"(":7.0,")":8.0,"*":9.0,"+":10.0,
