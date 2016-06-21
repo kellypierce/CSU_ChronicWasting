@@ -74,9 +74,9 @@ geno.disease.counts<-table(as.character(d20g.geno$D20G_Seq), as.factor(d20g.geno
 barplot(t(geno.disease.counts), beside=T)
 
 d20g.prev<-geno.disease.counts[,2]/(geno.disease.counts[,1]+geno.disease.counts[,2])
+d20g.ci2<-binom.confint(geno.disease.counts[,2], (geno.disease.counts[,1]+geno.disease.counts[,2]), method='logit')
 barplot2(d20g.prev, plot.ci=T, ci.u=d20g.ci2$upper, ci.l=d20g.ci2$lower)
 
-d20g.ci2<-binom.confint(geno.disease.counts[,2], (geno.disease.counts[,1]+geno.disease.counts[,2]), method='logit')
 
 s225f.geno<-cwd.prnp[which(cwd.prnp$S225F_Seq=='SS' | cwd.prnp$S225F_Seq == 'SF' | cwd.prnp$S225F_Seq == 'FF'),]
 s225f.geno.disease.counts<-table(as.character(s225f.geno$S225F_Seq), as.factor(s225f.geno$cwd))
@@ -85,8 +85,10 @@ barplot(t(s225f.geno.disease.counts), beside=T, ylab='Number of Deer')
 
 s225f.prev<-s225f.geno.disease.counts[,2]/(s225f.geno.disease.counts[,1]+s225f.geno.disease.counts[,2])
 s225f.ci<-binom.confint(s225f.geno.disease.counts[,2], (s225f.geno.disease.counts[,1]+s225f.geno.disease.counts[,2]), method='logit')
+geno.totals<-rowSums(s225f.geno.disease.counts)
 png(file='~/Dropbox/ColoState/CWD_by_S225F.png', height=10, width=15, res=300, units='cm')
-barplot2(s225f.prev, plot.ci=T, ci.u=s225f.ci$upper, ci.l=s225f.ci$lower, ylim=c(0,1), ylab='CWD Prevalence')
+geno.bar<-barplot2(s225f.prev, plot.ci=T, ci.u=s225f.ci$upper, ci.l=s225f.ci$lower, ylim=c(0,1), ylab='CWD Prevalence')
+mtext(side=1, at=geno.bar, text=c(paste('n =', geno.totals[1]), paste('n =',geno.totals[2]), paste('n =',geno.totals[3])), line=3)
 dev.off()
 
 ```
