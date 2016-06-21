@@ -1,3 +1,6 @@
+# MOST UPDATED SCRIPTS ARE IN A NEW REPOSITORY:
+# https://github.com/kellyp2738/RADseqDuplicateFiltering
+
 # DRAFT DBR Processing Pipeline
 
 # Overview
