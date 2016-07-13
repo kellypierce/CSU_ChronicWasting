@@ -1,0 +1,655 @@
+---
+title: "RelatednessNetwork"
+author: "Kelly Pierce"
+date: "May 1, 2016"
+output: html_document
+---
+# Graph analysis of relatedness matrix
+```{r packages, warning=FALSE, message=FALSE}
+library(SNPRelate)
+library(igraph)
+library(stringr)
+library(magicaxis)
+library(scales)
+library(GWASTools)
+```
+
+# Relatedness 
+
+Run the `snpgdsIBDMLE` function in `snpRelate` to calculate a maximum-likelihood estimator for the kinship coefficient. This code is copied from `HWE_LD_Pruned_PCA.r` for record-keeping purposes.
+
+```{r snpRelate, eval=FALSE}
+cwd.ibd<-"cwd_ibd.gds"
+snpgdsVCF2GDS('~/Desktop/LocalCSU_ChronicWasting/CWDPheno_dbrFilter_maf0.05_minGQ25_minDP10_maxMissing0.75_NO_REPLICATES_NO_LIB2_FIRST_SNP_HWE0.05.recode.vcf', cwd.ibd, verbose=TRUE)
+(ibd<-GdsGenotypeReader(cwd.ibd))
+genoData<-GenotypeData(ibd)
+
+close(genoData)
+open(genoData)
+
+## reopen data
+genofile<-snpgdsOpen('~/Desktop/CSU_ChronicWasting/cwd_ibd.gds', allow.duplicate=TRUE) 
+r<-snpgdsIBDMLE(genofile, autosome.only=FALSE, kinship=TRUE) 
+ibd.coeff<-snpgdsIBDSelection(r)
+write.table(ibd.coeff, '~/Desktop/LocalCSU_ChronicWasting/CWDPheno_dbrFilter_maf0.05_minGQ25_minDP10_maxMissing0.75_NO_REPLICATES_NO_LIB2_FIRST_SNP_HWE0.05_snprelate_IBD.txt', quote=F, row.names=F)
+```
+
+Open the MLE kinship estimates produced by `snpgdsIBDMLE`.
+
+```{r data}
+rel <- read.table('~/Desktop/LocalCSU_ChronicWasting/CWDPheno_dbrFilter_maf0.05_minGQ25_minDP10_maxMissing0.75_NO_REPLICATES_NO_LIB2_FIRST_SNP_HWE0.05_snprelate_IBD.txt',header=T)
+Nathan.data <- read.csv('~/Dropbox/ColoState/CWD_ddRADseq/CWD_Data_from_Nathan/LFP Data 201510 KP Additions.csv') 
+```
+
+## Relatedness distribution
+
+What's a good relatedness coefficient cut-off?
+
+```{r histograms}
+hist(rel$kinship)
+par(mar=c(5,4,2,2))
+hist(log(rel$kinship), axes=F, freq=F)
+magaxis(side=1, unlog=T)
+magaxis(side=2)
+abline(v=log(1/40), col='red', lty=3, lwd=5) #0.025 = 1/40
+```
+
+# Full graph
+
+```{r fullGraph}
+# fix the sample names
+rel$fix1 <- substring(str_extract(rel$ID1, "_[0-9]+"), 2)
+rel$fix2 <- substring(str_extract(rel$ID2, "_[0-9]+"), 2)
+rel.edges<-cbind(as.character(rel$fix1), as.character(rel$fix2))
+deer.rel<-graph.data.frame(rel.edges, directed=F)
+V(deer.rel)$size <- 4
+V(deer.rel)$label <- NA
+plot(deer.rel, edge.width=rel$kinship*10, layout=layout.fruchterman.reingold)
+```
+
+# Relatedness prune at 0.025 cut-off
+
+The `0.025` relatedness cut-off is the `Plink` default.
+
+```{r r0.025_prune}
+# prune by relatedness
+rel2 <- rel[which(rel$kinship>0.025),]
+deer.rel.pruned<-graph.data.frame(cbind(as.character(rel2$fix1), as.character(rel2$fix2)), directed=F)
+V(deer.rel.pruned)$size <- 2
+V(deer.rel.pruned)$label <- NA
+plot(deer.rel.pruned, edge.width=rel$kinship*2, layout=layout.fruchterman.reingold)
+```
+
+This obviously removes some deer; lets get the full list of deer even if they aren't in the related component of the graph. We'll then add in some self-edges/loops so those deer get plotted on the graph as unconnected nodes. Even though technically the kinship of a deer to itself is `1`, we'll set kinship to be `0` so we don't see the loops on the final plot.
+
+```{r r0.25_allDeer}
+allDeer<-unique(c(unique(rel$fix1), unique(rel$fix2)))
+
+rel2.extra1<-c()
+for(deer in 1:length(allDeer)){
+  if(!(allDeer[deer] %in% rel2$fix1) & !(allDeer[deer] %in% rel2$fix2)){
+    rel2.extra1<-c(rel2.extra1, allDeer[deer])
+  }
+}
+rel2.edges<-cbind(c(as.character(rel2$fix1), as.character(rel2.extra1)), 
+                  c(as.character(rel2$fix2), as.character(rel2.extra1)))
+deer.rel2<-graph.data.frame(rel2.edges, directed=F)
+full.kinship<-c(rel2$kinship, rep(0.00000000000001, length(rel2.extra1)))
+V(deer.rel2)$size <- 4
+V(deer.rel2)$label <- NA
+
+# this is a pretty picture!
+plot(deer.rel2, edge.width=full.kinship, layout=layout.fruchterman.reingold)
+```
+
+Color the nodes by winter range
+
+```{r r0.025_winterRange}
+wr<-c()
+wr.colors<-c('red', 'green', 'yellow', 'blue')
+wr.c<-c()
+for(g in 1:length(V(deer.rel2)$name)){
+  wr<-c(wr, as.character(Nathan.data[which(Nathan.data$deerid==as.character(V(deer.rel2)$name[g])),]$winterRange))
+  wr.c<-c(wr.c, wr.colors[Nathan.data[which(Nathan.data$deerid==as.character(V(deer.rel2)$name[g])),]$winterRange])
+  #print(wr[g], wr.c[g])
+}
+wr.c[is.na(wr.c)]<-'gray'
+wr.by.col<-cbind(wr, wr.c)
+table(wr.by.col[,1], wr.by.col[,2])
+
+# damn that's a fine looking figure. you can see some families within winter ranges
+png(file='~/Desktop/LocalCSU_ChronicWasting/wr_network0.025.png',
+    height=15, width=15, res=300, unit='cm')
+par(mfrow=c(1,1), mar=c(2,2,2,2))
+plot(deer.rel2, edge.width=full.kinship*10, layout=layout.fruchterman.reingold, vertex.color=wr.c)
+legend(x='bottomleft', legend=c('Bighole', 'Campbell', 'Cherokee', 'Redmtn', 'Male'), 
+       col='black', bty='n', pch=1, cex=0.9)
+legend(x='bottomleft', legend=c('Bighole', 'Campbell', 'Cherokee', 'Redmtn', 'Male'), 
+       col=c('red', 'green', 'yellow', 'blue', 'gray'), bty='n', pch=16, cex=0.9)
+dev.off()
+```
+
+```{r r0.025_CWDstatus}
+Nathan.data$cwd<-as.factor(Nathan.data$cwd)
+cwd<-c()
+cwd.colors<-c('blue', 'red')
+cwd.c<-c()
+for(g in 1:length(V(deer.rel2)$name)){
+  cwd<-c(cwd, as.character(Nathan.data[which(Nathan.data$deerid==as.character(V(deer.rel2)$name[g])),]$cwd))
+  cwd.c<-c(cwd.c, cwd.colors[Nathan.data[which(Nathan.data$deerid==as.character(V(deer.rel2)$name[g])),]$cwd])
+  #print(wr[g], wr.c[g])
+}
+cwd.by.col<-cbind(cwd, cwd.c)
+table(cwd.by.col[,1], cwd.by.col[,2])
+
+plot(deer.rel2, edge.width=full.kinship*10, layout=layout.fruchterman.reingold, vertex.color=cwd.c)
+legend(x='bottomleft', legend=c('CWD -', 'CWD +'), 
+       col='black', bty='n', pch=1, cex=0.9)
+legend(x='bottomleft', legend=c('CWD -', 'CWD +'), 
+       col=c('blue', 'red'), bty='n', pch=16, cex=0.9)
+```
+
+```{r r0.025_PRNPgenotype}
+prnp.data<-read.csv('~/Dropbox/ColoState/CWD_ddRADseq/CWD_Data_from_Nathan/LFP Prnp 201510 copy.csv')
+prnp.data$S225F_Seq<-as.factor(prnp.data$S225F_Seq)
+prnp<-c()
+prnp.colors<-c('darkgreen', 'green', 'yellow')
+prnp.c<-c()
+for(g in 1:length(V(deer.rel2)$name)){
+  prnp<-c(prnp, as.character(prnp.data[which(prnp.data$ID==as.character(V(deer.rel2)$name[g])),]$S225F_Seq))
+  }
+prnp.f<-as.factor(prnp)
+prnp.c<-prnp.colors[prnp.f]
+prnp.by.col<-cbind(prnp, prnp.c)
+table(prnp.by.col[,1], prnp.by.col[,2])
+
+plot(deer.rel2, edge.width=full.kinship*10, layout=layout.fruchterman.reingold, vertex.color=prnp.c)
+legend(x='bottomleft', legend=c('FF', 'SF', 'SS'), 
+       col='black', bty='n', pch=1, cex=0.9)
+legend(x='bottomleft', legend=c('FF', 'SF', 'SS'), 
+       col=c('darkgreen', 'green', 'yellow'), bty='n', pch=16, cex=0.9)
+# NOTE: no FF males, only SF and SS
+```
+
+# Maximal independent sets
+
+We want to know which nodes we need to remove to break the edges of strong relatedness. The *Maximal Independent Sets* problem is well-defined, but the algorithm for finding the maximal independent sets is NP hard. No joke, it used up all of my memory every time I tried running the `maximal.independent.vertex.sets` function on my laptop. While I could delegate that to a server, the problem doesn't need to be that difficult.
+
+## Basic idea
+
+1. We can prune away the weakly related nodes in the network, then add them back in as self connections so they're still techinically part of the graph (problematic for any degree-based analysis or other more sophisticated stats, but okay here). 
+
+2. Then we break the remaining related components into separate graphs using `decompose.graph` so they're easier to handle using the `maximal.independent.vertex.sets` function.
+
+3. We'll apply the `maximal.independent.vertex.sets` function to each component of the graph, and select the largest independent set (a random choice if there's a tie). The unconnected nodes should automatically get included.
+
+## A function to get the maximum independent set
+
+```{r mvsFxn}
+simpleMVS<-function(graph){
+  set.seed(0) # for repeatability of random node selection
+  separate.families<-decompose.graph(graph, mode=c('weak'))
+  keep.nodes<-c()
+  for(family in 1:length(separate.families)){
+    # get the list of all possible maximal sets
+    mvs<-maximal.independent.vertex.sets(separate.families[[family]])
+    sizes<-c()
+    for(set in 1:length(mvs)){
+      # get the sizes of all possible maximal sets
+      sizes<-c(sizes, length(mvs[[set]]))
+    }
+    # get the indexes for the maximum sets
+    largest<-which(sizes==max(sizes))
+    if(length(largest)==1){
+      # if there's only one largest set (no ties), then add those nodes to the list
+      keep.nodes<-c(keep.nodes, mvs[[largest]]$name)
+    }else{
+      # otherwise choose one randomly to keep
+      keep.idx<-sample(largest, 1)
+      keep.nodes<-c(keep.nodes, mvs[[keep.idx]]$name)
+    }
+  }
+  return(keep.nodes)
+}
+```
+
+## A function to more easily prune by a relatedness coefficient and add back in pruned nodes as loop-only nodes.
+
+Keep only the nodes that are *above* a relatedness threshold. Assumes my naming conventions for nodes, of course.
+
+```{r fancyPrune}
+fancyPrune<-function(snpRelateOutput, relThreshold){
+  # get the list of unique nodes
+  snpRelateOutput$fix1 <- substring(str_extract(snpRelateOutput$ID1, "_[0-9]+"), 2)
+  snpRelateOutput$fix2 <- substring(str_extract(snpRelateOutput$ID2, "_[0-9]+"), 2)
+  allNodes<-unique(c(unique(snpRelateOutput$fix1), unique(snpRelateOutput$fix2)))
+  
+  # prune by the threshold
+  rel.pruned <- snpRelateOutput[which(snpRelateOutput$kinship>relThreshold),]
+  
+  # add pruned nodes back in as self-loops
+  rel.extra1<-c()
+  for(node in 1:length(allNodes)){
+    if(!(allNodes[node] %in% rel.pruned$fix1) & !(allNodes[node] %in% rel.pruned$fix2)){
+      rel.extra1<-c(rel.extra1, allNodes[node])
+    }
+  }
+  
+  # make a graph object
+  full.kinship<-c(rel.pruned$kinship, rep(0.00000000000001, length(rel.extra1)))
+  rel.edges<-data.frame(from=c(as.character(rel.pruned$fix1), 
+                     as.character(rel.extra1)), 
+                  to=c(as.character(rel.pruned$fix2), 
+                    as.character(rel.extra1)), 
+                  weight=full.kinship)
+  revisedGraph<-graph.data.frame(rel.edges, directed=F)
+  return(revisedGraph)
+}
+```
+
+## What is an appropriate relatedness cut-off?
+
+Using a really stringent cut-off, such as `0.025`, produces one large fully connected component and a bunch of fully unconnected nodes. That large component is hard to deal with and the laptop runs out of memory trying to find the maximial independent sets.
+
+Visualization:
+
+```{r plot_diff_cutoffs}
+test0.025<-fancyPrune(rel, 0.025)
+V(test0.025)$size <- 4
+V(test0.025)$label <- NA
+
+test0.0625<-fancyPrune(rel, 1/16)
+V(test0.0625)$size <- 4
+V(test0.0625)$label <- NA
+
+test0.125<-fancyPrune(rel, 1/8)
+V(test0.125)$size <- 4
+V(test0.125)$label <- NA
+
+test0.25<-fancyPrune(rel, 1/4)
+V(test0.25)$size <- 4
+V(test0.25)$label <- NA
+
+par(mfrow=c(2,2), mar=c(2,1,1,1))
+plot(test0.025, edge.width=E(test0.025)$weight*10, layout=layout.fruchterman.reingold)
+mtext(text='0.025', side=1)
+plot(test0.0625, edge.width=E(test0.0625)$weight*10, layout=layout.fruchterman.reingold)
+mtext(text='0.0625', side=1)
+plot(test0.125, edge.width=E(test0.125)$weight*10, layout=layout.fruchterman.reingold)
+mtext(text='0.125', side=1)
+plot(test0.25, edge.width=E(test0.25)$weight*10, layout=layout.fruchterman.reingold)
+mtext(text='0.25', side=1)
+```
+
+A cut-off of `0.0625` might be a bit more tractable. How many CWD positive individuals do we expect to lose if we randomly prune the data based on that relatedness cut-off?
+
+```{r wr0.0625}
+wr<-c()
+wr.colors<-c('red', 'green', 'yellow', 'blue')
+wr.c<-c()
+for(g in 1:length(V(test0.0625)$name)){
+  wr<-c(wr, as.character(Nathan.data[which(Nathan.data$deerid==as.character(V(test0.0625)$name[g])),]$winterRange))
+  wr.c<-c(wr.c, wr.colors[Nathan.data[which(Nathan.data$deerid==as.character(V(test0.0625)$name[g])),]$winterRange])
+  #print(wr[g], wr.c[g])
+}
+wr.c[is.na(wr.c)]<-'gray'
+wr.by.col<-cbind(wr, wr.c)
+table(wr.by.col[,1], wr.by.col[,2])
+
+#png(file='~/Desktop/LocalCSU_ChronicWasting/relatedness_network_0.0625.png',
+#    height=10, width=10, res=300, unit='cm')
+png(file='~/Desktop/LocalCSU_ChronicWasting/wr_network0.0625.png',
+    height=15, width=15, res=300, unit='cm')
+par(mfrow=c(1,1), mar=c(2,2,2,2))
+plot(test0.0625, edge.width=E(test0.0625)$weight*10, layout=layout.fruchterman.reingold, vertex.color=wr.c)
+legend(x='bottomleft', legend=c('Bighole', 'Campbell', 'Cherokee', 'Redmtn', 'Male'), 
+       col='black', bty='n', pch=1, cex=0.9)
+legend(x='bottomleft', legend=c('Bighole', 'Campbell', 'Cherokee', 'Redmtn', 'Male'), 
+       col=c('red', 'green', 'yellow', 'blue', 'gray'), bty='n', pch=16, cex=0.9)
+dev.off()
+
+```
+
+```{r cwd0.0625}
+Nathan.data$cwd<-as.factor(Nathan.data$cwd)
+cwd<-c()
+cwd.colors<-c('blue', 'red')
+cwd.c<-c()
+for(g in 1:length(V(test0.0625)$name)){
+  cwd<-c(cwd, as.character(Nathan.data[which(Nathan.data$deerid==as.character(V(test0.0625)$name[g])),]$cwd))
+  cwd.c<-c(cwd.c, cwd.colors[Nathan.data[which(Nathan.data$deerid==as.character(V(test0.0625)$name[g])),]$cwd])
+  #print(wr[g], wr.c[g])
+}
+cwd.by.col<-cbind(cwd, cwd.c)
+table(cwd.by.col[,1], cwd.by.col[,2])
+
+plot(test0.0625, edge.width=E(test0.0625)$weight*10, layout=layout.fruchterman.reingold, vertex.color=cwd.c)
+legend(x='bottomleft', legend=c('CWD -', 'CWD +'), 
+       col='black', bty='n', pch=1, cex=0.9)
+legend(x='bottomleft', legend=c('CWD -', 'CWD +'), 
+       col=c('blue', 'red'), bty='n', pch=16, cex=0.9)
+```
+
+It looks like we'd stand to lose quite a few deer from the analysis if we use the `0.0625` cut-off and select the maximal independent set with random tie-breaks. We need instead a way to select the set that maximizes the number of CWD positive individuals.
+
+```{r biasMVS}
+biasedMVS<-function(graph, biasList){
+  keep.nodes<-c()
+  set.seed(0) # for repeatability of random node selection
+  print('Decomposing graph into families...')
+  separate.families<-decompose.graph(graph, mode=c('weak'))
+  print('Iterating through families in decomposed graph...')
+  
+  for(family in 1:length(separate.families)){
+    print(paste('Analyzing family ', family, ' of ', length(separate.families), sep=''))
+    nodeNames <- V(separate.families[[family]])$name
+    # if there are positive individuals in the family
+    if(any(nodeNames %in% biasList)){
+      # only look at independent sets containing positive individuals
+      # EVEN IF they are not the largest
+      print(paste('Identifying maximal independent sets for positive-deer containing family ', family, sep=''))
+      mvs<-maximal.independent.vertex.sets(separate.families[[family]])
+      
+      bias.filter<-c()
+      for(set in 1:length(mvs)){
+        # any positive nodes?
+        if(any(mvs[[set]]$name %in% biasList)){
+          bias.filter<-c(bias.filter, TRUE)
+        }else{
+          bias.filter<-c(bias.filter, FALSE)
+        }
+      }
+      
+      bias.mvs<-mvs[bias.filter] # get the sets containing positive individuals
+      
+      if(length(bias.mvs)>1){
+        # if there is more than one set containing positive individuals, track the set with the most
+        keep.idx<-c()
+        keep.len<-c(0)
+        # for each set in the mvs, how many positive deer are there?
+        
+        for(set in 1:length(bias.mvs)){
+          subset <- bias.mvs[[set]]$name
+          numberPos <- length((subset %in% biasList)==TRUE)
+          
+          if(numberPos > max(keep.len)){
+            keep.len <- c(numberPos)
+            keep.idx <- c(set)
+            
+          }else if(numberPos == max(keep.len)){
+            # track both components if there are two of equal sizes
+            keep.idx <- c(keep.idx, set)
+          }
+        }
+        
+        # if there was a single set with a max number of positive deer, easy
+        if(length(keep.idx)==1){
+          keep.nodes<-c(keep.nodes, bias.mvs[[keep.idx]]$name)
+          
+        }else{
+          # if there was a tie for set with the greatest number of pos. deer
+          # this could be because many sets contain the SAME pos. deer, 
+          # or because there are multiple pos. deer
+          ki<-sample(keep.idx, 1)
+          keep.nodes<-c(keep.nodes, bias.mvs[[ki]]$name)
+        }
+      }else{
+        # if there is just one set containing positive individuals
+        keep.nodes<-c(keep.nodes, bias.mvs[[1]]$name)
+      }
+    # if there are no positive individuals in the family
+    }else{
+      mvs<-maximal.independent.vertex.sets(separate.families[[family]])
+      # keep the largest set
+      sizes<-c()
+      for(set in 1:length(mvs)){
+        # get the sizes of all possible maximal sets
+        sizes<-c(sizes, length(mvs[[set]]))
+      }
+      # get the indexes for the maximum sets
+      largest<-which(sizes==max(sizes)) # returns an index
+      if(length(largest)==1){
+        # if there's only one largest set (no ties), then add those nodes to the list
+        keep.nodes<-c(keep.nodes, mvs[[largest]]$name)
+      }else{
+        # otherwise choose one randomly to keep
+        keep.idx<-sample(largest, 1)
+        keep.nodes<-c(keep.nodes, mvs[[keep.idx]]$name)
+      }
+    }
+  }
+  return(keep.nodes)
+}
+
+cwdPOS<-Nathan.data[which(Nathan.data$cwd=='1'),]$deerid
+new.nodes<-biasedMVS(test0.0625, cwdPOS)
+naive.nodes<-simpleMVS(test0.0625)
+
+# we manage to keep more CWD positive deer in with the biased relatedness filter
+perf1<-length(cwdPOS[which(cwdPOS %in% new.nodes)])
+perf2<-length(cwdPOS[which(cwdPOS %in% naive.nodes)])
+print(c(perf1, perf2))
+```
+
+What does the new graph of the remaining deer look like?
+
+```{r leftovers}
+discard.nodes<-V(test0.0625)$name[!(V(test0.0625)$name %in% new.nodes)]
+relPrune<-delete.vertices(test0.0625, discard.nodes)
+
+cwdn<-c()
+cwdn.colors<-c('blue', 'red')
+cwdn.c<-c()
+for(g in 1:length(V(relPrune)$name)){
+  cwdn<-c(cwdn, as.character(Nathan.data[which(Nathan.data$deerid==as.character(V(test0.0625)$name[g])),]$cwd))
+  cwdn.c<-c(cwdn.c, cwd.colors[Nathan.data[which(Nathan.data$deerid==as.character(V(test0.0625)$name[g])),]$cwd])
+  #print(wr[g], wr.c[g])
+}
+cwdn.by.col<-cbind(cwdn, cwdn.c)
+table(cwdn.by.col[,1], cwdn.by.col[,2])
+
+#png(file='~/Desktop/LocalCSU_ChronicWasting/biasedMVS_comparison.png',
+#    height=10, width=15, units='cm', res=300)
+par(mfrow=c(1,2), mar=c(3,2,1,1))
+plot(test0.0625, edge.width=E(test0.0625)$weight*10, layout=layout.fruchterman.reingold, vertex.color=cwd.c)
+legend(x='bottomleft', legend=c('CWD -', 'CWD +'), 
+       col='black', bty='n', pch=1, cex=0.9)
+legend(x='bottomleft', legend=c('CWD -', 'CWD +'), 
+       col=c('blue', 'red'), bty='n', pch=16, cex=0.9)
+
+plot(relPrune, edge.width=E(relPrune)$weight*10, layout=layout.fruchterman.reingold, vertex.color=cwdn.c)
+legend(x='bottomleft', legend=c('CWD -', 'CWD +'), 
+       col='black', bty='n', pch=1, cex=0.9)
+legend(x='bottomleft', legend=c('CWD -', 'CWD +'), 
+       col=c('blue', 'red'), bty='n', pch=16, cex=0.9)
+#dev.off()
+```
+
+To save, we get the original names back and write them to a text file with two columns: family and individual.
+
+```{r saveForPlink}
+deerNames<-c(as.character(rel$ID1[1]), unique(as.character(rel$ID2)))
+fullNames<-c()
+for(i in 1:length(new.nodes)){
+  search=paste('_', new.nodes[i], '.sorted.bam', sep='')
+  properName<- deerNames[grep(search, deerNames, fixed=T)]
+  fullNames<-c(fullNames, properName)
+}
+fullOut<-cbind(fullNames, fullNames)
+write.table(fullOut, file='~/Desktop/LocalCSU_ChronicWasting/finalDeerforGWAS.txt', quote = F, row.names = F, col.names = F)
+
+```
+
+# PCA for reduced data set
+
+```{r PCA}
+eigvec<-read.table('~/Desktop/LocalCSU_ChronicWasting/plink.eigenvec')
+eigvec$fix1 <- substring(str_extract(eigvec[,1], "_[0-9]+"), 2)
+
+Nathan.data <- read.csv('~/Dropbox/ColoState/CWD_ddRADseq/CWD_Data_from_Nathan/LFP Data 201510 KP Additions.csv') 
+Nathan.data$cwd<-as.factor(Nathan.data$cwd)
+Nathan.data$sex<-as.factor(Nathan.data$sex)
+cwd<-c()
+cwd.colors<-c('blue', 'red')
+cwd.c<-c()
+wr<-c()
+wr.colors<-c('red', 'green', 'yellow', 'blue')
+wr.c<-c()
+sex<-c()
+sex.colors<-c('orange', 'darkgray')
+sex.c<-c()
+for(g in 1:length(eigvec$fix1)){
+  cwd<-c(cwd, as.character(Nathan.data[which(Nathan.data$deerid==as.character(eigvec$fix1[g])),]$cwd))
+  cwd.c<-c(cwd.c, cwd.colors[Nathan.data[which(Nathan.data$deerid==as.character(eigvec$fix1[g])),]$cwd])
+  wr<-c(wr, as.character(Nathan.data[which(Nathan.data$deerid==as.character(eigvec$fix1[g])),]$winterRange))
+  wr.c<-c(wr.c, wr.colors[Nathan.data[which(Nathan.data$deerid==as.character(eigvec$fix1[g])),]$winterRange])
+  sex<-c(sex, as.character(Nathan.data[which(Nathan.data$deerid==as.character(eigvec$fix1[g])),]$sex))
+  sex.c<-c(sex.c, sex.colors[Nathan.data[which(Nathan.data$deerid==as.character(eigvec$fix1[g])),]$sex])
+}
+wr.c[is.na(wr.c)]<-'gray'
+wr.by.col<-cbind(wr, wr.c)
+table(wr.by.col[,1], wr.by.col[,2])
+
+pdf(file='~/Desktop/LocalCSU_ChronicWasting/prelim_PCA_by_sex_disease_range.pdf', height=10/2.54, width=23/2.54)#, unit='cm', res=300)
+par(mfrow=c(1,3))
+png(file='~/Desktop/LocalCSU_ChronicWasting/prelim_PCA_by_disease.png', height=15, width=15, unit='cm', res=300)
+plot(eigvec[,3], eigvec[,4], col=alpha(cwd.c, 0.7), pch=16, axes=F,
+     xlab='', ylab='')
+mtext(side=1, line=0, text='PC 2', cex=1.5)
+mtext(side=2, line=0, text='PC 1', cex=1.5)
+lines(x=c(0,0), y=c(-0.20, 0.15))
+lines(x=c(-0.25,0.2), y=c(0,0))
+legend(x=-0.25, y=-0.12, legend=c('CWD-', 'CWD+'), col=cwd.colors, pch=16, bty='n', cex=1.5)
+dev.off()
+
+plot(eigvec[,3], eigvec[,4], col=alpha(sex.c, 0.7), pch=16, axes=F,
+     xlab='', ylab='')
+mtext(side=1, line=0, text='PC 2')
+mtext(side=2, line=0, text='PC 1')
+lines(x=c(0,0), y=c(-0.20, 0.15))
+lines(x=c(-0.25,0.2), y=c(0,0))
+legend(x=-0.25, y=0.15, legend=c('Female', 'Male'), col=sex.colors, pch=16, bty='n', cex=1.5)
+
+png(file='~/Desktop/LocalCSU_ChronicWasting/prelim_PCA_by_range.png', height=15, width=15, unit='cm', res=300)
+plot(eigvec[,3], eigvec[,4], col=alpha(wr.c, 0.7), pch=16, axes=F,
+     xlab='', ylab='')
+mtext(side=1, line=0, text='PC 2', cex=1.5)
+mtext(side=2, line=0, text='PC 1', cex=1.5)
+lines(x=c(0,0), y=c(-0.20, 0.15))
+lines(x=c(-0.25,0.2), y=c(0,0))
+dev.off()
+legend(x=-0.25, y=0.15, legend=c('Bighole', 'Campbell', 'Cherokee', 'Redmtn', 'Male'), 
+       col=c(wr.colors, 'gray'), pch=16, bty='n', cex=1.5)
+dev.off()
+```
+
+<!--
+# last minute LASSO?
+
+Adapted from DAPC practical GWAS tutorial. BUT `glmnet`, which performs the LASSO, cannot handle missing data.
+
+```{r prunedData}
+
+library(glmnet)
+prunedSNPs<-read.table('~/Desktop/LocalCSU_ChronicWasting/CWD_HWE_LD_Related_pruned_plink.raw', header=T)
+prunedSNPs.only <- prunedSNPs[,7:17618]
+
+# complete cases?
+tp<-t(prunedSNPs.only)
+tpc<-tp[which(complete.cases(tp)),]
+dim(tpc) # only 547 SNPs genotyped for everyone!
+
+prunedSNPs.only<-as.matrix(prunedSNPs.only)
+
+```
+
+Missing data *can* be imputed, but only when missing data are randomly dispersed throughout the data set. In other words, missingness cannot itself correlate with the response variable or other covariates. For example, if a restriction site mutation prevented genotpying of a SNP linked to CWD, CWD+ deer would have more missing data for that site than CWD- deer. Imputing data under this scenario would be bad.
+
+
+```{r missingness, eval=FALSE}
+library(mi)
+# this ran for 90 minutes and didn't finish..
+mdf<-missing_data.frame(prunedSNPs)
+summary(mdf)
+```
+
+```{r lasso}
+
+prunedSNPs.means<-colMeans(prunedSNPs, na.rm=T)
+
+# cross-validate
+LASSO <- cv.glmnet(prunedSNPs.only, prunedSNPs$PHENOTYPE, family="binomial", lambda.min.ratio=0.01, alpha=1)
+
+# replace NAs with column mean: https://stat.ethz.ch/pipermail/r-help/2007-November/146598.html
+# should be okay for PCA, though ill-advised for other analyses
+for(c in 1:length(prunedSNPs.means)){ # for every column
+  #print(c)
+  replace<-is.na(prunedSNPs[,c])
+  plinkSNPs[replace,c]<-plinkSNPs.means[c]
+}
+
+prunedSNPs.only <- prunedSNPs[,7:17618]
+#snp.gen <- new("genlight", snp.mat)
+# not working as expected because of NAs
+snps.corrected <- apply(prunedSNPs.only, 2, function(e) residuals(lm(e~eigvec[,3]+eigvec[,4]+eigvec[,5]+eigvec[,6]+eigvec[,7]))) # may take a minute
+sc<-data.frame(snps.corrected)
+pca2 <- dudi.pca(snps.corrected, scale=FALSE)#, scannf=FALSE, nf=5)
+
+```
+
+# Do DAPC inferred clusters correlated with graph structure?
+
+Do the DAPC inferred clusters w/10 PCs map on to the graph structure?
+LD pruned data are in plink.raw; plink will overwrite this w/subsequent runs to preserve the reproducibility of this analysis, I've copied the file created by 
+
+`plink --file CWDPheno_dbrFilter_maf0.05_minGQ25_minDP10_maxMissing0.75_NO_REPLICATES_NO_LIB2_FIRST_SNP_HWE0.05_pheno_plink --exclude plink.prune.out --recode A`
+
+and resaved it:
+
+`cp plink.raw CWD_HWE_LD_pruned_plink.raw`
+
+```{r DAPC, eval=F}
+snp <- read.table('~/Desktop/LocalCSU_ChronicWasting/CWD_HWE_LD_pruned_plink.raw', header=T)
+snp.mat <- snp[,7:17618]
+snp.gen <- new("genlight", snp.mat)
+indNames(snp.gen) <- substring(str_extract(snp[,1], "_[0-9]+"), 2)
+ploidy(snp.gen) <- 2
+library(adegenet)
+fc <- find.clusters(snp.gen) # keep 10 PCs, 24 groups
+k <- fc$grp # extract the groups
+kcol <- rainbow(length(levels(k))) # a color for each group
+
+cbind(names(k), names(V(deer.rel))) # they're in the same order
+# get a list of the colors by group membership
+kvc<-c()
+for(g in 1:length(k)){
+  grp<-k[[g]]
+  kvc<-c(kvc, kcol[k[[g]]])
+}
+
+# plot with nodes colored by group membership
+V(deer.rel)$size <- 4
+plot(deer.rel, edge.width=rel$kinship*2, layout=layout.fruchterman.reingold,
+     vertex.color=kvc)
+
+# try with adjacency matrix? we'd like nodes that don't have edges to stay on the plot
+adj.mat<-matrix(nrow=dim(snp.mat)[1], ncol=dim(snp.mat)[1])
+adj.mat[lower.tri(adj.mat, diag=F)]<-rel$kinship
+adj.mat[1:10,1:10]
+deer.mat<-graph.adjacency(adj.mat, mode='lower', weighted=T, diag=F)
+reordered.names<-c(rel$fix1[1], rel$fix2[1:237])
+V(deer.mat)$label<-reordered.names
+cbind(names(k), V(deer.mat)$label) # they're in the same order
+V(deer.mat)$size <- 4
+plot(deer.mat, layout=layout.fruchterman.reingold, edge.width=adj.mat,
+     vertex.color=kvc, vertex.label=NA)
+
+deer.sparse <- delete.edges(deer.mat, E(deer.mat)[which(E(deer.mat)$weight>1/16)]) # get rid of unrelated deer
+tkplot(deer.sparse, layout=layout.fruchterman.reingold, edge.width=adj.mat,
+       vertex.color=kvc, vertex.label=NA) 
+
+comm<-cluster_optimal(deer.mat)
+membership(comm)
+V(deer.mat)$community <- optimal.community(deer.mat)$membership
+```
+-->
